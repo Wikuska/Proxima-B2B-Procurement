@@ -2,7 +2,15 @@ import uuid
 from decimal import Decimal
 from typing import List
 
-from sqlalchemy import Boolean, ForeignKey, Integer, Numeric, String, Text
+from sqlalchemy import (
+    Boolean,
+    ForeignKey,
+    Integer,
+    Numeric,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base
@@ -57,3 +65,9 @@ class ProductVolumeDiscount(Base):
 
     # Relations
     product: Mapped["Product"] = relationship(back_populates="volume_discounts")
+
+    __table_args__ = (
+        UniqueConstraint(
+            "product_id", "min_quantity", name="uq_product_volume_discount"
+        ),
+    )
