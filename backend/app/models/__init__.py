@@ -1,16 +1,14 @@
 from .base import Base
-
+from .company import Company, CompanyRequest
 from .enums import (
+    OrderStatus,
+    PurchaseType,
     RequestStatus,
     UserRole,
-    PurchaseType,
-    OrderStatus,
 )
-
-from .company import Company, CompanyRequest
-from .user import User
+from .order import Address, CartItem, Order, OrderItem
 from .product import Category, Product, ProductVolumeDiscount
-from .order import CartItem, Order, OrderItem
+from .user import User
 
 __all__ = [
     "Base",
@@ -27,4 +25,5 @@ __all__ = [
     "CartItem",
     "Order",
     "OrderItem",
+    "Address",
 ]
