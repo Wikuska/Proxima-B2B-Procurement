@@ -11,7 +11,7 @@ from .enums import UserRole
 
 if TYPE_CHECKING:
     from .company import Company, CompanyRequest
-    from .order import CartItem, Order
+    from .order import Address, CartItem, Order
 
 
 class User(Base):
@@ -19,13 +19,17 @@ class User(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     company_id: Mapped[uuid.UUID | None] = mapped_column(
-        ForeignKey("companies.id"), nullable=True
+        ForeignKey("companies.id", ondelete="SET NULL"), nullable=True
     )
 
     email: Mapped[str] = mapped_column(
         String(255), unique=True, index=True, nullable=False
     )
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+
+    first_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    last_name: Mapped[str] = mapped_column(String(100), nullable=False)
+
     role: Mapped[UserRole] = mapped_column(
         SQLEnum(UserRole), default=UserRole.CUSTOMER, nullable=False
     )
@@ -42,7 +46,12 @@ class User(Base):
     # Relations
     company: Mapped["Company | None"] = relationship(back_populates="users")
     company_requests: Mapped[List["CompanyRequest"]] = relationship(
-        back_populates="user"
+        back_populates="user", cascade="all, delete-orphan"
     )
     orders: Mapped[List["Order"]] = relationship(back_populates="user")
-    cart_items: Mapped[List["CartItem"]] = relationship(back_populates="user")
+    cart_items: Mapped[List["CartItem"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
+    addresses: Mapped[List["Address"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
