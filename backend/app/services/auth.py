@@ -1,19 +1,19 @@
-from core.exceptions import (
+from app.core.exceptions import (
     EmailAlreadyExistsException,
     EmailNotVerifiedException,
     InvalidCredentialsException,
     UserNotFoundException,
 )
-from core.security import (
+from app.core.security import (
     create_verification_token,
     decode_verification_token,
     get_password_hash,
     verify_password,
 )
-from crud import company as company_crud
-from crud import user as user_crud
-from models import User
-from schemas import UserCreate, UserRole
+from app.crud import company as company_crud
+from app.crud import user as user_crud
+from app.models import User, UserRole
+from app.schemas import UserCreate
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
@@ -27,7 +27,7 @@ async def register_user(db: AsyncSession, user_data: UserCreate) -> User:
     # Setting user data
     user_dict = {
         **user_data.model_dump(exclude={"password"}),
-        "hashed_password": get_password_hash(user_data.password),
+        "password_hash": get_password_hash(user_data.password),
         "role": UserRole.CUSTOMER,
         "company_id": None,
         "is_verified": False,
@@ -71,7 +71,7 @@ async def verify_user_email(db: AsyncSession, token: str) -> User:
 async def authenticate_user(db: AsyncSession, email: str, password: str) -> User:
     """Authenticates a user and returns their information."""
     user = await user_crud.get_user_by_email(db, email)
-    if not user or not verify_password(password, user.hashed_password):
+    if not user or not verify_password(password, user.password_hash):
         raise InvalidCredentialsException()
 
     if not user.is_verified:

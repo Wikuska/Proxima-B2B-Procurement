@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from models.enums import UserRole
+from app.models.enums import UserRole
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 

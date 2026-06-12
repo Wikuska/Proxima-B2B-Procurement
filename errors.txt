@@ -1,0 +1,23 @@
+const FIELD_MESSAGES = {
+    first_name: {
+        string_too_short: "First name must be at least 2 characters long",
+        string_too_long: "First name cannot exceed 100 characters",
+    },
+    last_name: {
+        string_too_short: "Last name must be at least 2 characters long",
+    },
+    password: {
+        string_too_short: "Password must be at least 8 characters long",
+        value_error: "Password must contain at least one uppercase letter and ine digit",
+    },
+    email: {
+        value_error: "Please enter a valid email address",
+    }
+}
+
+detail.forEach(error => {
+    const field = error.loc[1]
+    const type = error.type
+    const message = FIELD_MESSAGES[field]?.[type] ?? error.msg  // fallback to Pydantic's message
+    showFieldError(field, message)
+})

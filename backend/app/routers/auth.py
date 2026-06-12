@@ -1,8 +1,8 @@
-from core import security
-from database import get_db
+from app.core import security
+from app.database import get_db
+from app.schemas import Token, UserCreate, UserLogin, UserOut
+from app.services import auth as auth_service
 from fastapi import APIRouter, Depends, status
-from schemas import Token, UserCreate, UserLogin, UserOut
-from services import auth as auth_service
 from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])

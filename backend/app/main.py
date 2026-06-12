@@ -1,9 +1,9 @@
-from api.auth import router as auth_router
-from core.exceptions import AppException
+from app.core.exceptions import AppException
+from app.routers.auth import router as auth_router
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-app = FastAPI(title="Proxima B2B Procurent API", version="1.0.0")
+app = FastAPI(title="Proxima B2B Procurement API", version="1.0.0")
 
 app.include_router(auth_router)
 

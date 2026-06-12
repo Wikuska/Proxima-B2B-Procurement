@@ -2,15 +2,14 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import jwt
-from core.settings import settings
-from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
-from pwdlib import PasswordHash
-
-from backend.core.exceptions import (
+from app.core.exceptions import (
     ExpiredTokenException,
     InvalidTokenException,
     InvalidTokenTypeException,
 )
+from app.core.settings import settings
+from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
+from pwdlib import PasswordHash
 
 password_hash = PasswordHash.recommended()
 
