@@ -2,9 +2,11 @@ const FIELD_MESSAGES = {
     first_name: {
         string_too_short: "First name must be at least 2 characters long",
         string_too_long: "First name cannot exceed 100 characters",
+        string_pattern_mismatch: "First name can only contain letters, spaces, or hyphens",
     },
     last_name: {
         string_too_short: "Last name must be at least 2 characters long",
+        string_pattern_mismatch: "Last name can only contain letters, spaces, or hyphens",
     },
     password: {
         string_too_short: "Password must be at least 8 characters long",

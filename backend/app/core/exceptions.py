@@ -35,7 +35,7 @@ class InvalidCredentialsException(AppException):
 
 
 class EmailNotVerifiedException(AppException):
-    status_code = 401
+    status_code = 403
     detail = "Email not verified. Please check your inbox."
 
 

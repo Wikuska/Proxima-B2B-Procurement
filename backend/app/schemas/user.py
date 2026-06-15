@@ -2,7 +2,31 @@ import uuid
 from datetime import datetime
 
 from app.models.enums import UserRole
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
+from pydantic import AfterValidator, BaseModel, ConfigDict, EmailStr, Field
+from typing_extensions import Annotated
+
+
+def validate_password_strength(v: str) -> str:
+    if not any(c.isupper() for c in v):
+        raise ValueError("missing_uppercase")
+    if not any(c.isdigit() for c in v):
+        raise ValueError("missing_digit")
+    return v
+
+
+StrongPassword = Annotated[
+    str, Field(min_length=8), AfterValidator(validate_password_strength)
+]
+
+NameString = Annotated[
+    str,
+    Field(
+        min_length=2,
+        max_length=50,
+        pattern=r"^[a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ\s\-]+$",
+        description="Must contain only letters, spaces, or hyphens.",
+    ),
+]
 
 
 # Dane potrzebne do logowania użytkownika
@@ -14,25 +38,13 @@ class UserLogin(BaseModel):
 # Wspólne pola dla użytkownika
 class UserBase(BaseModel):
     email: EmailStr
-    first_name: str = Field(..., min_length=2, max_length=100)
-    last_name: str = Field(..., min_length=2, max_length=100)
+    first_name: NameString
+    last_name: NameString
 
 
 # Dane potrzebne do rejestracji nowego użytkownika
 class UserCreate(UserBase):
-    password: str = Field(
-        ...,
-        min_length=8,
-    )
-
-    @field_validator("password")
-    @classmethod
-    def password_strength(cls, v: str) -> str:
-        if not any(c.isupper() for c in v):
-            raise ValueError("missing_uppercase")
-        if not any(c.isdigit() for c in v):
-            raise ValueError("missing_digit")
-        return v
+    password: StrongPassword
 
 
 # Profil użytkownika zwracany w odpowiedzi API
@@ -51,7 +63,7 @@ class UserOut(UserBase):
 # Opcjonalne schematy do aktualizacji profilu w przyszłości
 class UserUpdate(BaseModel):
     email: EmailStr | None = None
-    password: str | None = Field(None, min_length=8)
-    first_name: str | None = Field(None, min_length=2, max_length=100)
-    last_name: str | None = Field(None, min_length=2, max_length=100)
+    password: StrongPassword | None = None
+    first_name: NameString | None = None
+    last_name: NameString | None = None
     hide_b2b_prompts: bool | None = None

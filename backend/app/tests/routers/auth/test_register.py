@@ -87,6 +87,10 @@ async def test_register_duplicate_email_returns_400(async_client: AsyncClient):
         {"password": "nouppercase123!"},
         {"password": "NoDigitPassword!"},
         {"first_name": "A"},
+        {"first_name": "$ylwia"},
+        {"first_name": "Szy2mon"},
+        {"last_name": "Kowal$ka"},
+        {"last_name": "Bi3lski"},
     ],
     ids=[
         "invalid_email_format",
@@ -94,6 +98,10 @@ async def test_register_duplicate_email_returns_400(async_client: AsyncClient):
         "password_missing_uppercase",
         "password_missing_digit",
         "first_name_too_short",
+        "first_name_contains_special_chars",
+        "first_name_contains_digits",
+        "last_name_contains_special_chars",
+        "last_name_contains_digits",
     ],
 )
 async def test_register_invalid_data_returns_422(
@@ -118,5 +126,64 @@ async def test_register_invalid_data_returns_422(
     # Send the bad data to the endpoint
     response = await async_client.post("/auth/register", json=payload)
 
-    # Assert: Ensure Pydantic caught the error before it reached the service layer
+    # Ensure Pydantic caught the error before it reached the service layer
     assert response.status_code == 422
+
+    # Ensure the error message points to the correct field that was invalid
+    data = response.json()
+    error_locations = [error["loc"][-1] for error in data["detail"]]
+
+    broken_field = list(override_kwargs.keys())[0]
+
+    assert broken_field in error_locations
+
+
+@pytest.mark.parametrize(
+    "name_kwargs",
+    [
+        {"first_name": "Anna Maria"},  # Space in first name
+        {"first_name": "Jean-Luc"},  # Hyphen in first name
+        {"last_name": "von der Leyen"},  # Multiple spaces in last name
+        {"last_name": "Kowalska-Nowak"},  # Hyphen in last name
+        {
+            "first_name": "Marie-Claire",
+            "last_name": "De La Rosa",
+        },  # Mix of both in one payload
+    ],
+    ids=[
+        "first_name_with_space",
+        "first_name_with_hyphen",
+        "last_name_with_spaces",
+        "last_name_with_hyphen",
+        "complex_first_and_last_names",
+    ],
+)
+async def test_register_valid_complex_names_returns_201(
+    async_client: AsyncClient,
+    name_kwargs: dict,
+):
+    """
+    Happy Path: Ensure that valid edge cases for names (containing spaces or hyphens)
+    successfully pass Pydantic validation and result in a created user.
+    """
+    # Start with a perfectly valid payload
+    payload = {
+        "email": "complex.names@example.com",
+        "password": "ValidPassword123!",
+        "first_name": "John",
+        "last_name": "Doe",
+    }
+
+    # Apply the specific valid names for this test iteration
+    payload.update(name_kwargs)
+
+    # Send the data to the endpoint
+    response = await async_client.post("/auth/register", json=payload)
+
+    # Ensure it passed validation and created the resource
+    assert response.status_code == 201
+
+    # Ensure the response contains the exact names we sent
+    data = response.json()
+    for key, expected_value in name_kwargs.items():
+        assert data[key] == expected_value
