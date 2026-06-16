@@ -7,6 +7,8 @@ import {
   registerSchema,
   type RegisterFormData,
 } from "../../schemas/authSchema";
+import { useMutation } from "@tanstack/react-query";
+import { registerUser } from "../../api/auth";
 
 interface CreateAccountFormProps {
   onSwitchToSignIn: () => void;
@@ -24,15 +26,18 @@ export default function CreateAccountForm({
     reValidateMode: "onBlur",
   });
 
-  const onSubmit = (data: RegisterFormData) => {
-    const payload = {
-      email: data.email,
-      first_name: data.firstName,
-      last_name: data.lastName,
-      password: data.password,
-    };
+  const { mutate, isPending } = useMutation({
+    mutationFn: registerUser,
+    onSuccess: () => {
+      alert(
+        "Account created successfully! Please check your email to verify your account.",
+      );
+      onSwitchToSignIn();
+    },
+  });
 
-    console.log("Data sent to backend:", payload);
+  const onSubmit = (data: RegisterFormData) => {
+    mutate(data);
   };
 
   return (
@@ -109,8 +114,9 @@ export default function CreateAccountForm({
           className="mt-6"
           type="submit"
           icon={<UserRoundPlus size={16} />}
+          disabled={isPending}
         >
-          Create account
+          {isPending ? "Creating account..." : "Create account"}
         </FormButton>
       </form>
 

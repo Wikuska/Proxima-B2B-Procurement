@@ -7,7 +7,7 @@ import { FlaskConical } from "lucide-react";
 type AuthMode = "signin" | "signup";
 
 export default function AuthPage() {
-  const [authMode, setAuthMode] = useState<AuthMode>("signup");
+  const [authMode, setAuthMode] = useState<AuthMode>("signin");
 
   return (
     <div className="flex min-h-screen w-full items-center justify-center bg-bg-base p-4 sm:p-8">
