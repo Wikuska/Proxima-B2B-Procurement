@@ -42,3 +42,8 @@ class EmailNotVerifiedException(AppException):
 class UserNotFoundException(AppException):
     status_code = 404
     detail = "User not found"
+
+
+class AccountDeactivatedException(AppException):
+    status_code = 403
+    detail = "Account is deactivated. Please contact support."

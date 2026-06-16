@@ -51,8 +51,6 @@ class UserCreate(UserBase):
 class UserOut(UserBase):
     id: uuid.UUID
     role: UserRole
-    is_verified: bool
-    is_active: bool
     hide_b2b_prompts: bool
     company_id: uuid.UUID | None
     created_at: datetime

@@ -1,4 +1,5 @@
 from app.core.exceptions import (
+    AccountDeactivatedException,
     EmailAlreadyExistsException,
     EmailNotVerifiedException,
     InvalidCredentialsException,
@@ -10,6 +11,7 @@ from app.core.security import (
     get_password_hash,
     verify_password,
 )
+from app.core.settings import settings
 from app.crud import company as company_crud
 from app.crud import user as user_crud
 from app.models import User, UserRole
@@ -40,7 +42,7 @@ async def register_user(db: AsyncSession, user_data: UserCreate) -> User:
     # Sending verification email (mocked)
     verification_token = create_verification_token(new_user.email)
     verification_url = (
-        f"http://localhost:8000/api/v1/auth/verify?token={verification_token}"
+        f"{settings.FRONTEND_URL}/verify-email?token={verification_token}"
     )
 
     print("\n" + "=" * 80)
@@ -73,6 +75,9 @@ async def authenticate_user(db: AsyncSession, email: str, password: str) -> User
     user = await user_crud.get_user_by_email(db, email)
     if not user or not verify_password(password, user.password_hash):
         raise InvalidCredentialsException()
+
+    if not user.is_active:
+        raise AccountDeactivatedException()
 
     if not user.is_verified:
         raise EmailNotVerifiedException()
