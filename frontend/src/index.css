@@ -1,0 +1,19 @@
+@import "tailwindcss";
+
+@theme {
+  /* Główne kolory marki */
+  --color-primary: #26547C; /* Dusk Blue - Navbar, przyciski akcji*/
+  --color-accent: #60B2E5; /* Fresh Sky - Hover, focus, linki*/
+
+  /* Tła aplikacji */
+  --color-bg-base: #F8FAFC; /* Główne tło, sterylny wygląd*/
+  --color-bg-surface: #FFFFFF; /* Czysta biel na karty formularzy */
+
+  /* Teksty i kontrasty */
+  --color-text-main: #0F172A; /* Slate 900 - Główny tekst, łagodny dla oczu*/
+  --color-text-muted: #94A3B8; /* Slate 400 - Teksty pomocnicze, placeholdery*/
+
+  /* Obramowania */
+  --color-border-base: #94A3B8; /* Slate 400 - Nieaktywne inputy*/
+  --color-border-focus: #60B2E5; /* Fresh Sky - Aktywne inputy*/
+}
