@@ -27,5 +27,7 @@ async def login(user_in: UserLogin, db: AsyncSession = Depends(get_db)):
     """Standard JSON login endpoint."""
     user = await auth_service.authenticate_user(db, user_in.email, user_in.password)
 
-    access_token = security.create_access_token(subject=user.id)
+    access_token = security.create_access_token(
+        subject=str(user.id), role=user.role.value
+    )
     return {"access_token": access_token, "token_type": "bearer"}
