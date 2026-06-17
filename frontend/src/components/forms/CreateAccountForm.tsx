@@ -9,6 +9,7 @@ import {
 } from "../../schemas/authSchema";
 import { useMutation } from "@tanstack/react-query";
 import { registerUser } from "../../api/auth";
+import { ApiError } from "../../api/client";
 
 interface CreateAccountFormProps {
   onSwitchToSignIn: () => void;
@@ -20,6 +21,7 @@ export default function CreateAccountForm({
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors },
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
@@ -29,10 +31,19 @@ export default function CreateAccountForm({
   const { mutate, isPending } = useMutation({
     mutationFn: registerUser,
     onSuccess: () => {
-      alert(
+      console.log(
         "Account created successfully! Please check your email to verify your account.",
       );
       onSwitchToSignIn();
+    },
+    onError: (error) => {
+      if (error instanceof ApiError) {
+        if (error.status === 400 && error.message.includes("already exists")) {
+          setError("email", { message: error.message });
+          return;
+        }
+        setError("root", { message: error.message });
+      }
     },
   });
 
@@ -60,23 +71,27 @@ export default function CreateAccountForm({
         </span>
       </div>
 
+      {errors.root && (
+        <p className="text-sm text-red-500">{errors.root.message}</p>
+      )}
+
       <form className="space-y-3" onSubmit={handleSubmit(onSubmit)}>
         <FormInput
-          {...register("firstName")}
+          {...register("first_name")}
           id="firstName"
           label="First name"
           type="text"
           placeholder="Anna"
-          error={errors.firstName?.message}
+          error={errors.first_name?.message}
           required
         />
         <FormInput
-          {...register("lastName")}
+          {...register("last_name")}
           id="lastName"
           label="Last name"
           type="text"
           placeholder="Kowalska"
-          error={errors.lastName?.message}
+          error={errors.last_name?.message}
           required
         />
 
@@ -101,12 +116,12 @@ export default function CreateAccountForm({
         />
 
         <FormInput
-          {...register("confirmPassword")}
+          {...register("confirm_password")}
           id="confirmPassword"
           label="Confirm password"
           type="password"
           placeholder="••••••••"
-          error={errors.confirmPassword?.message}
+          error={errors.confirm_password?.message}
           required
         />
 

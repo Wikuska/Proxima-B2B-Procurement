@@ -11,18 +11,25 @@ const nameSchema = z
 export const registerSchema = z
   .object({
     email: z.email("Invalid email address"),
-    firstName: nameSchema,
-    lastName: nameSchema,
+    first_name: nameSchema,
+    last_name: nameSchema,
     password: z
       .string()
       .min(8, "Password must be at least 8 characters long")
       .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
       .regex(/\d/, "Password must contain at least one digit"),
-    confirmPassword: z.string(),
+    confirm_password: z.string(),
   })
-  .refine((data) => data.password === data.confirmPassword, {
+  .refine((data) => data.password === data.confirm_password, {
     message: "Passwords do not match",
     path: ["confirmPassword"],
   });
 
 export type RegisterFormData = z.infer<typeof registerSchema>;
+
+export const signInSchema = z.object({
+  email: z.email("Invalid email format"),
+  password: z.string().min(1, "Password is required"),
+});
+
+export type SignInFormData = z.infer<typeof signInSchema>;

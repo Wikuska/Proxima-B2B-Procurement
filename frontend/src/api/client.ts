@@ -53,7 +53,7 @@ export default async function apiFetch<T>(
   const token = useAuthStore.getState().token;
 
   const headers: Record<string, string> = {
-    // Only set Content-Type if we have a body  avoids issues with GET/DELETE requests
+    // Only set Content-Type if we have a body — avoids issues with GET/DELETE requests
     ...(body ? { "Content-Type": "application/json" } : {}),
     ...((customConfig.headers as Record<string, string>) || {}),
   };
@@ -68,48 +68,54 @@ export default async function apiFetch<T>(
     body: body ? JSON.stringify(body) : undefined,
   };
 
-  const res = await fetch(`${API_URL}${path}`, config);
+  try {
+    const res = await fetch(`${API_URL}${path}`, config);
 
-  if (res.status === 401) {
-    const isAuthRoute = path.startsWith("/auth");
+    if (res.status === 401) {
+      const isAuthRoute = path.startsWith("/auth");
 
-    if (!isAuthRoute) {
-      useAuthStore.getState().clearAuth();
-      window.location.href = "/auth";
-      return Promise.reject(new Error("Session expired"));
+      if (!isAuthRoute) {
+        useAuthStore.getState().clearAuth();
+        window.location.href = "/auth";
+        return Promise.reject(new ApiError(401, "Session expired"));
+      }
+
+      const errorData = await res.json().catch(() => ({}));
+
+      if (Array.isArray(errorData.detail)) {
+        throw new ApiError(
+          res.status,
+          parseErrorMessage(errorData),
+          errorData.detail,
+        );
+      }
+
+      throw new ApiError(res.status, parseErrorMessage(errorData));
     }
 
-    const errorData = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
 
-    // Preserve raw validation errors for form field mapping
-    if (Array.isArray(errorData.detail)) {
-      throw new ApiError(
-        res.status,
-        parseErrorMessage(errorData),
-        errorData.detail,
-      );
+      if (Array.isArray(errorData.detail)) {
+        throw new ApiError(
+          res.status,
+          parseErrorMessage(errorData),
+          errorData.detail,
+        );
+      }
+
+      throw new ApiError(res.status, parseErrorMessage(errorData));
     }
 
-    throw new ApiError(res.status, parseErrorMessage(errorData));
+    // 204 No Content — no body to parse (e.g. DELETE endpoints)
+    if (res.status === 204) return {} as T;
+
+    return await res.json();
+  } catch (error) {
+    // Re-throw ApiErrors as-is - they're already handled above
+    if (error instanceof ApiError) throw error;
+
+    // fetch() itself threw - network failure, DNS error, no internet etc.
+    throw new ApiError(0, "Network error. Please check your connection.");
   }
-
-  if (!res.ok) {
-    const errorData = await res.json().catch(() => ({}));
-
-    // Preserve raw validation errors for form field mapping
-    if (Array.isArray(errorData.detail)) {
-      throw new ApiError(
-        res.status,
-        parseErrorMessage(errorData),
-        errorData.detail,
-      );
-    }
-
-    throw new ApiError(res.status, parseErrorMessage(errorData));
-  }
-
-  // 204 No Content — no body to parse (e.g. DELETE endpoints)
-  if (res.status === 204) return {} as T;
-
-  return await res.json();
 }
