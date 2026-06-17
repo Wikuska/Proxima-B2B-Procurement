@@ -21,6 +21,7 @@ class Category(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
+    slug: Mapped[str] = mapped_column(String(255), unique=True, index=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     products: Mapped[List["Product"]] = relationship(back_populates="category")
@@ -35,12 +36,14 @@ class Product(Base):
     )
 
     name: Mapped[str] = mapped_column(String(255), nullable=False)
+    slug: Mapped[str] = mapped_column(String(255), unique=True, index=True)
     sku: Mapped[str] = mapped_column(
         String(100), unique=True, index=True, nullable=False
     )
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     base_price: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
     stock_quantity: Mapped[int] = mapped_column(Integer, default=0)
+    main_image_url: Mapped[str | None] = mapped_column(String, nullable=True)
 
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     b2b_available: Mapped[bool] = mapped_column(Boolean, default=True)
