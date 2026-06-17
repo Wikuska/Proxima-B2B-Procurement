@@ -28,6 +28,9 @@ class Address(Base):
     country: Mapped[str] = mapped_column(String(100), nullable=False)
     is_default: Mapped[bool] = mapped_column(Boolean, default=False)
 
+    # Relations
+    user: Mapped["User"] = relationship(back_populates="addresses")
+
 
 class CartItem(Base):
     __tablename__ = "cart_items"
