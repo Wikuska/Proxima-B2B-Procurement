@@ -51,8 +51,6 @@ async def register_user(db: AsyncSession, user_data: UserCreate) -> User:
     print(f"  Click the link to verify your account:\n  {verification_url}")
     print("=" * 80 + "\n")
 
-    return new_user
-
 
 async def verify_user_email(db: AsyncSession, token: str) -> User:
     """Verifies a user's email using the provided token and assigns B2B company if matched."""

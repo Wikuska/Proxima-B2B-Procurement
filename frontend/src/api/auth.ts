@@ -1,5 +1,8 @@
 import apiFetch from "./client";
-import { type User } from "./user";
+
+interface MessageResponse {
+  message: string;
+}
 
 interface RegisterPayload {
   email: string;
@@ -19,7 +22,7 @@ export interface TokenResponse {
 }
 
 export const registerUser = (payload: RegisterPayload) => {
-  return apiFetch<User>("/auth/register", {
+  return apiFetch<MessageResponse>("/auth/register", {
     method: "POST",
     body: payload,
   });

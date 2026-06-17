@@ -27,18 +27,12 @@ async def test_register_user_success(
     assert response.status_code == 201
 
     data = response.json()
-    assert data["email"] == payload["email"]
-    assert data["first_name"] == payload["first_name"]
-    assert data["last_name"] == payload["last_name"]
+    assert "message" in data
 
-    # Critical security checks
+    # Critical security checks — no sensitive data in response
     assert "password_hash" not in data
     assert "password" not in data
-
-    # Assert default state
-    assert data["is_verified"] is False
-    assert data["is_active"] is True
-    assert data["company_id"] is None
+    assert "email" not in data
 
     # Assert: Database State
     db_session.expire_all()
@@ -51,6 +45,8 @@ async def test_register_user_success(
     # Ensure the user was actually persisted to the test database
     assert db_user is not None
     assert db_user.email == payload["email"]
+    assert db_user.first_name == payload["first_name"]
+    assert db_user.last_name == payload["last_name"]
     assert db_user.is_verified is False
     assert db_user.company_id is None
 
@@ -160,6 +156,7 @@ async def test_register_invalid_data_returns_422(
 )
 async def test_register_valid_complex_names_returns_201(
     async_client: AsyncClient,
+    db_session: AsyncSession,
     name_kwargs: dict,
 ):
     """
@@ -183,7 +180,12 @@ async def test_register_valid_complex_names_returns_201(
     # Ensure it passed validation and created the resource
     assert response.status_code == 201
 
-    # Ensure the response contains the exact names we sent
-    data = response.json()
+    db_session.expire_all()
+    result = await db_session.execute(
+        select(User).where(User.email == payload["email"])
+    )
+    db_user = result.scalar_one_or_none()
+
+    assert db_user is not None
     for key, expected_value in name_kwargs.items():
-        assert data[key] == expected_value
+        assert getattr(db_user, key) == expected_value

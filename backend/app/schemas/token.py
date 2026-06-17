@@ -1,3 +1,4 @@
+from app.models.enums import UserRole
 from pydantic import BaseModel
 
 
@@ -11,4 +12,4 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     # 'sub' to subject, ID użytkownika zamienione na string
     sub: str | None = None
-    role: str | None = None
+    role: UserRole | None = None
