@@ -9,6 +9,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useMutation } from "@tanstack/react-query";
 import { ApiError } from "../../api/client";
+import { useLocation, useNavigate } from "react-router-dom";
 
 interface JWTPayload {
   sub: string;
@@ -20,6 +21,8 @@ interface SignInFormProps {
 }
 
 export default function SignInForm({ onSwitchToSignUp }: SignInFormProps) {
+  const navigate = useNavigate();
+  const location = useLocation();
   const setAuth = useAuthStore((state) => state.setAuth);
 
   const {
@@ -36,7 +39,8 @@ export default function SignInForm({ onSwitchToSignUp }: SignInFormProps) {
     onSuccess: (data) => {
       const decodedToken = jwtDecode<JWTPayload>(data.access_token);
       setAuth(data.access_token, decodedToken.sub, decodedToken.role);
-      console.log("Logged in successfully");
+      const from = (location.state as { from?: string })?.from || "/";
+      navigate(from, { replace: true });
     },
     onError: (error) => {
       if (error instanceof ApiError) {
