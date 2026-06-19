@@ -28,8 +28,7 @@ async def setup_catalog(db_session: AsyncSession):
             base_price=Decimal("500.00"),
             stock_quantity=10,
             is_active=True,
-            b2b_available=True,
-            b2c_available=True,
+            is_b2b_only=False,
         ),
         Product(
             name="Acetone",
@@ -39,8 +38,7 @@ async def setup_catalog(db_session: AsyncSession):
             base_price=Decimal("10.00"),
             stock_quantity=100,
             is_active=True,
-            b2b_available=True,
-            b2c_available=True,
+            is_b2b_only=False,
         ),
         Product(
             name="Benzene",
@@ -50,8 +48,7 @@ async def setup_catalog(db_session: AsyncSession):
             base_price=Decimal("20.00"),
             stock_quantity=50,
             is_active=True,
-            b2b_available=True,
-            b2c_available=False,  # B2B only
+            is_b2b_only=True,  # B2B only
         ),
         Product(
             name="Chloroform",
@@ -61,8 +58,7 @@ async def setup_catalog(db_session: AsyncSession):
             base_price=Decimal("30.00"),
             stock_quantity=0,
             is_active=False,  # Inactive
-            b2b_available=True,
-            b2c_available=True,
+            is_b2b_only=False,
         ),
     ]
     db_session.add_all(products)
@@ -87,8 +83,7 @@ async def setup_many_products(db_session: AsyncSession):
             base_price=Decimal("10.00"),
             stock_quantity=10,
             is_active=True,
-            b2b_available=True,
-            b2c_available=True,
+            is_b2b_only=False,
         )
         for i in range(1, 31)
     ]
@@ -156,6 +151,10 @@ async def test_get_all_products_without_filters(
     returned_slugs = {item["slug"] for item in data["items"]}
     assert "acetone" in returned_slugs
     assert "microscope" in returned_slugs
+    benzene_item = next(item for item in data["items"] if item["slug"] == "benzene")
+    assert benzene_item["is_b2b_only"] is True
+    acetone_item = next(item for item in data["items"] if item["slug"] == "acetone")
+    assert acetone_item["is_b2b_only"] is False
 
 
 async def test_get_products_search_by_query_happy_path(

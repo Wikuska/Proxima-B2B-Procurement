@@ -46,8 +46,7 @@ class Product(Base):
     main_image_url: Mapped[str | None] = mapped_column(String, nullable=True)
 
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    b2b_available: Mapped[bool] = mapped_column(Boolean, default=True)
-    b2c_available: Mapped[bool] = mapped_column(Boolean, default=True)
+    is_b2b_only: Mapped[bool] = mapped_column(Boolean, default=False)
 
     # Relations
     category: Mapped["Category"] = relationship(back_populates="products")

@@ -11,8 +11,7 @@ class ProductListOut(BaseModel):
     base_price: Decimal
     stock_quantity: int
     main_image_url: str | None
-    b2b_available: bool
-    b2c_available: bool
+    is_b2b_only: bool
 
     model_config = ConfigDict(from_attributes=True)
 
