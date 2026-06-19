@@ -1,5 +1,4 @@
 from decimal import Decimal
-from uuid import uuid4
 
 import pytest
 from app.models.product import Category, Product
@@ -22,9 +21,9 @@ async def setup_catalog(db_session: AsyncSession):
 
     products = [
         Product(
-            name="Xenon Lamp",
-            slug="xenon-lamp",
-            sku="TEL-APP-15P-CZA",
+            name="Microscope",
+            slug="microscope",
+            sku="MIC-PRO-100",
             category_id=equipment.id,
             base_price=Decimal("500.00"),
             stock_quantity=10,
@@ -99,104 +98,94 @@ async def setup_many_products(db_session: AsyncSession):
     return {"category": category, "products": products}
 
 
-# TESTS
+# /catalog/categories/{slug}/products tests
 
 
-async def test_get_products_returns_paginated_response(
+async def test_get_products_by_category_slug_happy_path(
     async_client: AsyncClient,
     setup_catalog: dict,
 ):
-    """
-    Happy Path: Ensure the endpoint returns a properly structured
-    paginated response with correct fields.
-    """
-    response = await async_client.get("/catalog/products")
+    """Ensure filtering by category_slug in path returns only products from that category."""
+    reagents_slug = setup_catalog["reagents"].slug
+
+    response = await async_client.get(f"/catalog/categories/{reagents_slug}/products")
 
     assert response.status_code == 200
-
-    data = response.json()
-    assert "items" in data
-    assert "total" in data
-    assert "page" in data
-    assert "size" in data
-    assert "pages" in data
-
-    assert isinstance(data["items"], list)
-    assert isinstance(data["total"], int)
-
-
-async def test_get_products_returns_empty_when_no_products(
-    async_client: AsyncClient,
-):
-    """
-    Edge Case: Ensure the endpoint returns an empty paginated response
-    when no products exist rather than an error.
-    """
-    response = await async_client.get("/catalog/products")
-
-    assert response.status_code == 200
-
-    data = response.json()
-    assert data["items"] == []
-    assert data["total"] == 0
-    assert data["pages"] == 0
-
-
-async def test_get_products_filters_by_category_id(
-    async_client: AsyncClient,
-    setup_catalog: dict,
-):
-    """
-    Happy Path: Ensure filtering by category_id returns only products
-    belonging to that category.
-    """
-    reagents_id = setup_catalog["reagents"].id
-
-    response = await async_client.get(f"/catalog/products?category_id={reagents_id}")
-
-    assert response.status_code == 200
-
     data = response.json()
     assert len(data["items"]) > 0
 
     returned_slugs = {item["slug"] for item in data["items"]}
-
     assert "acetone" in returned_slugs
     assert "benzene" in returned_slugs
-
     assert "microscope" not in returned_slugs
-    assert "xenon-lamp" not in returned_slugs
 
 
-async def test_get_products_nonexistent_category_returns_empty(
+async def test_get_products_by_nonexistent_category_slug_returns_empty(
     async_client: AsyncClient,
-    setup_catalog: dict,
 ):
-    """
-    Edge Case: Filtering by a valid UUID that doesn't match any category
-    should return an empty list, not a 404.
-    """
-    nonexistent_id = uuid4()
-
-    response = await async_client.get(f"/catalog/products?category_id={nonexistent_id}")
+    """Requesting products for a non-existent category slug returns 200 with empty items."""
+    response = await async_client.get("/catalog/categories/ghost-category/products")
 
     assert response.status_code == 200
-
     data = response.json()
     assert data["items"] == []
     assert data["total"] == 0
 
 
-async def test_get_products_invalid_category_format_returns_422(
+async def test_get_products_by_category_missing_slug_returns_404(
     async_client: AsyncClient,
 ):
-    """
-    Negative Path: Ensure passing a non-UUID string as category_id
-    fails Pydantic validation and returns 422.
-    """
-    response = await async_client.get("/catalog/products?category_id=this-is-not-uuid")
+    """If the slug is missing from the path entirely, FastAPI router should throw 404."""
+    response = await async_client.get("/catalog/categories//products")
+    assert response.status_code == 404
 
-    assert response.status_code == 422
+
+# /catalog/products tests
+
+
+async def test_get_all_products_without_filters(
+    async_client: AsyncClient,
+    setup_catalog: dict,
+):
+    """Ensure calling go to /products without queries returns all active products."""
+    response = await async_client.get("/catalog/products")
+
+    assert response.status_code == 200
+    data = response.json()
+    # Powinien zwrócić zarówno odczynniki, jak i sprzęt
+    returned_slugs = {item["slug"] for item in data["items"]}
+    assert "acetone" in returned_slugs
+    assert "microscope" in returned_slugs
+
+
+async def test_get_products_search_by_query_happy_path(
+    async_client: AsyncClient,
+    setup_catalog: dict,
+):
+    """Ensure text search filters products properly by name or SKU (case-insensitive)."""
+    response = await async_client.get("/catalog/products?search_query=scope")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total"] == 1
+    assert data["items"][0]["slug"] == "microscope"
+
+
+async def test_get_products_search_no_results_returns_empty(
+    async_client: AsyncClient,
+):
+    """If search query matches nothing, return 200 with empty list."""
+    response = await async_client.get(
+        "/catalog/products?search_query=nonexistent-item-name"
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["items"] == []
+    assert data["total"] == 0
+
+
+# Buissnes logic, pagination tests
 
 
 async def test_get_products_pagination_returns_different_pages(
