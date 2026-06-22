@@ -1,5 +1,6 @@
 import math
 
+from app.core.exceptions import CategoryNotFoundException
 from app.crud import category as category_crud
 from app.crud import product as product_crud
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,6 +17,11 @@ async def fetch_products_for_catalog(
     page: int = 1,
     size: int = 24,
 ):
+    if category_slug:
+        category = await category_crud.get_category_by_slug(db, category_slug)
+        if not category:
+            raise CategoryNotFoundException()
+
     # Calculate database offset based on page number
     skip = (page - 1) * size
     items, total = await product_crud.get_active_products(

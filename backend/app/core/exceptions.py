@@ -47,3 +47,8 @@ class UserNotFoundException(AppException):
 class AccountDeactivatedException(AppException):
     status_code = 403
     detail = "Account is deactivated. Please contact support."
+
+
+class CategoryNotFoundException(AppException):
+    status_code = 404
+    detail = "Category not found"

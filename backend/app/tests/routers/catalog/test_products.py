@@ -115,16 +115,15 @@ async def test_get_products_by_category_slug_happy_path(
     assert "microscope" not in returned_slugs
 
 
-async def test_get_products_by_nonexistent_category_slug_returns_empty(
+async def test_get_products_by_nonexistent_category_slug_returns_404(
     async_client: AsyncClient,
 ):
-    """Requesting products for a non-existent category slug returns 200 with empty items."""
+    """Requesting products for a non-existent category slug returns a 404 Not Found error."""
     response = await async_client.get("/catalog/categories/ghost-category/products")
 
-    assert response.status_code == 200
+    assert response.status_code == 404
     data = response.json()
-    assert data["items"] == []
-    assert data["total"] == 0
+    assert data["detail"] == "Category not found"
 
 
 async def test_get_products_by_category_missing_slug_returns_404(
