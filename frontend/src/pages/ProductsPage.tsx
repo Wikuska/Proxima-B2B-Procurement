@@ -73,15 +73,7 @@ export default function ProductsPage() {
                 }`}
               >
                 {data.items.map((product) => (
-                  <ProductCard
-                    key={product.id}
-                    id={product.id}
-                    name={product.name}
-                    slug={product.slug}
-                    sku={product.sku}
-                    price={product.base_price}
-                    isB2BOnly={product.is_b2b_only}
-                  />
+                  <ProductCard key={product.id} product={product} />
                 ))}
               </div>
 
