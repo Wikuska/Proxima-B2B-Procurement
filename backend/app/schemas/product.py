@@ -8,6 +8,7 @@ class ProductListOut(BaseModel):
     id: UUID
     name: str
     slug: str
+    sku: str
     base_price: Decimal
     stock_quantity: int
     main_image_url: str | None
@@ -22,3 +23,8 @@ class PaginatedProductListOut(BaseModel):
     page: int  # Current page
     size: int  # Number of products on one page
     pages: int  # Number of all existing pages
+
+
+class ProductDetailsOut(ProductListOut):
+    description: str | None
+    is_active: bool

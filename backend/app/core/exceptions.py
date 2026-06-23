@@ -52,3 +52,8 @@ class AccountDeactivatedException(AppException):
 class CategoryNotFoundException(AppException):
     status_code = 404
     detail = "Category not found"
+
+
+class ProductNotFoundException(AppException):
+    status_code = 404
+    detail = "Product not found"

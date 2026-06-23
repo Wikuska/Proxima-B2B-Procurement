@@ -1,5 +1,5 @@
 from app.database import get_db
-from app.schemas import CategoryOut, PaginatedProductListOut
+from app.schemas import CategoryOut, PaginatedProductListOut, ProductDetailsOut
 from app.services import catalog as catalog_service
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -39,3 +39,12 @@ async def get_all_products(
     return await catalog_service.fetch_products_for_catalog(
         db, search_query=search_query, page=page, size=size
     )
+
+
+@router.get("/products/{product_slug}", response_model=ProductDetailsOut)
+async def get_product_details(
+    product_slug: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """Returns detailed information about a single product by its slug."""
+    return await catalog_service.fetch_product_details(db, product_slug)

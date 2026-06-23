@@ -28,3 +28,10 @@ async def get_active_products(
     items = result.all()
 
     return items, total
+
+
+async def get_product_by_slug(db: AsyncSession, slug: str) -> Product | None:
+    stmt = select(Product).where(Product.slug == slug)
+    result = await db.execute(stmt)
+
+    return result.scalar_one_or_none()
