@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 import pytest
-from app.models.product import Category, Product
+from app.models.product import Category, Product, ProductVolumeDiscount
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -65,6 +65,21 @@ async def setup_catalog(db_session: AsyncSession):
         ),
     ]
     db_session.add_all(products)
+    await db_session.flush()
+
+    discounts = [
+        ProductVolumeDiscount(
+            product_id=products[1].id,
+            min_quantity=10,
+            discount_percentage=Decimal("5.00"),
+        ),
+        ProductVolumeDiscount(
+            product_id=products[1].id,
+            min_quantity=50,
+            discount_percentage=Decimal("15.00"),
+        ),
+    ]
+    db_session.add_all(discounts)
     await db_session.commit()
 
     return {"reagents": reagents, "equipment": equipment, "products": products}
@@ -379,3 +394,40 @@ async def test_get_product_details_with_no_description(
     assert response.status_code == 200
     data = response.json()
     assert data["description"] is None
+
+
+async def test_get_product_details_with_discounts(
+    async_client: AsyncClient,
+    setup_catalog: dict,
+):
+    """Verifies that a product correctly returns a list of assigned volume discounts."""
+    acetone = setup_catalog["products"][1]
+
+    response = await async_client.get(f"/catalog/products/{acetone.slug}")
+
+    assert response.status_code == 200
+    data = response.json()
+
+    assert "volume_discounts" in data
+    assert isinstance(data["volume_discounts"], list)
+    assert len(data["volume_discounts"]) > 0
+
+    first_discount = data["volume_discounts"][0]
+    assert "min_quantity" in first_discount
+    assert "discount_percentage" in first_discount
+
+
+async def test_get_product_details_without_discounts(
+    async_client: AsyncClient,
+    setup_catalog: dict,
+):
+    """Verifies that the API returns an empty list for a product without volume discounts."""
+    microscope = setup_catalog["products"][0]
+
+    response = await async_client.get(f"/catalog/products/{microscope.slug}")
+
+    assert response.status_code == 200
+    data = response.json()
+
+    assert "volume_discounts" in data
+    assert data["volume_discounts"] == []
