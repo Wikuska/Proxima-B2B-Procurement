@@ -3,11 +3,15 @@ import CreateAccountForm from "../components/forms/CreateAccountForm";
 import SignInForm from "../components/forms/SignInForm";
 import FormButton from "../components/forms/FormButton";
 import { FlaskConical } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 
 type AuthMode = "signin" | "signup";
 
 export default function AuthPage() {
-  const [authMode, setAuthMode] = useState<AuthMode>("signin");
+  const [searchParams] = useSearchParams();
+  const [authMode, setAuthMode] = useState<AuthMode>(
+    searchParams.get("mode") === "register" ? "signup" : "signin",
+  );
 
   return (
     <div className="flex min-h-screen w-full items-center justify-center bg-bg-base p-4 sm:p-8">
