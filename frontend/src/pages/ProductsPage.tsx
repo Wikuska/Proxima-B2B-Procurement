@@ -1,9 +1,9 @@
 import { useParams } from "react-router-dom";
 import ProductCard from "../components/catalog/ProductCard";
-import { useProducts } from "../hooks/catalog/useCategoryProducts";
-import { useCategories } from "../hooks/catalog/useCategories";
+import { useProducts } from "../hooks/catalog/products";
+import { useCategories } from "../hooks/catalog/categories";
 import { ApiError } from "../api/client";
-import { useUrlPagination } from "../hooks/common/useUrlPagination";
+import { useUrlPagination } from "../hooks/common/urlPagination";
 import ErrorState from "../components/common/ErrorState";
 import CatalogHeader from "../components/catalog/CatalogHeader";
 import CatalogSidebar from "../components/catalog/CatalogSidebar";
