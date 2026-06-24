@@ -1,6 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import {
   QueryClient,
   QueryClientProvider,
@@ -50,6 +51,7 @@ createRoot(document.getElementById("root")!).render(
         <Toaster position="top-right" richColors />
         <App />
       </BrowserRouter>
+      <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   </StrictMode>,
 );

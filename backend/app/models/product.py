@@ -51,7 +51,7 @@ class Product(Base):
     # Relations
     category: Mapped["Category"] = relationship(back_populates="products")
     volume_discounts: Mapped[List["ProductVolumeDiscount"]] = relationship(
-        back_populates="product"
+        back_populates="product", order_by="asc(ProductVolumeDiscount.min_quantity)"
     )
 
 
