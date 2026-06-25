@@ -44,6 +44,16 @@ class UserNotFoundException(AppException):
     detail = "User not found"
 
 
+class NotAuthenticatedException(AppException):
+    status_code = 401
+    detail = "Not authenticated"
+
+
+class InsufficientPermissionsException(AppException):
+    status_code = 403
+    detail = "You do not have permission to perform this action"
+
+
 class AccountDeactivatedException(AppException):
     status_code = 403
     detail = "Account is deactivated. Please contact support."

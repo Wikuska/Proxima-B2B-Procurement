@@ -8,7 +8,6 @@ from app.core.exceptions import (
     InvalidTokenTypeException,
 )
 from app.core.settings import settings
-from app.models.enums import UserRole
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 from pwdlib import PasswordHash
 
@@ -24,9 +23,13 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 
 def create_access_token(
-    subject: str | Any, role: UserRole, expires_delta: timedelta | None = None
+    subject: str | Any, expires_delta: timedelta | None = None
 ) -> str:
-    """Generates a JWT access token for login and authentication"""
+    """Generates a JWT access token for login and authentication.
+
+    The token only proves identity (``sub``); the user's role is read from the
+    database (single source of truth), never carried in the token.
+    """
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
     else:
@@ -37,7 +40,6 @@ def create_access_token(
     to_encode = {
         "exp": expire,
         "sub": str(subject),
-        "role": role.value,
         "type": "access",
     }
     encoded_jwt = jwt.encode(

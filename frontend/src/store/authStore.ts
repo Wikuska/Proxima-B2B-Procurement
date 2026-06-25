@@ -4,18 +4,12 @@ import { persist, devtools } from "zustand/middleware";
 export type UserRole = "CUSTOMER" | "COMPANY_ADMIN" | "ADMIN";
 
 interface AuthState {
+  // The JWT is the only thing we persist — it proves identity. The user's role
+  // and profile are the source-of-truth from GET /auth/me (see useCurrentUser),
+  // never cached here, so they can't go stale against the backend.
   token: string | null;
-  userId: string | null;
-  role: UserRole | null;
 
-  // Derived booleans — computed from role, never stored in localStorage
-  isCustomer: boolean;
-  isCompanyAdmin: boolean;
-  isAdmin: boolean;
-  isB2B: boolean;
-
-  // Actions
-  setAuth: (token: string, userId: string, role: UserRole) => void;
+  setToken: (token: string) => void;
   clearAuth: () => void;
 }
 
@@ -24,56 +18,12 @@ export const useAuthStore = create<AuthState>()(
     persist(
       (set) => ({
         token: null,
-        userId: null,
-        role: null,
-        isCustomer: false,
-        isCompanyAdmin: false,
-        isAdmin: false,
-        isB2B: false,
-
-        setAuth: (token, userId, role) => {
-          set({
-            token,
-            userId,
-            role,
-            isCustomer: role === "CUSTOMER",
-            isCompanyAdmin: role === "COMPANY_ADMIN",
-            isAdmin: role === "ADMIN",
-            isB2B: role === "COMPANY_ADMIN" || role === "ADMIN",
-          });
-        },
-
-        clearAuth: () =>
-          set({
-            token: null,
-            userId: null,
-            role: null,
-            isCustomer: false,
-            isCompanyAdmin: false,
-            isAdmin: false,
-            isB2B: false,
-          }),
+        setToken: (token) => set({ token }),
+        clearAuth: () => set({ token: null }),
       }),
       {
         name: "auth-storage",
-
-        // Only persist the source of truth — booleans are recomputed on rehydration
-        partialize: (state) => ({
-          token: state.token,
-          userId: state.userId,
-          role: state.role,
-        }),
-
-        // Recompute derived booleans after localStorage is read on page load
-        onRehydrateStorage: () => (state) => {
-          if (state?.role) {
-            state.isCustomer = state.role === "CUSTOMER";
-            state.isCompanyAdmin = state.role === "COMPANY_ADMIN";
-            state.isAdmin = state.role === "ADMIN";
-            state.isB2B =
-              state.role === "COMPANY_ADMIN" || state.role === "ADMIN";
-          }
-        },
+        partialize: (state) => ({ token: state.token }),
       },
     ),
   ),

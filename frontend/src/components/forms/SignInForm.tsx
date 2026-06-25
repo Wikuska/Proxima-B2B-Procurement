@@ -3,18 +3,12 @@ import FormButton from "./FormButton";
 import { LogIn } from "lucide-react";
 import { signInSchema, type SignInFormData } from "../../schemas/authSchema";
 import { signInUser } from "../../api/auth";
-import { useAuthStore, type UserRole } from "../../store/authStore";
-import { jwtDecode } from "jwt-decode";
+import { useAuthStore } from "../../store/authStore";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useMutation } from "@tanstack/react-query";
 import { ApiError } from "../../api/client";
 import { useLocation, useNavigate } from "react-router-dom";
-
-interface JWTPayload {
-  sub: string;
-  role: UserRole;
-}
 
 interface SignInFormProps {
   onSwitchToSignUp: () => void;
@@ -23,7 +17,7 @@ interface SignInFormProps {
 export default function SignInForm({ onSwitchToSignUp }: SignInFormProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const setAuth = useAuthStore((state) => state.setAuth);
+  const setToken = useAuthStore((state) => state.setToken);
 
   const {
     register,
@@ -37,8 +31,8 @@ export default function SignInForm({ onSwitchToSignUp }: SignInFormProps) {
   const { mutate, isPending } = useMutation({
     mutationFn: signInUser,
     onSuccess: (data) => {
-      const decodedToken = jwtDecode<JWTPayload>(data.access_token);
-      setAuth(data.access_token, decodedToken.sub, decodedToken.role);
+      // Store only the token — identity/role come from GET /auth/me.
+      setToken(data.access_token);
       const from = (location.state as { from?: string })?.from || "/";
       navigate(from, { replace: true });
     },

@@ -1,7 +1,20 @@
 import apiFetch from "./client";
+import type { UserRole } from "../store/authStore";
 
 interface MessageResponse {
   message: string;
+}
+
+// Mirrors the backend UserOut schema (snake_case field names).
+export interface CurrentUser {
+  id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  role: UserRole;
+  hide_b2b_prompts: boolean;
+  company_id: string | null;
+  created_at: string;
 }
 
 interface RegisterPayload {
@@ -37,4 +50,8 @@ export const signInUser = (payload: SignInPayload) => {
     method: "POST",
     body: payload,
   });
+};
+
+export const getMe = () => {
+  return apiFetch<CurrentUser>("/auth/me");
 };

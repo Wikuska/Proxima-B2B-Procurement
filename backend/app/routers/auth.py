@@ -1,6 +1,8 @@
 from app.core import security
+from app.core.dependencies import get_current_user
 from app.database import get_db
-from app.schemas import MessageOut, Token, UserCreate, UserLogin
+from app.models import User
+from app.schemas import MessageOut, Token, UserCreate, UserLogin, UserOut
 from app.services import auth as auth_service
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -31,5 +33,11 @@ async def login(user_in: UserLogin, db: AsyncSession = Depends(get_db)):
     """Standard JSON login endpoint."""
     user = await auth_service.authenticate_user(db, user_in.email, user_in.password)
 
-    access_token = security.create_access_token(subject=str(user.id), role=user.role)
+    access_token = security.create_access_token(subject=str(user.id))
     return {"access_token": access_token, "token_type": "bearer"}
+
+
+@router.get("/me", response_model=UserOut)
+async def read_current_user(current_user: User = Depends(get_current_user)):
+    """Return the authenticated user's identity and role (source of truth for the frontend)."""
+    return current_user

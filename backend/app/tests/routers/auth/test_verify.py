@@ -5,7 +5,6 @@ import pytest
 from app.core.security import create_verification_token
 from app.core.settings import settings
 from app.models import Company
-from app.models.enums import UserRole
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -149,9 +148,7 @@ async def test_verify_email_wrong_token_type_returns_401(async_client: AsyncClie
     """Ensure using an access token instead of a verification token returns 401."""
     from app.core.security import create_access_token
 
-    access_token = create_access_token(
-        subject="test@example.com", role=UserRole.CUSTOMER
-    )
+    access_token = create_access_token(subject="test@example.com")
 
     response = await async_client.get(f"/auth/verify?token={access_token}")
 
