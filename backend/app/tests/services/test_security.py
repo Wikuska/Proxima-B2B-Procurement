@@ -16,7 +16,6 @@ from app.core.security import (
     verify_password,
 )
 from app.core.settings import settings
-from app.models.enums import UserRole
 
 # PASSWORD HASHING TESTS
 
@@ -54,7 +53,7 @@ def test_verify_password_returns_false_for_wrong_password():
 
 def test_create_access_token_returns_string():
     """Ensure the generated access token is a string."""
-    token = create_access_token(subject="user_12345", role=UserRole.CUSTOMER)
+    token = create_access_token(subject="user_12345")
 
     assert isinstance(token, str)
     assert len(token) > 0
@@ -64,7 +63,7 @@ def test_create_access_token_contains_correct_claims():
     """Ensure the generated access token contains the correct payload claims."""
     subject = "user_12345"
 
-    token = create_access_token(subject=subject, role=UserRole.CUSTOMER)
+    token = create_access_token(subject=subject)
     decoded = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
 
     assert decoded["sub"] == subject
@@ -75,7 +74,7 @@ def test_create_access_token_contains_correct_claims():
 def test_decode_access_token_returns_correct_payload():
     """Ensure our decoding function correctly retrieves the payload."""
     subject = "user_12345"
-    token = create_access_token(subject=subject, role=UserRole.CUSTOMER)
+    token = create_access_token(subject=subject)
 
     payload = decode_access_token(token)
 
@@ -89,7 +88,7 @@ def test_decode_access_token_raises_expired_token_exception():
     subject = "user_12345"
     # Create a token that expired 1 minute ago using the expires_delta parameter
     token = create_access_token(
-        subject=subject, role=UserRole.CUSTOMER, expires_delta=timedelta(minutes=-1)
+        subject=subject, expires_delta=timedelta(minutes=-1)
     )
 
     with pytest.raises(ExpiredTokenException):
@@ -155,7 +154,7 @@ def test_decode_verification_token_raises_invalid_token_exception():
 
 def test_decode_verification_token_raises_invalid_token_type_exception():
     """Ensure an access token is rejected by the verification token decoder."""
-    access_token = create_access_token(subject="user_12345", role=UserRole.CUSTOMER)
+    access_token = create_access_token(subject="user_12345")
 
     with pytest.raises(InvalidTokenTypeException):
         decode_verification_token(access_token)

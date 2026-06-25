@@ -11,6 +11,12 @@ async def get_user_by_email(db: AsyncSession, email: str) -> User | None:
     return result.scalar_one_or_none()
 
 
+async def get_user_by_id(db: AsyncSession, user_id: uuid.UUID) -> User | None:
+    """Fetches a user by their primary key."""
+    result = await db.execute(select(User).where(User.id == user_id))
+    return result.scalar_one_or_none()
+
+
 async def create_user(db: AsyncSession, user_data: dict) -> User:
     """Creates a new user in the database."""
     new_user = User(**user_data)
