@@ -1,9 +1,12 @@
 import { Routes, Route } from "react-router-dom";
-import AuthPage from "./pages/AuthPage";
-import VerifyEmailPage from "./pages/VerifyEmailPage";
 import MainLayout from "./layouts/MainLayout";
-import HomePage from "./pages/HomePage";
-import ProductsPage from "./pages/ProductsPage";
+import {
+  AuthPage,
+  VerifyEmailPage,
+  HomePage,
+  ProductsPage,
+  ProductDetailsPage,
+} from "./pages";
 
 export default function App() {
   return (
@@ -12,11 +15,9 @@ export default function App() {
       <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route element={<MainLayout />}>
         <Route path="/" element={<HomePage />} />
-        <Route
-          path="/categories/:categorySlug/products"
-          element={<ProductsPage />}
-        />
-        <Route path="/products" element={<ProductsPage />} />
+        <Route path="/catalog" element={<ProductsPage />} />
+        <Route path="/catalog/:categorySlug" element={<ProductsPage />} />
+        <Route path="/product/:productSlug" element={<ProductDetailsPage />} />
       </Route>
     </Routes>
   );

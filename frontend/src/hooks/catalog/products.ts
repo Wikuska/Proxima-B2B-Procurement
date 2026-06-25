@@ -1,5 +1,9 @@
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import { fetchProducts, type FetchProductsPayload } from "../../api/catalog";
+import {
+  fetchProducts,
+  type FetchProductsPayload,
+  fetchProductBySlug,
+} from "../../api/catalog";
 
 export const useProducts = (payload: FetchProductsPayload) => {
   return useQuery({
@@ -11,5 +15,15 @@ export const useProducts = (payload: FetchProductsPayload) => {
     ],
     queryFn: () => fetchProducts(payload),
     placeholderData: keepPreviousData,
+  });
+};
+
+export const useProduct = (slug: string) => {
+  return useQuery({
+    queryKey: ["product", slug],
+
+    queryFn: () => fetchProductBySlug(slug),
+
+    enabled: !!slug,
   });
 };

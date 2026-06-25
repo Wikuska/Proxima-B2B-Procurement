@@ -1,6 +1,7 @@
 from app.models import Category, Product
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 
 async def get_active_products(
@@ -28,3 +29,14 @@ async def get_active_products(
     items = result.all()
 
     return items, total
+
+
+async def get_product_by_slug(db: AsyncSession, slug: str) -> Product | None:
+    stmt = (
+        select(Product)
+        .where(Product.slug == slug)
+        .options(selectinload(Product.volume_discounts))
+    )
+    result = await db.execute(stmt)
+
+    return result.scalar_one_or_none()

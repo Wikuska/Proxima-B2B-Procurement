@@ -1,6 +1,6 @@
 import math
 
-from app.core.exceptions import CategoryNotFoundException
+from app.core.exceptions import CategoryNotFoundException, ProductNotFoundException
 from app.crud import category as category_crud
 from app.crud import product as product_crud
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -35,3 +35,12 @@ async def fetch_products_for_catalog(
         "size": size,
         "pages": math.ceil(total / size) if total > 0 else 0,
     }
+
+
+async def fetch_product_details(db: AsyncSession, product_slug: str):
+    product = await product_crud.get_product_by_slug(db, product_slug)
+
+    if not product:
+        raise ProductNotFoundException()
+
+    return product

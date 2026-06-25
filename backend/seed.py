@@ -8,8 +8,9 @@ import uuid
 from decimal import Decimal
 
 from app.database import AsyncSessionLocal
-from app.models import Category, Product
-from sqlalchemy import select
+from app.models import Category, Company, Product, ProductVolumeDiscount, User, UserRole
+from pwdlib import PasswordHash
+from sqlalchemy import delete
 
 # ── CATEGORIES ──────────────────────────────────────────────────────────────
 
@@ -53,7 +54,7 @@ CATEGORIES = [
 
 
 # ── PRODUCTS ─────────────────────────────────────────────────────────────────
-# Format: (name, slug, sku, description, base_price, stock_quantity, b2b_available, b2c_available)
+# Format: (name, slug, sku, description, base_price, stock_quantity, is_b2b_only, main_image_url)
 
 PRODUCTS = {
     "reagents-chemicals": [
@@ -64,8 +65,8 @@ PRODUCTS = {
             "High-purity acetone for HPLC and spectroscopy applications. 1L amber glass bottle.",
             Decimal("24.90"),
             250,
-            True,
-            True,
+            False,
+            "https://images.unsplash.com/photo-1628863353691-0071c8c1874c?w=400&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8Y2hlbWljYWwlMjBsYWJ8ZW58MHx8MHx8fDA%3D",
         ),
         (
             "Ethanol Absolute 99.8%",
@@ -75,7 +76,7 @@ PRODUCTS = {
             Decimal("145.00"),
             80,
             True,
-            False,
+            None,
         ),
         (
             "Hydrochloric Acid 37%",
@@ -85,7 +86,7 @@ PRODUCTS = {
             Decimal("89.00"),
             60,
             True,
-            False,
+            None,
         ),
         (
             "Sodium Hydroxide Pellets",
@@ -94,8 +95,8 @@ PRODUCTS = {
             "ACS grade NaOH pellets, ≥97% purity. 1kg resealable container.",
             Decimal("38.50"),
             120,
-            True,
-            True,
+            False,
+            None,
         ),
         (
             "Phosphate Buffer Saline (PBS)",
@@ -104,8 +105,8 @@ PRODUCTS = {
             "Ready-to-use 10x PBS concentrate, pH 7.4. Sterile filtered, 500mL.",
             Decimal("42.00"),
             95,
-            True,
-            True,
+            False,
+            None,
         ),
         (
             "Methanol AnalaR",
@@ -115,7 +116,7 @@ PRODUCTS = {
             Decimal("67.00"),
             70,
             True,
-            False,
+            None,
         ),
         (
             "Agarose LE",
@@ -124,8 +125,8 @@ PRODUCTS = {
             "Low electroendosmosis agarose for standard gel electrophoresis. 100g.",
             Decimal("189.00"),
             45,
-            True,
-            True,
+            False,
+            None,
         ),
         (
             "Bromophenol Blue Indicator",
@@ -134,8 +135,8 @@ PRODUCTS = {
             "pH indicator dye, powder form. pH range 3.0–4.6, yellow to blue. 25g.",
             Decimal("28.00"),
             200,
-            True,
-            True,
+            False,
+            None,
         ),
     ],
     "lab-equipment": [
@@ -146,8 +147,8 @@ PRODUCTS = {
             "Binocular optical microscope, 40x–1000x magnification. Includes 5 objective lenses and LED illumination.",
             Decimal("3450.00"),
             12,
-            True,
-            True,
+            False,
+            "https://images.unsplash.com/photo-1526930382372-67bf22c0fce2?w=400&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8bWljcm9zY29wZXxlbnwwfHwwfHx8MA%3D%3D",
         ),
         (
             "Magnetic Hotplate Stirrer",
@@ -156,8 +157,8 @@ PRODUCTS = {
             "Ceramic hotplate with integrated magnetic stirrer. Temperature range RT–340°C, max 1500 RPM.",
             Decimal("890.00"),
             25,
-            True,
-            True,
+            False,
+            None,
         ),
         (
             "Benchtop Centrifuge 6000 RPM",
@@ -167,7 +168,7 @@ PRODUCTS = {
             Decimal("4200.00"),
             8,
             True,
-            False,
+            None,
         ),
         (
             "Vortex Mixer VM-300",
@@ -176,8 +177,8 @@ PRODUCTS = {
             "Variable speed vortex mixer, 300–3000 RPM. Touch-activated or continuous mode. Universal head included.",
             Decimal("560.00"),
             30,
-            True,
-            True,
+            False,
+            None,
         ),
         (
             "UV/VIS Spectrophotometer",
@@ -187,7 +188,7 @@ PRODUCTS = {
             Decimal("8900.00"),
             5,
             True,
-            False,
+            None,
         ),
         (
             "Peristaltic Pump PP-100",
@@ -196,8 +197,8 @@ PRODUCTS = {
             "Variable flow peristaltic pump, 0.1–100 mL/min. Compatible with silicone and Tygon tubing.",
             Decimal("1250.00"),
             15,
-            True,
-            True,
+            False,
+            None,
         ),
     ],
     "glassware": [
@@ -208,8 +209,8 @@ PRODUCTS = {
             "Borosilicate 3.3 glass beaker with spout. Graduated, heat resistant to 500°C. Pack of 10.",
             Decimal("48.00"),
             300,
-            True,
-            True,
+            False,
+            "https://images.unsplash.com/photo-1617155093730-a8bf47be792d?w=400&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8bGFib3JhdG9yeSUyMGdsYXNzd2FyZXxlbnwwfHwwfHx8MA%3D%3D",
         ),
         (
             "Erlenmeyer Flask 250mL",
@@ -218,8 +219,8 @@ PRODUCTS = {
             "Conical flask with narrow neck, borosilicate glass. Graduated. Pack of 6.",
             Decimal("36.00"),
             250,
-            True,
-            True,
+            False,
+            None,
         ),
         (
             "Graduated Cylinder 100mL",
@@ -228,8 +229,8 @@ PRODUCTS = {
             "Class A borosilicate graduated cylinder. ±0.5mL accuracy. Hexagonal base for stability.",
             Decimal("22.00"),
             400,
-            True,
-            True,
+            False,
+            None,
         ),
         (
             "Microscope Slides Plain",
@@ -238,8 +239,8 @@ PRODUCTS = {
             "Clear borosilicate glass slides, 76x26mm, 1.0mm thickness. Pre-cleaned. Box of 100.",
             Decimal("18.50"),
             500,
-            True,
-            True,
+            False,
+            None,
         ),
         (
             "Petri Dish Glass 90mm",
@@ -248,8 +249,8 @@ PRODUCTS = {
             "Borosilicate glass petri dish with lid, 90mm diameter. Autoclavable. Pack of 10.",
             Decimal("55.00"),
             180,
-            True,
-            True,
+            False,
+            None,
         ),
         (
             "Separating Funnel 250mL",
@@ -258,8 +259,8 @@ PRODUCTS = {
             "Pear-shaped separating funnel with PTFE stopcock. 250mL volume, borosilicate glass.",
             Decimal("78.00"),
             60,
-            True,
-            True,
+            False,
+            None,
         ),
     ],
     "consumables": [
@@ -270,8 +271,8 @@ PRODUCTS = {
             "Powder-free nitrile examination gloves. Chemical resistant. AQL 1.5. Box of 100.",
             Decimal("32.00"),
             800,
-            True,
-            True,
+            False,
+            None,
         ),
         (
             "Micropipette Tips 200µL",
@@ -280,8 +281,8 @@ PRODUCTS = {
             "Universal fit pipette tips, 200µL volume. DNase/RNase free. Rack of 96, 10 racks per pack.",
             Decimal("28.50"),
             600,
-            True,
-            True,
+            False,
+            "https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=400&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8bGFiJTIwZXF1aXBtZW50fGVufDB8fDB8fHww",
         ),
         (
             "Polypropylene Tubes 15mL",
@@ -290,8 +291,8 @@ PRODUCTS = {
             "Conical centrifuge tubes with screw cap. Graduated, DNase/RNase free. Pack of 500.",
             Decimal("18.50"),
             400,
-            True,
-            True,
+            False,
+            None,
         ),
         (
             "Syringe Filter 0.22µm",
@@ -300,8 +301,8 @@ PRODUCTS = {
             "PES membrane syringe filters, 0.22µm pore size, 25mm diameter. Sterile. Pack of 50.",
             Decimal("95.00"),
             200,
-            True,
-            True,
+            False,
+            None,
         ),
         (
             "Plastic Petri Dish 90mm",
@@ -310,8 +311,8 @@ PRODUCTS = {
             "Sterile polystyrene petri dishes with lid, 90mm. Vented. Pack of 90.",
             Decimal("24.00"),
             350,
-            True,
-            True,
+            False,
+            None,
         ),
         (
             "Parafilm M Sealing Film",
@@ -320,8 +321,8 @@ PRODUCTS = {
             "Thermoplastic stretch film for sealing laboratory containers. 10cm x 38m roll.",
             Decimal("62.00"),
             150,
-            True,
-            True,
+            False,
+            None,
         ),
     ],
     "measuring-testing": [
@@ -333,7 +334,7 @@ PRODUCTS = {
             Decimal("4800.00"),
             10,
             True,
-            False,
+            None,
         ),
         (
             "Digital pH Meter HI-98103",
@@ -342,8 +343,8 @@ PRODUCTS = {
             "Portable pH meter with ATC probe. Range 0–14 pH, ±0.02 accuracy. Auto-calibration.",
             Decimal("289.00"),
             40,
-            True,
-            True,
+            False,
+            None,
         ),
         (
             "Infrared Thermometer",
@@ -352,8 +353,8 @@ PRODUCTS = {
             "Non-contact IR thermometer, -50°C to +550°C range. 12:1 distance-to-spot ratio.",
             Decimal("149.00"),
             75,
-            True,
-            True,
+            False,
+            None,
         ),
         (
             "Conductivity Meter CM-500",
@@ -362,8 +363,8 @@ PRODUCTS = {
             "Bench conductivity meter, 0.01µS/cm to 200mS/cm range. Temperature compensation.",
             Decimal("680.00"),
             20,
-            True,
-            True,
+            False,
+            None,
         ),
         (
             "Refractometer 0-32% Brix",
@@ -372,8 +373,8 @@ PRODUCTS = {
             "Handheld optical refractometer, 0–32% Brix scale. ATC. Includes case and pipette.",
             Decimal("95.00"),
             55,
-            True,
-            True,
+            False,
+            None,
         ),
         (
             "Stopwatch Digital Lab",
@@ -382,8 +383,8 @@ PRODUCTS = {
             "Precision digital stopwatch, 1/100 second resolution. Water resistant, countdown timer.",
             Decimal("42.00"),
             120,
-            True,
-            True,
+            False,
+            None,
         ),
     ],
     "safety-equipment": [
@@ -394,8 +395,8 @@ PRODUCTS = {
             "Indirect ventilation chemical splash goggles. Anti-fog polycarbonate lens. EN 166 certified.",
             Decimal("28.00"),
             300,
-            True,
-            True,
+            False,
+            None,
         ),
         (
             "Lab Coat Cotton 260g",
@@ -404,8 +405,8 @@ PRODUCTS = {
             "100% cotton lab coat, 260g/m². Autoclavable. Sizes S–XXL. Knit cuffs, 3 pockets.",
             Decimal("89.00"),
             150,
-            True,
-            True,
+            False,
+            None,
         ),
         (
             "Chemical Spill Kit 20L",
@@ -415,7 +416,7 @@ PRODUCTS = {
             Decimal("245.00"),
             35,
             True,
-            False,
+            None,
         ),
         (
             "Eyewash Station Portable",
@@ -425,7 +426,7 @@ PRODUCTS = {
             Decimal("189.00"),
             20,
             True,
-            False,
+            None,
         ),
         (
             "Chemical Resistant Apron",
@@ -434,8 +435,8 @@ PRODUCTS = {
             "PVC chemical resistant apron, 90x120cm. Adjustable neck and waist straps. EN 13034 certified.",
             Decimal("45.00"),
             200,
-            True,
-            True,
+            False,
+            None,
         ),
         (
             "First Aid Kit Laboratory",
@@ -444,8 +445,8 @@ PRODUCTS = {
             "Laboratory-specific first aid kit. 73 items including burn gel, eye wash, and chemical exposure guide.",
             Decimal("135.00"),
             60,
-            True,
-            True,
+            False,
+            None,
         ),
     ],
     "lab-furniture": [
@@ -457,7 +458,7 @@ PRODUCTS = {
             Decimal("2800.00"),
             8,
             True,
-            False,
+            None,
         ),
         (
             "Reagent Storage Rack 5-Tier",
@@ -466,8 +467,8 @@ PRODUCTS = {
             "Polypropylene chemical storage rack, 5 tiers. Holds standard 1L bottles. 600x200x400mm.",
             Decimal("320.00"),
             30,
-            True,
-            True,
+            False,
+            None,
         ),
         (
             "Lab Stool Adjustable",
@@ -476,8 +477,8 @@ PRODUCTS = {
             "Ergonomic lab stool, 450–650mm seat height. Chemical-resistant PU upholstery. 5-star base.",
             Decimal("490.00"),
             25,
-            True,
-            True,
+            False,
+            None,
         ),
         (
             "Fume Hood Storage Cabinet",
@@ -487,7 +488,7 @@ PRODUCTS = {
             Decimal("1650.00"),
             10,
             True,
-            False,
+            None,
         ),
         (
             "Wall-Mount Drying Rack",
@@ -496,8 +497,8 @@ PRODUCTS = {
             "Stainless steel wall-mounted glassware drying rack. 30 pegs, adjustable spacing. 600x400mm.",
             Decimal("185.00"),
             40,
-            True,
-            True,
+            False,
+            None,
         ),
     ],
 }
@@ -510,11 +511,86 @@ async def seed():
     async with AsyncSessionLocal() as db:
         print("🧪 Starting Proxima Lab Supply seed...")
 
-        existing = await db.scalar(select(Category).limit(1))
-        if existing:
-            print("⚠️  Database already seeded. Skipping.")
-            return
+        print("🧹 Clearing existing data...")
+        await db.execute(delete(ProductVolumeDiscount))
+        await db.execute(delete(Product))
+        await db.execute(delete(Category))
+        await db.execute(delete(User))
+        await db.execute(delete(Company))
+        await db.commit()
 
+        # COMPANIES
+        print("🏢 Creating companies...")
+        acme_company_id = uuid.uuid4()
+        acme_company = Company(
+            id=acme_company_id,
+            name="Acme Laboratory Labs",
+            nip="1234567890",
+            discount_percentage=Decimal("20.00"),
+            email_domain="acmelabs.com",
+            is_active=True,
+        )
+        db.add(acme_company)
+        await db.flush()
+        print(f"   ✓ {acme_company.name}")
+
+        # USERS
+        print("👥 Creating users (Password for all: 'Password123')...")
+        password_hash = PasswordHash.recommended()
+        test_password_hash = password_hash.hash("Password123")
+
+        users_to_create = [
+            # Global Admin
+            User(
+                email="admin@proxima.local",
+                password_hash=test_password_hash,
+                first_name="Super",
+                last_name="Admin",
+                role=UserRole.ADMIN,
+                is_verified=True,
+                is_active=True,
+                company_id=None,
+            ),
+            # B2C Buyer
+            User(
+                email="kowalski@gmail.com",
+                password_hash=test_password_hash,
+                first_name="Jan",
+                last_name="Kowalski",
+                role=UserRole.CUSTOMER,
+                is_verified=True,
+                is_active=True,
+                company_id=None,
+            ),
+            # B2B Admin
+            User(
+                email="manager@acmelabs.com",
+                password_hash=test_password_hash,
+                first_name="Anna",
+                last_name="Nowak",
+                role=UserRole.COMPANY_ADMIN,
+                is_verified=True,
+                is_active=True,
+                company_id=acme_company_id,
+            ),
+            # B2B Buyer
+            User(
+                email="buyer@acmelabs.com",
+                password_hash=test_password_hash,
+                first_name="Piotr",
+                last_name="Wiśniewski",
+                role=UserRole.CUSTOMER,
+                is_verified=True,
+                is_active=True,
+                company_id=acme_company_id,
+            ),
+        ]
+
+        db.add_all(users_to_create)
+        await db.flush()
+        print(f"   ✓ Created {len(users_to_create)} test users")
+
+        # CATEGORIES
         print("📂 Creating categories...")
         category_map: dict[str, uuid.UUID] = {}
 
@@ -529,12 +605,14 @@ async def seed():
             category_map[cat_data["slug"]] = cat.id
             print(f"   ✓ {cat_data['name']}")
 
+        # PRODUCTS
         print("📦 Creating products...")
         total_products = 0
+        created_products_for_discounts = []
 
         for category_slug, products in PRODUCTS.items():
             category_id = category_map[category_slug]
-            for name, slug, sku, description, price, stock, b2b, b2c in products:
+            for name, slug, sku, description, price, stock, is_b2b, img_url in products:
                 product = Product(
                     category_id=category_id,
                     name=name,
@@ -544,17 +622,50 @@ async def seed():
                     base_price=price,
                     stock_quantity=stock,
                     is_active=True,
-                    b2b_available=b2b,
-                    b2c_available=b2c,
+                    is_b2b_only=is_b2b,
+                    main_image_url=img_url,
                 )
                 db.add(product)
+                await db.flush()
+
+                if (
+                    category_slug == "reagents-chemicals"
+                    or category_slug == "consumables"
+                ):
+                    created_products_for_discounts.append(product)
+
                 total_products += 1
             print(f"   ✓ {category_slug} — {len(products)} products")
+
+        # PRODUCT VOLUME DISCOUNTS
+
+        print("💰 Creating volume discounts...")
+        discounts_to_create = []
+
+        for prod in created_products_for_discounts[:3]:
+            discounts_to_create.append(
+                ProductVolumeDiscount(
+                    product_id=prod.id,
+                    min_quantity=10,
+                    discount_percentage=Decimal("5.00"),
+                )
+            )
+            discounts_to_create.append(
+                ProductVolumeDiscount(
+                    product_id=prod.id,
+                    min_quantity=50,
+                    discount_percentage=Decimal("15.00"),
+                )
+            )
+
+        db.add_all(discounts_to_create)
+        print(f"   ✓ Created {len(discounts_to_create)} discount tiers")
 
         await db.commit()
         print("\n✅ Seed complete!")
         print(f"   {len(CATEGORIES)} categories")
         print(f"   {total_products} products")
+        print("   Test accounts ready to use with password: password123")
 
 
 if __name__ == "__main__":

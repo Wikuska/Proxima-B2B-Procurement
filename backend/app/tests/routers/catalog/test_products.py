@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 import pytest
-from app.models.product import Category, Product
+from app.models.product import Category, Product, ProductVolumeDiscount
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -24,6 +24,7 @@ async def setup_catalog(db_session: AsyncSession):
             name="Microscope",
             slug="microscope",
             sku="MIC-PRO-100",
+            description="Nice Microscope",
             category_id=equipment.id,
             base_price=Decimal("500.00"),
             stock_quantity=10,
@@ -34,6 +35,7 @@ async def setup_catalog(db_session: AsyncSession):
             name="Acetone",
             slug="acetone",
             sku="TSH-M-BLK-COT",
+            description="Nice Acetone",
             category_id=reagents.id,
             base_price=Decimal("10.00"),
             stock_quantity=100,
@@ -54,6 +56,7 @@ async def setup_catalog(db_session: AsyncSession):
             name="Chloroform",
             slug="chloroform",
             sku="CL-SAN-LT-8-BLU",
+            description="Nice Chloroform",
             category_id=reagents.id,
             base_price=Decimal("30.00"),
             stock_quantity=0,
@@ -62,6 +65,21 @@ async def setup_catalog(db_session: AsyncSession):
         ),
     ]
     db_session.add_all(products)
+    await db_session.flush()
+
+    discounts = [
+        ProductVolumeDiscount(
+            product_id=products[1].id,
+            min_quantity=10,
+            discount_percentage=Decimal("5.00"),
+        ),
+        ProductVolumeDiscount(
+            product_id=products[1].id,
+            min_quantity=50,
+            discount_percentage=Decimal("15.00"),
+        ),
+    ]
+    db_session.add_all(discounts)
     await db_session.commit()
 
     return {"reagents": reagents, "equipment": equipment, "products": products}
@@ -301,3 +319,115 @@ async def test_get_products_out_of_bounds_page_returns_empty(
     assert data["items"] == []
     assert data["total"] == 30  # total is still correct
     assert data["pages"] == 2
+
+
+# /catalog/products/{product_slug} tests
+
+
+async def test_get_product_details_happy_path(
+    async_client: AsyncClient,
+    setup_catalog: dict,
+):
+    """Ensure a valid slug returns 200 with correct product data."""
+    microscope = setup_catalog["products"][0]
+
+    response = await async_client.get(f"/catalog/products/{microscope.slug}")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["slug"] == microscope.slug
+    assert data["name"] == microscope.name
+    assert data["description"] == microscope.description
+    assert data["sku"] == microscope.sku
+
+
+async def test_get_product_details_not_found(
+    async_client: AsyncClient,
+    setup_catalog: dict,
+):
+    """Ensure a non-existent slug returns 404."""
+    response = await async_client.get("/catalog/products/non-existent-slug")
+
+    assert response.status_code == 404
+
+
+async def test_get_product_details_returns_correct_product(
+    async_client: AsyncClient,
+    setup_catalog: dict,
+):
+    """Ensure the endpoint returns the exact product matching the slug, not another one."""
+    acetone = setup_catalog["products"][1]
+    microscope = setup_catalog["products"][0]
+
+    response = await async_client.get(f"/catalog/products/{acetone.slug}")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["slug"] == acetone.slug
+    assert data["slug"] != microscope.slug
+
+
+async def test_get_product_details_inactive_product(
+    async_client: AsyncClient,
+    setup_catalog: dict,
+):
+    """Ensure inactive products are still returned — or adjust assertion if your business logic hides them."""
+    chloroform = setup_catalog["products"][3]
+
+    response = await async_client.get(f"/catalog/products/{chloroform.slug}")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["slug"] == chloroform.slug
+    assert data["is_active"] is False
+
+
+async def test_get_product_details_with_no_description(
+    async_client: AsyncClient,
+    setup_catalog: dict,
+):
+    """Ensure a product with no description returns null in the response, not an error."""
+    benzene = setup_catalog["products"][2]
+
+    response = await async_client.get(f"/catalog/products/{benzene.slug}")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["description"] is None
+
+
+async def test_get_product_details_with_discounts(
+    async_client: AsyncClient,
+    setup_catalog: dict,
+):
+    """Verifies that a product correctly returns a list of assigned volume discounts."""
+    acetone = setup_catalog["products"][1]
+
+    response = await async_client.get(f"/catalog/products/{acetone.slug}")
+
+    assert response.status_code == 200
+    data = response.json()
+
+    assert "volume_discounts" in data
+    assert isinstance(data["volume_discounts"], list)
+    assert len(data["volume_discounts"]) > 0
+
+    first_discount = data["volume_discounts"][0]
+    assert "min_quantity" in first_discount
+    assert "discount_percentage" in first_discount
+
+
+async def test_get_product_details_without_discounts(
+    async_client: AsyncClient,
+    setup_catalog: dict,
+):
+    """Verifies that the API returns an empty list for a product without volume discounts."""
+    microscope = setup_catalog["products"][0]
+
+    response = await async_client.get(f"/catalog/products/{microscope.slug}")
+
+    assert response.status_code == 200
+    data = response.json()
+
+    assert "volume_discounts" in data
+    assert data["volume_discounts"] == []

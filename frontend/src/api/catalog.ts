@@ -7,7 +7,7 @@ export interface CategoryResponse {
   description: string | null;
 }
 
-interface ProductListOut {
+export interface ProductListOut {
   id: string;
   name: string;
   slug: string;
@@ -24,6 +24,17 @@ export interface PaginatedProductListOut {
   page: number;
   size: number;
   pages: number;
+}
+
+export interface ProductVolumeDiscountOut {
+  min_quantity: number;
+  discount_percentage: string;
+}
+
+export interface ProductDetailsOut extends ProductListOut {
+  description: string | null;
+  is_active: boolean;
+  volume_discounts: ProductVolumeDiscountOut[];
 }
 
 export interface FetchProductsPayload {
@@ -60,4 +71,10 @@ export const fetchProducts = ({
   }
 
   return apiFetch<PaginatedProductListOut>(url, { method: "GET" });
+};
+
+export const fetchProductBySlug = (slug: string) => {
+  return apiFetch<ProductDetailsOut>(`/catalog/products/${slug}`, {
+    method: "GET",
+  });
 };

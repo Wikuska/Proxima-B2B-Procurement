@@ -14,7 +14,7 @@ export default function NavCategoryMenu({
     <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-[800px] bg-bg-surface border border-border-base/30 rounded-xl shadow-xl p-5 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
       <div className="mb-5 pb-5 border-b border-border-base/20">
         <Link
-          to="/products"
+          to="/catalog"
           onClick={onClose}
           className="group relative flex items-center justify-between p-4 rounded-xl bg-accent/5 border border-accent/20 hover:border-accent/50 hover:bg-white hover:shadow-sm transition-all duration-300 overflow-hidden"
         >
@@ -40,7 +40,7 @@ export default function NavCategoryMenu({
         {categories.map((category) => (
           <Link
             key={category.id}
-            to={`/categories/${category.slug}/products`}
+            to={`/catalog/${category.slug}`}
             onClick={onClose}
             className="group relative flex flex-col p-4 rounded-xl bg-bg-base border border-border-base/20 hover:border-accent/50 hover:bg-white hover:shadow-sm transition-all duration-300 overflow-hidden"
           >
