@@ -4,7 +4,7 @@ from .product import PaginatedProductListOut, ProductDetailsOut, ProductListOut
 from .token import Token, TokenData
 from .user import UserBase, UserCreate, UserLogin, UserOut, UserUpdate
 
-all = [
+__all__ = [
     "Token",
     "TokenData",
     "UserBase",

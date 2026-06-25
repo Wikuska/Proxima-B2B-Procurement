@@ -80,25 +80,6 @@ export default function ProductDetailsPage() {
               </a>
             )}
           </div>
-          <div>
-            <p className="text-text-body leading-relaxed text-sm lg:text-base whitespace-pre-line line-clamp-4">
-              {product.description ||
-                "Brak dodatkowego opisu dla tego produktu."}
-            </p>
-            {product.description && (
-              <button
-                onClick={() =>
-                  document
-                    .getElementById("product-description")
-                    ?.scrollIntoView({ behavior: "smooth" })
-                }
-                className="mt-2 text-sm text-accent hover:text-primary font-medium transition-colors cursor-pointer"
-              >
-                Read more
-              </button>
-            )}
-          </div>
-
           {/* Price & Stock */}
           <div className="flex flex-col gap-2 bg-bg-base p-4 rounded-xl border border-border-base/20 shadow-sm">
             <div className="text-3xl font-bold text-text-primary font-mono">

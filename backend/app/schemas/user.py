@@ -29,25 +29,25 @@ NameString = Annotated[
 ]
 
 
-# Dane potrzebne do logowania użytkownika
+# Data required to log a user in
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
 
 
-# Wspólne pola dla użytkownika
+# Fields shared across user schemas
 class UserBase(BaseModel):
     email: EmailStr
     first_name: NameString
     last_name: NameString
 
 
-# Dane potrzebne do rejestracji nowego użytkownika
+# Data required to register a new user
 class UserCreate(UserBase):
     password: StrongPassword
 
 
-# Profil użytkownika zwracany w odpowiedzi API
+# User profile returned in API responses
 class UserOut(UserBase):
     id: uuid.UUID
     role: UserRole
@@ -58,7 +58,7 @@ class UserOut(UserBase):
     model_config = ConfigDict(from_attributes=True)
 
 
-# Opcjonalne schematy do aktualizacji profilu w przyszłości
+# Optional schema for future profile updates
 class UserUpdate(BaseModel):
     email: EmailStr | None = None
     password: StrongPassword | None = None

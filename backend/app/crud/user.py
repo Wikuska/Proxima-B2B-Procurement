@@ -1,3 +1,5 @@
+import uuid
+
 from app.models import User
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,7 +21,7 @@ async def create_user(db: AsyncSession, user_data: dict) -> User:
 
 
 async def mark_user_as_verified(
-    db: AsyncSession, user: User, company_id: int | None
+    db: AsyncSession, user: User, company_id: uuid.UUID | None
 ) -> User:
     """Marks a user's email as verified and assigns B2B company if matched."""
     user.is_verified = True
