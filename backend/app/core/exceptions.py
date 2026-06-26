@@ -67,3 +67,33 @@ class CategoryNotFoundException(AppException):
 class ProductNotFoundException(AppException):
     status_code = 404
     detail = "Product not found"
+
+
+class CompanyNotFoundException(AppException):
+    status_code = 404
+    detail = "No active company is registered with this NIP"
+
+
+class AlreadyInCompanyException(AppException):
+    status_code = 400
+    detail = "You are already assigned to a company"
+
+
+class DuplicateCompanyRequestException(AppException):
+    status_code = 409
+    detail = "You already have a pending join request"
+
+
+class CompanyRequestNotFoundException(AppException):
+    status_code = 404
+    detail = "Join request not found"
+
+
+class RequestAlreadyReviewedException(AppException):
+    status_code = 409
+    detail = "This request has already been reviewed"
+
+
+class CannotRemoveSelfException(AppException):
+    status_code = 400
+    detail = "You cannot remove yourself from the company"

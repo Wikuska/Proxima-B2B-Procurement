@@ -35,3 +35,21 @@ async def mark_user_as_verified(
     await db.commit()
     await db.refresh(user)
     return user
+
+
+async def set_user_company(
+    db: AsyncSession, user: User, company_id: uuid.UUID | None
+) -> User:
+    user.company_id = company_id
+    await db.commit()
+    await db.refresh(user)
+    return user
+
+
+async def get_users_by_company_id(
+    db: AsyncSession, company_id: uuid.UUID
+) -> list[User]:
+    result = await db.execute(
+        select(User).where(User.company_id == company_id)
+    )
+    return list(result.scalars().all())

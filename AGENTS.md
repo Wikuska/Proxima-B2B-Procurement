@@ -63,6 +63,28 @@ volume-based discounts, email double opt-in, and company verification via NIP.
 - DB (local): `docker-compose up -d` (Postgres on :5433, pgAdmin on :5050).
 - Frontend: from `frontend/`, `npm run dev` / `npm run build` / `npm run lint`.
 
+## Frontend color palette (Tailwind CSS custom properties)
+These CSS variables are defined in `frontend/src/index.css` and map to Tailwind utility classes
+(`bg-primary`, `text-accent`, `bg-bg-surface`, etc.). Always use them — never hardcode hex values.
+
+```css
+/* Brand */
+--color-primary: #26547C;   /* Dusk Blue  — navbar, action buttons */
+--color-accent:  #60B2E5;   /* Fresh Sky  — hover, focus, links */
+
+/* Backgrounds */
+--color-bg-base:    #F8FAFC; /* App background, sterile look */
+--color-bg-surface: #FFFFFF; /* Cards, forms */
+
+/* Text */
+--color-text-main:  #0F172A; /* Slate 900 — primary text */
+--color-text-muted: #94A3B8; /* Slate 400 — helper text, placeholders */
+
+/* Borders */
+--color-border-base:  #94A3B8; /* Slate 400 — inactive inputs */
+--color-border-focus: #60B2E5; /* Fresh Sky — active inputs */
+```
+
 ## Guardrails
 - Never commit real secrets. `backend/.env` holds `DATABASE_URL`, `SECRET_KEY`,
   `TEST_DATABASE_URL`, `FRONTEND_URL`.
