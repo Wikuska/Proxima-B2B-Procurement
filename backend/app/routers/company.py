@@ -3,7 +3,9 @@ import uuid
 from app.core.dependencies import get_current_user, require_company_admin
 from app.database import get_db
 from app.models import User
+from app.schemas.common import MessageOut
 from app.schemas.company import (
+    CompanyMemberOut,
     CompanyRequestAdminOut,
     CompanyRequestCreate,
     CompanyRequestOut,
@@ -66,3 +68,21 @@ async def reject_request(
     db: AsyncSession = Depends(get_db),
 ):
     return await company_service.review_request(db, admin, request_id, approve=False)
+
+
+@router.get("/members", response_model=list[CompanyMemberOut])
+async def list_members(
+    admin: User = Depends(require_company_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    return await company_service.list_company_members(db, admin)
+
+
+@router.delete("/members/{user_id}", response_model=MessageOut)
+async def remove_member(
+    user_id: uuid.UUID,
+    admin: User = Depends(require_company_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    await company_service.remove_company_member(db, admin, user_id)
+    return MessageOut(message="Member removed successfully")

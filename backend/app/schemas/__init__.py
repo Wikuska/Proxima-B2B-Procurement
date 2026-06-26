@@ -1,6 +1,6 @@
 from .category import CategoryOut
 from .common import MessageOut
-from .company import CompanyRequestAdminOut, CompanyRequestCreate, CompanyRequestOut, RequesterMini
+from .company import CompanyMemberOut, CompanyRequestAdminOut, CompanyRequestCreate, CompanyRequestOut, RequesterMini
 from .product import PaginatedProductListOut, ProductDetailsOut, ProductListOut
 from .token import Token, TokenData
 from .user import UserBase, UserCreate, UserLogin, UserOut, UserUpdate
@@ -22,4 +22,5 @@ __all__ = [
     "CompanyRequestOut",
     "CompanyRequestAdminOut",
     "RequesterMini",
+    "CompanyMemberOut",
 ]

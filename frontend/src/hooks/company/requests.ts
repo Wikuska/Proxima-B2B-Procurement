@@ -1,9 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   approveCompanyRequest,
+  getCompanyMembers,
   getMyCompanyRequests,
   getPendingCompanyRequests,
   rejectCompanyRequest,
+  removeCompanyMember,
   submitCompanyRequest,
   type SubmitRequestPayload,
 } from "../../api/company";
@@ -43,6 +45,22 @@ export const useReviewCompanyRequest = () => {
       queryClient.invalidateQueries({
         queryKey: ["company-requests", "pending"],
       });
+    },
+  });
+};
+
+export const useCompanyMembers = () =>
+  useQuery({
+    queryKey: ["company-members"],
+    queryFn: getCompanyMembers,
+  });
+
+export const useRemoveCompanyMember = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (userId: string) => removeCompanyMember(userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["company-members"] });
     },
   });
 };

@@ -89,10 +89,10 @@ export default function NavBar() {
 
           <RoleGuard allow={["COMPANY_ADMIN", "ADMIN"]}>
             <Link
-              to="/company/requests"
+              to="/company"
               className="hover:text-accent text-text-main/80 transition-colors py-2 border-b-2 border-transparent"
             >
-              Company requests
+              Company
             </Link>
           </RoleGuard>
 

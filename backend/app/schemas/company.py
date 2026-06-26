@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from app.models.enums import RequestStatus
+from app.models.enums import RequestStatus, UserRole
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field
 from typing_extensions import Annotated
 
@@ -44,3 +44,13 @@ class CompanyRequestOut(BaseModel):
 
 class CompanyRequestAdminOut(CompanyRequestOut):
     user: RequesterMini
+
+
+class CompanyMemberOut(BaseModel):
+    id: uuid.UUID
+    email: str
+    first_name: str
+    last_name: str
+    role: UserRole
+
+    model_config = ConfigDict(from_attributes=True)

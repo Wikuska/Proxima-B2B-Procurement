@@ -92,3 +92,8 @@ class CompanyRequestNotFoundException(AppException):
 class RequestAlreadyReviewedException(AppException):
     status_code = 409
     detail = "This request has already been reviewed"
+
+
+class CannotRemoveSelfException(AppException):
+    status_code = 400
+    detail = "You cannot remove yourself from the company"

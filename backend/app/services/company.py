@@ -3,11 +3,13 @@ from datetime import datetime, timezone
 
 from app.core.exceptions import (
     AlreadyInCompanyException,
+    CannotRemoveSelfException,
     CompanyNotFoundException,
     CompanyRequestNotFoundException,
     DuplicateCompanyRequestException,
     InsufficientPermissionsException,
     RequestAlreadyReviewedException,
+    UserNotFoundException,
 )
 from app.crud import company as company_crud
 from app.crud import user as user_crud
@@ -46,6 +48,26 @@ async def list_pending_requests_for_admin(
     if company is None:
         return []
     return await company_crud.get_pending_requests_by_nip(db, company.nip)
+
+
+async def list_company_members(db: AsyncSession, admin: User) -> list[User]:
+    if admin.company_id is None:
+        return []
+    return await user_crud.get_users_by_company_id(db, admin.company_id)
+
+
+async def remove_company_member(
+    db: AsyncSession, admin: User, user_id: uuid.UUID
+) -> User:
+    target = await user_crud.get_user_by_id(db, user_id)
+    if target is None:
+        raise UserNotFoundException()
+    if target.company_id != admin.company_id:
+        raise InsufficientPermissionsException()
+    if target.id == admin.id:
+        raise CannotRemoveSelfException()
+    await user_crud.set_user_company(db, target, None)
+    return target
 
 
 async def review_request(

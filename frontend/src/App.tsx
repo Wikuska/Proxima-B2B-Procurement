@@ -1,15 +1,18 @@
-import { Routes, Route } from "react-router-dom";
-import MainLayout from "./layouts/MainLayout";
+import { Navigate, Route, Routes } from "react-router-dom";
 import ProtectedRoute from "./components/common/ProtectedRoute";
+import MainLayout from "./layouts/MainLayout";
 import {
   AuthPage,
-  VerifyEmailPage,
+  CompanyPage,
   HomePage,
-  ProductsPage,
-  ProductDetailsPage,
   JoinCompanyPage,
-  CompanyRequestsPage,
+  ProductDetailsPage,
+  ProductsPage,
+  VerifyEmailPage,
 } from "./pages";
+import CompanyMembersTab from "./pages/company/CompanyMembersTab";
+import CompanyOrdersTab from "./pages/company/CompanyOrdersTab";
+import JoinRequestsTab from "./pages/company/JoinRequestsTab";
 
 export default function App() {
   return (
@@ -30,13 +33,18 @@ export default function App() {
           }
         />
         <Route
-          path="/company/requests"
+          path="/company"
           element={
             <ProtectedRoute allow={["COMPANY_ADMIN", "ADMIN"]}>
-              <CompanyRequestsPage />
+              <CompanyPage />
             </ProtectedRoute>
           }
-        />
+        >
+          <Route index element={<Navigate to="requests" replace />} />
+          <Route path="requests" element={<JoinRequestsTab />} />
+          <Route path="orders" element={<CompanyOrdersTab />} />
+          <Route path="members" element={<CompanyMembersTab />} />
+        </Route>
       </Route>
     </Routes>
   );
