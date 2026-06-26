@@ -1,8 +1,10 @@
+import pytest
 import pytest_asyncio
+from app.core.security import create_access_token
 from app.core.settings import settings
 from app.database import get_db
 from app.main import app
-from app.models import Base, User
+from app.models import Base, Company, User
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.pool import NullPool
@@ -82,3 +84,34 @@ async def user_factory(db_session: AsyncSession):
         return user
 
     return _create_user
+
+
+@pytest.fixture
+def auth_headers():
+    """Factory fixture: given a user, returns Authorization headers with a valid JWT."""
+
+    def _make_headers(user):
+        token = create_access_token(subject=str(user.id))
+        return {"Authorization": f"Bearer {token}"}
+
+    return _make_headers
+
+
+@pytest_asyncio.fixture
+async def company_factory(db_session: AsyncSession):
+    """Factory fixture to dynamically create companies for tests."""
+
+    async def _create_company(**kwargs):
+        company_data = {
+            "name": "Test Company",
+            "nip": "1234567890",
+            "is_active": True,
+        }
+        company_data.update(kwargs)
+
+        company = Company(**company_data)
+        db_session.add(company)
+        await db_session.commit()
+        return company
+
+    return _create_company

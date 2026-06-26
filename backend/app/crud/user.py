@@ -35,3 +35,12 @@ async def mark_user_as_verified(
     await db.commit()
     await db.refresh(user)
     return user
+
+
+async def set_user_company(
+    db: AsyncSession, user: User, company_id: uuid.UUID
+) -> User:
+    user.company_id = company_id
+    await db.commit()
+    await db.refresh(user)
+    return user

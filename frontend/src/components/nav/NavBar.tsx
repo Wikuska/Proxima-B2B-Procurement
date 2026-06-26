@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ShoppingCart } from "lucide-react";
 import { useCategories } from "../../hooks/catalog/categories";
+import { useAuth } from "../../hooks/user/useAuth";
+import RoleGuard from "../common/RoleGuard";
 import NavAuthButtons from "./NavAuthButtons";
 import NavCategoryMenu from "./NavCategoryMenu";
 
@@ -10,6 +12,7 @@ export default function NavBar() {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const { data: categories, isLoading, isError, refetch } = useCategories();
+  const { isAuthenticated, user } = useAuth();
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -83,6 +86,24 @@ export default function NavBar() {
           >
             Contact
           </Link>
+
+          <RoleGuard allow={["COMPANY_ADMIN", "ADMIN"]}>
+            <Link
+              to="/company/requests"
+              className="hover:text-accent text-text-main/80 transition-colors py-2 border-b-2 border-transparent"
+            >
+              Company requests
+            </Link>
+          </RoleGuard>
+
+          {isAuthenticated && user?.company_id == null && (
+            <Link
+              to="/join-company"
+              className="hover:text-accent text-text-main/80 transition-colors py-2 border-b-2 border-transparent"
+            >
+              Join a company
+            </Link>
+          )}
         </nav>
 
         <div className="flex items-center gap-6">

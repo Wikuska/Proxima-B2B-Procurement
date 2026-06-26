@@ -1,11 +1,14 @@
 import { Routes, Route } from "react-router-dom";
 import MainLayout from "./layouts/MainLayout";
+import ProtectedRoute from "./components/common/ProtectedRoute";
 import {
   AuthPage,
   VerifyEmailPage,
   HomePage,
   ProductsPage,
   ProductDetailsPage,
+  JoinCompanyPage,
+  CompanyRequestsPage,
 } from "./pages";
 
 export default function App() {
@@ -18,6 +21,22 @@ export default function App() {
         <Route path="/catalog" element={<ProductsPage />} />
         <Route path="/catalog/:categorySlug" element={<ProductsPage />} />
         <Route path="/product/:productSlug" element={<ProductDetailsPage />} />
+        <Route
+          path="/join-company"
+          element={
+            <ProtectedRoute>
+              <JoinCompanyPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/company/requests"
+          element={
+            <ProtectedRoute allow={["COMPANY_ADMIN", "ADMIN"]}>
+              <CompanyRequestsPage />
+            </ProtectedRoute>
+          }
+        />
       </Route>
     </Routes>
   );
