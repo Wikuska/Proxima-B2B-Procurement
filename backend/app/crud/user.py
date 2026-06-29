@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime, timezone
 
 from app.models import User
 from app.models.enums import UserRole
@@ -33,6 +34,8 @@ async def mark_user_as_verified(
     """Marks a user's email as verified and assigns B2B company if matched."""
     user.is_verified = True
     user.company_id = company_id
+    if company_id is not None:
+        user.company_joined_at = datetime.now(timezone.utc)
     await db.commit()
     await db.refresh(user)
     return user
@@ -42,6 +45,7 @@ async def set_user_company(
     db: AsyncSession, user: User, company_id: uuid.UUID | None
 ) -> User:
     user.company_id = company_id
+    user.company_joined_at = datetime.now(timezone.utc) if company_id is not None else None
     await db.commit()
     await db.refresh(user)
     return user

@@ -66,10 +66,7 @@ async def leave_company(db: AsyncSession, user: User) -> User:
         if count <= 1:
             raise LastCompanyAdminException()
         user.role = UserRole.CUSTOMER
-    user.company_id = None
-    await db.commit()
-    await db.refresh(user)
-    return user
+    return await user_crud.set_user_company(db, user, None)
 
 
 async def remove_company_member(
@@ -84,6 +81,21 @@ async def remove_company_member(
         raise CannotRemoveSelfException()
     await user_crud.set_user_company(db, target, None)
     return target
+
+
+async def get_my_affiliation(db: AsyncSession, user: User) -> dict:
+    if user.company_id is None:
+        raise NotInCompanyException()
+    company = await company_crud.get_company_by_id(db, user.company_id)
+    if company is None:
+        raise NotInCompanyException()
+    return {
+        "company_name": company.name,
+        "company_nip": company.nip,
+        "discount_percentage": company.discount_percentage,
+        "role": user.role,
+        "joined_at": user.company_joined_at,
+    }
 
 
 async def review_request(

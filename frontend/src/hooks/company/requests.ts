@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   approveCompanyRequest,
   getCompanyMembers,
+  getMyAffiliation,
   getMyCompanyRequests,
   getPendingCompanyRequests,
   leaveCompany,
@@ -11,6 +12,7 @@ import {
   type SubmitRequestPayload,
 } from "../../api/company";
 import { useAuthStore } from "../../store/authStore";
+import { useCurrentUser } from "../user/useCurrentUser";
 
 export const useMyCompanyRequests = () => {
   const token = useAuthStore((state) => state.token);
@@ -18,6 +20,15 @@ export const useMyCompanyRequests = () => {
     queryKey: ["company-requests", "me"],
     queryFn: getMyCompanyRequests,
     enabled: !!token,
+  });
+};
+
+export const useMyAffiliation = () => {
+  const { data: user } = useCurrentUser();
+  return useQuery({
+    queryKey: ["company-affiliation", "me"],
+    queryFn: getMyAffiliation,
+    enabled: user?.company_id != null,
   });
 };
 
@@ -73,6 +84,7 @@ export const useLeaveCompany = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["me"] });
       queryClient.invalidateQueries({ queryKey: ["company-requests", "me"] });
+      queryClient.invalidateQueries({ queryKey: ["company-affiliation", "me"] });
     },
   });
 };
