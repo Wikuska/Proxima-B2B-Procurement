@@ -1,7 +1,8 @@
 import uuid
 
 from app.models import User
-from sqlalchemy import select
+from app.models.enums import UserRole
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
@@ -53,3 +54,15 @@ async def get_users_by_company_id(
         select(User).where(User.company_id == company_id)
     )
     return list(result.scalars().all())
+
+
+async def count_company_admins_in_company(
+    db: AsyncSession, company_id: uuid.UUID
+) -> int:
+    result = await db.execute(
+        select(func.count()).where(
+            User.company_id == company_id,
+            User.role == UserRole.COMPANY_ADMIN,
+        )
+    )
+    return result.scalar_one()

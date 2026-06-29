@@ -97,3 +97,13 @@ class RequestAlreadyReviewedException(AppException):
 class CannotRemoveSelfException(AppException):
     status_code = 400
     detail = "You cannot remove yourself from the company"
+
+
+class NotInCompanyException(AppException):
+    status_code = 400
+    detail = "You are not assigned to any company"
+
+
+class LastCompanyAdminException(AppException):
+    status_code = 409
+    detail = "You are the only company admin. Assign the company admin role to another member before leaving the company."

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ChevronDown, User } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "../../store/authStore";
 import { useAuth } from "../../hooks/user/useAuth";
 import { profileTabs } from "../../config/profileTabs";
@@ -8,6 +9,7 @@ import { profileTabs } from "../../config/profileTabs";
 export default function NavAuthButtons() {
   const { token, clearAuth } = useAuthStore();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
@@ -59,6 +61,7 @@ export default function NavAuthButtons() {
                 onClick={() => {
                   setIsOpen(false);
                   clearAuth();
+                  queryClient.removeQueries({ queryKey: ["me"] });
                 }}
                 className="w-full text-left px-4 py-2 text-sm text-text-main hover:bg-accent/10 hover:text-primary transition-colors"
               >

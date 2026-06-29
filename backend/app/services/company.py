@@ -8,13 +8,15 @@ from app.core.exceptions import (
     CompanyRequestNotFoundException,
     DuplicateCompanyRequestException,
     InsufficientPermissionsException,
+    LastCompanyAdminException,
+    NotInCompanyException,
     RequestAlreadyReviewedException,
     UserNotFoundException,
 )
 from app.crud import company as company_crud
 from app.crud import user as user_crud
 from app.models import CompanyRequest, User
-from app.models.enums import RequestStatus
+from app.models.enums import RequestStatus, UserRole
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
@@ -54,6 +56,20 @@ async def list_company_members(db: AsyncSession, admin: User) -> list[User]:
     if admin.company_id is None:
         return []
     return await user_crud.get_users_by_company_id(db, admin.company_id)
+
+
+async def leave_company(db: AsyncSession, user: User) -> User:
+    if user.company_id is None:
+        raise NotInCompanyException()
+    if user.role == UserRole.COMPANY_ADMIN:
+        count = await user_crud.count_company_admins_in_company(db, user.company_id)
+        if count <= 1:
+            raise LastCompanyAdminException()
+        user.role = UserRole.CUSTOMER
+    user.company_id = None
+    await db.commit()
+    await db.refresh(user)
+    return user
 
 
 async def remove_company_member(

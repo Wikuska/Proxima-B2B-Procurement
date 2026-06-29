@@ -4,6 +4,7 @@ import {
   getCompanyMembers,
   getMyCompanyRequests,
   getPendingCompanyRequests,
+  leaveCompany,
   rejectCompanyRequest,
   removeCompanyMember,
   submitCompanyRequest,
@@ -61,6 +62,17 @@ export const useRemoveCompanyMember = () => {
     mutationFn: (userId: string) => removeCompanyMember(userId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["company-members"] });
+    },
+  });
+};
+
+export const useLeaveCompany = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: leaveCompany,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["me"] });
+      queryClient.invalidateQueries({ queryKey: ["company-requests", "me"] });
     },
   });
 };

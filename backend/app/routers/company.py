@@ -70,6 +70,15 @@ async def reject_request(
     return await company_service.review_request(db, admin, request_id, approve=False)
 
 
+@router.delete("/me/affiliation", response_model=MessageOut)
+async def leave_company(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    await company_service.leave_company(db, user)
+    return MessageOut(message="You have left the company")
+
+
 @router.get("/members", response_model=list[CompanyMemberOut])
 async def list_members(
     admin: User = Depends(require_company_admin),

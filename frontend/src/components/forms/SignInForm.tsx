@@ -6,7 +6,7 @@ import { signInUser } from "../../api/auth";
 import { useAuthStore } from "../../store/authStore";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "../../api/client";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -18,6 +18,7 @@ export default function SignInForm({ onSwitchToSignUp }: SignInFormProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const setToken = useAuthStore((state) => state.setToken);
+  const queryClient = useQueryClient();
 
   const {
     register,
@@ -33,6 +34,8 @@ export default function SignInForm({ onSwitchToSignUp }: SignInFormProps) {
     onSuccess: (data) => {
       // Store only the token — identity/role come from GET /auth/me.
       setToken(data.access_token);
+      // Discard any cached profile so the next render fetches the new user.
+      queryClient.removeQueries({ queryKey: ["me"] });
       const from = (location.state as { from?: string })?.from || "/";
       navigate(from, { replace: true });
     },
