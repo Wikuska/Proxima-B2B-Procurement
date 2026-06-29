@@ -58,3 +58,19 @@ export const removeCompanyMember = (userId: string) =>
   apiFetch<{ message: string }>(`/companies/members/${userId}`, {
     method: "DELETE",
   });
+
+export const leaveCompany = () =>
+  apiFetch<{ message: string }>("/companies/me/affiliation", {
+    method: "DELETE",
+  });
+
+export interface CompanyAffiliation {
+  company_name: string;
+  company_nip: string;
+  discount_percentage: string;
+  role: "CUSTOMER" | "COMPANY_ADMIN" | "ADMIN";
+  joined_at: string | null;
+}
+
+export const getMyAffiliation = () =>
+  apiFetch<CompanyAffiliation>("/companies/me");

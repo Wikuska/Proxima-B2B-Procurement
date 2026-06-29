@@ -1,18 +1,26 @@
 import { useState, useRef, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, NavLink, useLocation } from "react-router-dom";
 import { ShoppingCart } from "lucide-react";
 import { useCategories } from "../../hooks/catalog/categories";
-import { useAuth } from "../../hooks/user/useAuth";
 import RoleGuard from "../common/RoleGuard";
 import NavAuthButtons from "./NavAuthButtons";
 import NavCategoryMenu from "./NavCategoryMenu";
+import NavRegionMenu from "./NavRegionMenu";
+
+const navLinkClass = ({ isActive }: { isActive: boolean }) =>
+  `py-2 border-b-2 transition-colors ${
+    isActive
+      ? "text-accent border-accent"
+      : "text-text-main/80 border-transparent hover:text-accent"
+  }`;
 
 export default function NavBar() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const { data: categories, isLoading, isError, refetch } = useCategories();
-  const { isAuthenticated, user } = useAuth();
+  const location = useLocation();
+  const isCatalogActive = location.pathname.startsWith("/catalog");
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -38,12 +46,9 @@ export default function NavBar() {
         </Link>
 
         <nav className="hidden md:flex items-center gap-8 text-sm font-medium h-full">
-          <Link
-            to="/"
-            className="text-accent border-b-2 border-accent py-2 transition-colors"
-          >
+          <NavLink to="/" end className={navLinkClass}>
             Home
-          </Link>
+          </NavLink>
 
           <div className="relative flex items-center h-full" ref={dropdownRef}>
             {isError ? (
@@ -59,7 +64,11 @@ export default function NavBar() {
               <button
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 disabled={isLoading}
-                className="hover:text-accent text-text-main/80 transition-colors py-2 border-b-2 border-transparent flex items-center gap-1 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className={`transition-colors py-2 border-b-2 flex items-center gap-1 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+                  isCatalogActive
+                    ? "text-accent border-accent"
+                    : "text-text-main/80 border-transparent hover:text-accent"
+                }`}
               >
                 {isLoading ? "Loading..." : "Categories"}
                 {!isLoading && (
@@ -80,33 +89,18 @@ export default function NavBar() {
             )}
           </div>
 
-          <Link
-            to="/contact"
-            className="hover:text-accent text-text-main/80 transition-colors py-2 border-b-2 border-transparent"
-          >
+          <NavLink to="/contact" className={navLinkClass}>
             Contact
-          </Link>
+          </NavLink>
 
           <RoleGuard allow={["COMPANY_ADMIN", "ADMIN"]}>
-            <Link
-              to="/company"
-              className="hover:text-accent text-text-main/80 transition-colors py-2 border-b-2 border-transparent"
-            >
+            <NavLink to="/company" className={navLinkClass}>
               Company
-            </Link>
+            </NavLink>
           </RoleGuard>
-
-          {isAuthenticated && user?.company_id == null && (
-            <Link
-              to="/join-company"
-              className="hover:text-accent text-text-main/80 transition-colors py-2 border-b-2 border-transparent"
-            >
-              Join a company
-            </Link>
-          )}
         </nav>
 
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-6 h-full">
           <Link
             to="/cart"
             className="relative p-2 text-text-main/80 hover:text-accent transition-colors flex items-center justify-center"
@@ -116,6 +110,8 @@ export default function NavBar() {
               0
             </span>
           </Link>
+
+          <NavRegionMenu isDisabled={true} />
 
           <div className="flex items-center gap-4 border-l border-border-base/40 pl-6 h-6">
             <NavAuthButtons />

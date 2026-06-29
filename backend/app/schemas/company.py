@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+from decimal import Decimal
 
 from app.models.enums import RequestStatus, UserRole
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field
@@ -44,6 +45,14 @@ class CompanyRequestOut(BaseModel):
 
 class CompanyRequestAdminOut(CompanyRequestOut):
     user: RequesterMini
+
+
+class CompanyAffiliationOut(BaseModel):
+    company_name: str
+    company_nip: str
+    discount_percentage: Decimal
+    role: UserRole
+    joined_at: datetime | None
 
 
 class CompanyMemberOut(BaseModel):

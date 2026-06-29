@@ -39,6 +39,10 @@ class User(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)  # Soft Delete
     hide_b2b_prompts: Mapped[bool] = mapped_column(Boolean, default=False)
 
+    company_joined_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

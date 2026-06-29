@@ -5,6 +5,7 @@ from app.database import get_db
 from app.models import User
 from app.schemas.common import MessageOut
 from app.schemas.company import (
+    CompanyAffiliationOut,
     CompanyMemberOut,
     CompanyRequestAdminOut,
     CompanyRequestCreate,
@@ -68,6 +69,23 @@ async def reject_request(
     db: AsyncSession = Depends(get_db),
 ):
     return await company_service.review_request(db, admin, request_id, approve=False)
+
+
+@router.get("/me", response_model=CompanyAffiliationOut)
+async def get_my_affiliation(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return await company_service.get_my_affiliation(db, user)
+
+
+@router.delete("/me/affiliation", response_model=MessageOut)
+async def leave_company(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    await company_service.leave_company(db, user)
+    return MessageOut(message="You have left the company")
 
 
 @router.get("/members", response_model=list[CompanyMemberOut])

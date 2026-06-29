@@ -8,13 +8,15 @@ from app.core.exceptions import (
     CompanyRequestNotFoundException,
     DuplicateCompanyRequestException,
     InsufficientPermissionsException,
+    LastCompanyAdminException,
+    NotInCompanyException,
     RequestAlreadyReviewedException,
     UserNotFoundException,
 )
 from app.crud import company as company_crud
 from app.crud import user as user_crud
 from app.models import CompanyRequest, User
-from app.models.enums import RequestStatus
+from app.models.enums import RequestStatus, UserRole
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
@@ -56,6 +58,17 @@ async def list_company_members(db: AsyncSession, admin: User) -> list[User]:
     return await user_crud.get_users_by_company_id(db, admin.company_id)
 
 
+async def leave_company(db: AsyncSession, user: User) -> User:
+    if user.company_id is None:
+        raise NotInCompanyException()
+    if user.role == UserRole.COMPANY_ADMIN:
+        count = await user_crud.count_company_admins_in_company(db, user.company_id)
+        if count <= 1:
+            raise LastCompanyAdminException()
+        user.role = UserRole.CUSTOMER
+    return await user_crud.set_user_company(db, user, None)
+
+
 async def remove_company_member(
     db: AsyncSession, admin: User, user_id: uuid.UUID
 ) -> User:
@@ -68,6 +81,21 @@ async def remove_company_member(
         raise CannotRemoveSelfException()
     await user_crud.set_user_company(db, target, None)
     return target
+
+
+async def get_my_affiliation(db: AsyncSession, user: User) -> dict:
+    if user.company_id is None:
+        raise NotInCompanyException()
+    company = await company_crud.get_company_by_id(db, user.company_id)
+    if company is None:
+        raise NotInCompanyException()
+    return {
+        "company_name": company.name,
+        "company_nip": company.nip,
+        "discount_percentage": company.discount_percentage,
+        "role": user.role,
+        "joined_at": user.company_joined_at,
+    }
 
 
 async def review_request(

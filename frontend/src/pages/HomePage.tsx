@@ -13,13 +13,10 @@ export default function HomePage() {
             <h1 className="text-3xl md:text-4xl font-extrabold text-text-main mb-4 leading-tight">
               Highest Quality Accessories & Equipment for Laboratories
             </h1>
-            <p className="text-base md:text-lg text-text-main/80 mb-6 font-medium">
+            <p className="text-base md:text-lg text-text-main/80  font-medium">
               We offer both essential hobbyist tools and advanced, certified
               professional equipment tailored to your needs.
             </p>
-            <button className="bg-accent hover:bg-accent/90 text-white font-bold px-6 py-3 rounded-lg text-sm uppercase tracking-wider transition-colors shadow-md">
-              Learn More
-            </button>
           </div>
         </div>
       </section>

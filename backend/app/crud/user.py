@@ -1,7 +1,9 @@
 import uuid
+from datetime import datetime, timezone
 
 from app.models import User
-from sqlalchemy import select
+from app.models.enums import UserRole
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
@@ -32,6 +34,8 @@ async def mark_user_as_verified(
     """Marks a user's email as verified and assigns B2B company if matched."""
     user.is_verified = True
     user.company_id = company_id
+    if company_id is not None:
+        user.company_joined_at = datetime.now(timezone.utc)
     await db.commit()
     await db.refresh(user)
     return user
@@ -41,6 +45,7 @@ async def set_user_company(
     db: AsyncSession, user: User, company_id: uuid.UUID | None
 ) -> User:
     user.company_id = company_id
+    user.company_joined_at = datetime.now(timezone.utc) if company_id is not None else None
     await db.commit()
     await db.refresh(user)
     return user
@@ -53,3 +58,15 @@ async def get_users_by_company_id(
         select(User).where(User.company_id == company_id)
     )
     return list(result.scalars().all())
+
+
+async def count_company_admins_in_company(
+    db: AsyncSession, company_id: uuid.UUID
+) -> int:
+    result = await db.execute(
+        select(func.count()).where(
+            User.company_id == company_id,
+            User.role == UserRole.COMPANY_ADMIN,
+        )
+    )
+    return result.scalar_one()

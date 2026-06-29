@@ -4,15 +4,17 @@ import MainLayout from "./layouts/MainLayout";
 import {
   AuthPage,
   CompanyPage,
+  ContactPage,
   HomePage,
-  JoinCompanyPage,
   ProductDetailsPage,
   ProductsPage,
+  ProfilePage,
   VerifyEmailPage,
 } from "./pages";
 import CompanyMembersTab from "./pages/company/CompanyMembersTab";
 import CompanyOrdersTab from "./pages/company/CompanyOrdersTab";
 import JoinRequestsTab from "./pages/company/JoinRequestsTab";
+import CompanyAffiliationTab from "./pages/profile/CompanyAffiliationTab";
 
 export default function App() {
   return (
@@ -24,14 +26,18 @@ export default function App() {
         <Route path="/catalog" element={<ProductsPage />} />
         <Route path="/catalog/:categorySlug" element={<ProductsPage />} />
         <Route path="/product/:productSlug" element={<ProductDetailsPage />} />
+        <Route path="/contact" element={<ContactPage />} />
         <Route
-          path="/join-company"
+          path="/profile"
           element={
             <ProtectedRoute>
-              <JoinCompanyPage />
+              <ProfilePage />
             </ProtectedRoute>
           }
-        />
+        >
+          <Route index element={<Navigate to="company-affiliation" replace />} />
+          <Route path="company-affiliation" element={<CompanyAffiliationTab />} />
+        </Route>
         <Route
           path="/company"
           element={

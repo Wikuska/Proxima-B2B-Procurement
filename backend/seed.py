@@ -5,10 +5,11 @@ Run from backend/ directory: python -m app.seeds.seed_catalog
 
 import asyncio
 import uuid
+from datetime import datetime, timezone
 from decimal import Decimal
 
 from app.database import AsyncSessionLocal
-from app.models import Category, Company, Product, ProductVolumeDiscount, User, UserRole
+from app.models import Category, Company, CompanyRequest, Product, ProductVolumeDiscount, User, UserRole
 from pwdlib import PasswordHash
 from sqlalchemy import delete
 
@@ -515,6 +516,7 @@ async def seed():
         await db.execute(delete(ProductVolumeDiscount))
         await db.execute(delete(Product))
         await db.execute(delete(Category))
+        await db.execute(delete(CompanyRequest))
         await db.execute(delete(User))
         await db.execute(delete(Company))
         await db.commit()
@@ -572,6 +574,7 @@ async def seed():
                 is_verified=True,
                 is_active=True,
                 company_id=acme_company_id,
+                company_joined_at=datetime(2024, 1, 15, tzinfo=timezone.utc),
             ),
             # B2B Buyer
             User(
@@ -583,6 +586,7 @@ async def seed():
                 is_verified=True,
                 is_active=True,
                 company_id=acme_company_id,
+                company_joined_at=datetime(2024, 3, 10, tzinfo=timezone.utc),
             ),
         ]
 
