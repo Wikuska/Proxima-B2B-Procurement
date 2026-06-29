@@ -32,6 +32,10 @@ class ProductVolumeDiscountOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class ProductSnapshotOut(ProductListOut):
+    is_active: bool
+
+
 class ProductDetailsOut(ProductListOut):
     description: str | None
     is_active: bool

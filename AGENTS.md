@@ -48,6 +48,12 @@ volume-based discounts, email double opt-in, and company verification via NIP.
 - Frontend data fetching goes through `apiFetch` (`src/api/client.ts`) — it injects the JWT and
   handles 401. Don't call `fetch` directly. Server state lives in TanStack Query; only auth/token
   state lives in Zustand.
+- **Exception — cart store**: `src/store/cartStore.ts` is a deliberate second Zustand store.
+  It holds `{ product_id, quantity, selected }` items and persists to localStorage for guests.
+  For authenticated users, mutations call the API and replace store state with the authoritative
+  server response; localStorage is not written (partialize returns empty items when a token
+  exists). This is a conscious trade-off: cart needs to survive page refresh for guests and be
+  globally accessible without prop-drilling, which React Query alone cannot provide.
 
 ## Workflow
 - Build features as **vertical slices**, one section at a time, in this order: **API →

@@ -1,14 +1,34 @@
 import { ShoppingCart } from "lucide-react";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
 import { type ProductListOut } from "../../api/catalog";
+import { useCartActions } from "../../hooks/cart/useCartActions";
+import { useAuth } from "../../hooks/user/useAuth";
 
 interface ProductCardProps {
   product: ProductListOut;
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
-  const { id, name, slug, sku, base_price, is_b2b_only, main_image_url } =
+  const { id, name, slug, sku, base_price, is_b2b_only, main_image_url, stock_quantity } =
     product;
+  const { user } = useAuth();
+  const { add, pendingProductIds } = useCartActions();
+  const isPending = pendingProductIds.has(id);
+  const b2bBlocked = is_b2b_only && !user?.company_id;
+
+  const handleQuickAdd = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (b2bBlocked) {
+      toast.error("Available to company accounts only");
+      return;
+    }
+    if (stock_quantity <= 0) {
+      toast.error("Out of stock");
+      return;
+    }
+    add(id, 1);
+  };
 
   return (
     <div className="group flex flex-col bg-bg-surface border border-border-base/20 rounded-2xl overflow-hidden hover:shadow-xl hover:border-accent/30 transition-all duration-300">
@@ -54,12 +74,10 @@ export default function ProductCard({ product }: ProductCardProps) {
             ${Number(base_price).toFixed(2)}
           </span>
           <button
-            className="bg-bg-base border border-border-base hover:border-accent hover:bg-accent hover:text-white text-text-main p-2 rounded-lg transition-all"
+            className="bg-bg-base border border-border-base hover:border-accent hover:bg-accent hover:text-white text-text-main p-2 rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
             aria-label="Add to cart"
-            onClick={(e) => {
-              e.preventDefault();
-              console.log("Added to cart:", id);
-            }}
+            disabled={isPending || b2bBlocked || stock_quantity <= 0}
+            onClick={handleQuickAdd}
           >
             <ShoppingCart size={18} />
           </button>

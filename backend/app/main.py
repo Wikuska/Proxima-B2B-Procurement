@@ -1,5 +1,6 @@
 from app.core.exceptions import AppException
 from app.routers.auth import router as auth_router
+from app.routers.cart import router as cart_router
 from app.routers.catalog import router as catalog_router
 from app.routers.company import router as company_router
 from fastapi import FastAPI, Request
@@ -9,6 +10,7 @@ from fastapi.responses import JSONResponse
 app = FastAPI(title="Proxima B2B Procurement API", version="1.0.0")
 
 app.include_router(auth_router)
+app.include_router(cart_router)
 app.include_router(catalog_router)
 app.include_router(company_router)
 
