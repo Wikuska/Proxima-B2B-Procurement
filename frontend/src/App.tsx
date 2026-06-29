@@ -3,6 +3,7 @@ import ProtectedRoute from "./components/common/ProtectedRoute";
 import MainLayout from "./layouts/MainLayout";
 import {
   AuthPage,
+  CartPage,
   CompanyPage,
   ContactPage,
   HomePage,
@@ -26,6 +27,7 @@ export default function App() {
         <Route path="/catalog" element={<ProductsPage />} />
         <Route path="/catalog/:categorySlug" element={<ProductsPage />} />
         <Route path="/product/:productSlug" element={<ProductDetailsPage />} />
+        <Route path="/cart" element={<CartPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route
           path="/profile"

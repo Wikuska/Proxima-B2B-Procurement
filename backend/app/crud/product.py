@@ -1,3 +1,5 @@
+import uuid
+
 from app.models import Category, Product
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -29,6 +31,22 @@ async def get_active_products(
     items = result.all()
 
     return items, total
+
+
+async def get_product_by_id(db: AsyncSession, product_id: uuid.UUID) -> Product | None:
+    stmt = select(Product).where(Product.id == product_id)
+    result = await db.execute(stmt)
+    return result.scalar_one_or_none()
+
+
+async def get_products_by_ids(
+    db: AsyncSession, ids: list[uuid.UUID]
+) -> list[Product]:
+    if not ids:
+        return []
+    stmt = select(Product).where(Product.id.in_(ids))
+    result = await db.scalars(stmt)
+    return list(result.all())
 
 
 async def get_product_by_slug(db: AsyncSession, slug: str) -> Product | None:

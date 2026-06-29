@@ -107,3 +107,18 @@ class NotInCompanyException(AppException):
 class LastCompanyAdminException(AppException):
     status_code = 409
     detail = "You are the only company admin. Assign the company admin role to another member before leaving the company."
+
+
+class ProductUnavailableException(AppException):
+    status_code = 400
+    detail = "This product is not available"
+
+
+class B2BRestrictedException(AppException):
+    status_code = 403
+    detail = "This product is available to company accounts only"
+
+
+class InsufficientStockException(AppException):
+    status_code = 400
+    detail = "Requested quantity exceeds available stock"

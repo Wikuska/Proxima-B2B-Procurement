@@ -1,5 +1,9 @@
+import uuid
+
+from app.crud import product as product_crud
 from app.database import get_db
 from app.schemas import CategoryOut, PaginatedProductListOut, ProductDetailsOut
+from app.schemas.product import ProductSnapshotOut
 from app.services import catalog as catalog_service
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -39,6 +43,19 @@ async def get_all_products(
     return await catalog_service.fetch_products_for_catalog(
         db, search_query=search_query, page=page, size=size
     )
+
+
+@router.get("/products/batch", response_model=list[ProductSnapshotOut])
+async def get_products_batch(
+    ids: str = Query(..., description="Comma-separated list of product UUIDs"),
+    db: AsyncSession = Depends(get_db),
+):
+    """Returns product snapshots for the given IDs, including inactive ones (for guest cart hydration)."""
+    try:
+        parsed_ids = [uuid.UUID(i.strip()) for i in ids.split(",") if i.strip()]
+    except ValueError:
+        return []
+    return await product_crud.get_products_by_ids(db, parsed_ids)
 
 
 @router.get("/products/{product_slug}", response_model=ProductDetailsOut)

@@ -1,7 +1,9 @@
 import { Outlet } from "react-router-dom";
 import NavBar from "../components/nav/NavBar";
+import { useCartSync } from "../hooks/cart/useCartSync";
 
 export default function MainLayout() {
+  useCartSync();
   return (
     <div className="min-h-screen bg-bg-base text-text-main flex flex-col font-sans">
       <NavBar />

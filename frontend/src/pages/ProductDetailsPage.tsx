@@ -103,10 +103,13 @@ export default function ProductDetailsPage() {
             </div>
           </div>
 
-          <AddToCart
-            stock={product.stock_quantity}
-            disabled={!product.is_active || product.stock_quantity <= 0}
-          />
+          {product.is_active && (
+            <AddToCart
+              productId={product.id}
+              stock={product.stock_quantity}
+              isB2bOnly={product.is_b2b_only}
+            />
+          )}
         </div>
       </div>
 

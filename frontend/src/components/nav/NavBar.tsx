@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { ShoppingCart } from "lucide-react";
 import { useCategories } from "../../hooks/catalog/categories";
+import { useCartView } from "../../hooks/cart/useCartView";
+import CartDropdown from "../cart/CartDropdown";
 import RoleGuard from "../common/RoleGuard";
 import NavAuthButtons from "./NavAuthButtons";
 import NavCategoryMenu from "./NavCategoryMenu";
@@ -16,11 +18,16 @@ const navLinkClass = ({ isActive }: { isActive: boolean }) =>
 
 export default function NavBar() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const cartRef = useRef<HTMLDivElement>(null);
 
   const { data: categories, isLoading, isError, refetch } = useCategories();
+  const { lines } = useCartView();
   const location = useLocation();
   const isCatalogActive = location.pathname.startsWith("/catalog");
+
+  const cartItemCount = lines.length;
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -30,9 +37,25 @@ export default function NavBar() {
       ) {
         setIsDropdownOpen(false);
       }
+      if (
+        cartRef.current &&
+        !cartRef.current.contains(event.target as Node)
+      ) {
+        setIsCartOpen(false);
+      }
+    }
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsDropdownOpen(false);
+        setIsCartOpen(false);
+      }
     }
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
   }, []);
 
   return (
@@ -101,15 +124,25 @@ export default function NavBar() {
         </nav>
 
         <div className="flex items-center gap-6 h-full">
-          <Link
-            to="/cart"
-            className="relative p-2 text-text-main/80 hover:text-accent transition-colors flex items-center justify-center"
-          >
-            <ShoppingCart size={22} strokeWidth={2} />
-            <span className="absolute top-0 right-0 bg-accent text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
-              0
-            </span>
-          </Link>
+          <div className="relative" ref={cartRef}>
+            <button
+              onClick={() => setIsCartOpen((prev) => !prev)}
+              aria-haspopup="true"
+              aria-expanded={isCartOpen}
+              aria-label="Open cart"
+              className="relative p-2 text-text-main/80 hover:text-accent transition-colors flex items-center justify-center"
+            >
+              <ShoppingCart size={22} strokeWidth={2} />
+              {cartItemCount > 0 && (
+                <span className="absolute top-0 right-0 bg-accent text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                  {cartItemCount}
+                </span>
+              )}
+            </button>
+            {isCartOpen && (
+              <CartDropdown onClose={() => setIsCartOpen(false)} />
+            )}
+          </div>
 
           <NavRegionMenu isDisabled={true} />
 
