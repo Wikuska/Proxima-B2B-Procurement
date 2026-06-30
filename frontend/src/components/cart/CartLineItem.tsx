@@ -1,9 +1,10 @@
-import { useState } from "react";
-import { Minus, Plus, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { UNAVAILABLE_REASON_LABEL } from "../../utils/cartEligibility";
 import type { CartLineItem as CartLine } from "../../hooks/cart/useCartView";
 import type { LinePricingOut } from "../../api/pricing";
+import ProductImage from "../product/ProductImage";
+import QuantityStepper from "../product/QuantityStepper";
 
 interface CartLineItemProps {
   line: CartLine;
@@ -40,28 +41,6 @@ export default function CartLineItem({
     unavailableReason,
   } = line;
 
-  const [inputValue, setInputValue] = useState(String(quantity));
-  const [prevQuantity, setPrevQuantity] = useState(quantity);
-
-  if (quantity !== prevQuantity) {
-    setPrevQuantity(quantity);
-    setInputValue(String(quantity));
-  }
-
-  const commitQty = () => {
-    const parsed = parseInt(inputValue, 10);
-    if (isNaN(parsed) || parsed < 1) {
-      onSetQty(product_id, 1);
-      setInputValue("1");
-    } else if (parsed > stock_quantity) {
-      onSetQty(product_id, stock_quantity);
-      setInputValue(String(stock_quantity));
-    } else {
-      onSetQty(product_id, parsed);
-      setInputValue(String(parsed));
-    }
-  };
-
   const companyPct = pricingLine ? Number(pricingLine.company_pct) : 0;
   const volumePct = pricingLine ? Number(pricingLine.volume_pct) : 0;
   const priceAfterCompany = pricingLine
@@ -97,23 +76,12 @@ export default function CartLineItem({
           />
         </div>
       )}
-      <div
-        className={`flex-shrink-0 rounded-lg border border-border-base/20 bg-bg-surface flex items-center justify-center overflow-hidden ${
-          compact ? "w-16 h-16 p-1.5" : "w-24 h-24 p-2"
-        }`}
-      >
-        {main_image_url ? (
-          <img
-            src={main_image_url}
-            alt={name}
-            className="w-full h-full object-contain mix-blend-multiply"
-          />
-        ) : (
-          <span className="text-[10px] text-text-muted text-center leading-tight px-1">
-            No image
-          </span>
-        )}
-      </div>
+      <ProductImage
+        src={main_image_url}
+        alt={name}
+        compact={compact}
+        className={`flex-shrink-0 ${compact ? "w-16" : "w-24"}`}
+      />
       <div
         className={`flex flex-1 min-w-0 justify-between items-center ${
           compact ? "gap-2" : "gap-4"
@@ -199,40 +167,13 @@ export default function CartLineItem({
             compact ? "flex-col items-end gap-2" : "items-center gap-6"
           }`}
         >
-          <div
-            className={`flex items-center border border-border-base/30 rounded-lg overflow-hidden ${
-              compact ? "h-8" : "h-9"
-            }`}
-          >
-            <button
-              onClick={() => onSetQty(product_id, quantity - 1)}
-              disabled={!available || quantity <= 1 || isPending}
-              className="px-2.5 h-full bg-bg-surface hover:bg-border-base/10 disabled:opacity-40 transition-colors flex items-center justify-center"
-            >
-              <Minus size={14} />
-            </button>
-            <input
-              type="text"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              value={inputValue}
-              disabled={!available || isPending}
-              onChange={(e) => setInputValue(e.target.value.replace(/\D/g, ""))}
-              onBlur={commitQty}
-              onKeyDown={(e) => e.key === "Enter" && commitQty()}
-              className={`h-full font-mono border-x border-border-base/30 text-center bg-bg-surface focus:outline-none focus:bg-accent/5 disabled:opacity-40 ${
-                compact ? "w-10 text-sm" : "w-12 text-base"
-              }`}
-              aria-label="Quantity"
-            />
-            <button
-              onClick={() => onSetQty(product_id, quantity + 1)}
-              disabled={!available || quantity >= stock_quantity || isPending}
-              className="px-2.5 h-full bg-bg-surface hover:bg-border-base/10 disabled:opacity-40 transition-colors flex items-center justify-center"
-            >
-              <Plus size={14} />
-            </button>
-          </div>
+          <QuantityStepper
+            value={quantity}
+            max={stock_quantity}
+            disabled={!available || isPending}
+            size={compact ? "sm" : "md"}
+            onChange={(qty) => onSetQty(product_id, qty)}
+          />
           <div className={`flex items-center ${compact ? "gap-2" : "gap-4"}`}>
             <div className={`flex flex-col items-end ${compact ? "" : "w-28"}`}>
               {hasDiscount && !compact && (

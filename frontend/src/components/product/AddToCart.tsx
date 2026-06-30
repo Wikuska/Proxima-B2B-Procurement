@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { useCartActions } from "../../hooks/cart/useCartActions";
 import { useCartStore } from "../../store/cartStore";
 import { useAuth } from "../../hooks/user/useAuth";
+import QuantityStepper from "./QuantityStepper";
 
 interface AddToCartProps {
   productId: string;
@@ -21,20 +22,6 @@ export default function AddToCart({ productId, stock, isB2bOnly }: AddToCartProp
 
   const [quantity, setQuantity] = useState<number>(1);
 
-  const handleDecrement = () => setQuantity((prev) => Math.max(1, prev - 1));
-  const handleIncrement = () => setQuantity((prev) => Math.min(maxAddable, prev + 1));
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value, 10);
-    if (isNaN(value) || value < 1) {
-      setQuantity(1);
-    } else if (value > maxAddable) {
-      setQuantity(maxAddable);
-    } else {
-      setQuantity(value);
-    }
-  };
-
   const handleAddToCart = async () => {
     if (b2bBlocked) {
       toast.error("Available to company accounts only");
@@ -50,37 +37,14 @@ export default function AddToCart({ productId, stock, isB2bOnly }: AddToCartProp
   return (
     <div className="flex flex-wrap items-end gap-4 mt-2 bg-bg-surface p-5 border border-border-base/20 rounded-xl">
       <div className="flex flex-col gap-2">
-        <label htmlFor="quantity" className="text-xs font-medium text-text-muted">
-          Quantity:
-        </label>
-        <div className="flex items-center border border-border-base/40 rounded-lg overflow-hidden h-12 bg-bg-surface">
-          <button
-            type="button"
-            onClick={handleDecrement}
-            disabled={quantity <= 1 || disabled || isPending}
-            className="px-4 h-full bg-bg-base hover:bg-accent/10 disabled:opacity-50 transition-colors font-medium"
-          >
-            -
-          </button>
-          <input
-            id="quantity"
-            type="number"
-            min="1"
-            max={maxAddable}
-            value={quantity}
-            onChange={handleInputChange}
-            disabled={disabled || isPending}
-            className="w-14 text-center h-full border-x border-border-base/40 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none font-mono"
-          />
-          <button
-            type="button"
-            onClick={handleIncrement}
-            disabled={quantity >= maxAddable || disabled || isPending}
-            className="px-4 h-full bg-bg-base hover:bg-accent/10 disabled:opacity-50 transition-colors font-medium"
-          >
-            +
-          </button>
-        </div>
+        <label className="text-xs font-medium text-text-muted">Quantity:</label>
+        <QuantityStepper
+          value={quantity}
+          max={maxAddable}
+          disabled={disabled || isPending}
+          onChange={setQuantity}
+          size="lg"
+        />
       </div>
 
       <button

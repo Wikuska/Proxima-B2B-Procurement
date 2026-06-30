@@ -5,6 +5,7 @@ import { type ProductListOut } from "../../api/catalog";
 import { useCartActions } from "../../hooks/cart/useCartActions";
 import { useAuth } from "../../hooks/user/useAuth";
 import { usePurchaseMode } from "../../store/purchaseModeStore";
+import ProductImage from "../product/ProductImage";
 
 interface ProductCardProps {
   product: ProductListOut;
@@ -53,20 +54,10 @@ export default function ProductCard({ product }: ProductCardProps) {
     <div className="group flex flex-col bg-bg-surface border border-border-base/20 rounded-2xl overflow-hidden hover:shadow-xl hover:border-accent/30 transition-all duration-300">
       <Link
         to={`/product/${slug}`}
-        className="relative aspect-square bg-white p-4 flex items-center justify-center border-b border-border-base/10 block overflow-hidden"
+        className="relative bg-white p-4 border-b border-border-base/10 block overflow-hidden"
       >
-        <div className="w-40 h-40 flex items-center justify-center group-hover:scale-105 transition-transform duration-500">
-          {main_image_url ? (
-            <img
-              src={main_image_url}
-              alt={`Photo of ${name}`}
-              className="w-full h-full object-contain"
-            />
-          ) : (
-            <div className="w-32 h-32 bg-gray-100 rounded-full flex items-center justify-center text-gray-400">
-              No Image
-            </div>
-          )}
+        <div className="group-hover:scale-105 transition-transform duration-500">
+          <ProductImage src={main_image_url} alt={`Photo of ${name}`} />
         </div>
 
         {is_b2b_only && (
