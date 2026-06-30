@@ -16,6 +16,8 @@ export interface ProductListOut {
   stock_quantity: number;
   main_image_url: string | null;
   is_b2b_only: boolean;
+  company_discount_percentage: string | null;
+  company_unit_price: string | null;
 }
 
 export interface PaginatedProductListOut {

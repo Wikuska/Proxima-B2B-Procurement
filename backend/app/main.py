@@ -3,6 +3,7 @@ from app.routers.auth import router as auth_router
 from app.routers.cart import router as cart_router
 from app.routers.catalog import router as catalog_router
 from app.routers.company import router as company_router
+from app.routers.pricing import router as pricing_router
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -13,6 +14,7 @@ app.include_router(auth_router)
 app.include_router(cart_router)
 app.include_router(catalog_router)
 app.include_router(company_router)
+app.include_router(pricing_router)
 
 app.add_middleware(
     CORSMiddleware,

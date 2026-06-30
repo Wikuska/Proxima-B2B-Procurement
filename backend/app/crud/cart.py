@@ -11,6 +11,7 @@ async def get_cart_items(db: AsyncSession, user_id: uuid.UUID) -> list[CartItem]
         select(CartItem)
         .where(CartItem.user_id == user_id)
         .options(selectinload(CartItem.product))
+        .order_by(CartItem.added_at, CartItem.id)
     )
     result = await db.scalars(stmt)
     return list(result.all())

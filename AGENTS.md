@@ -54,6 +54,12 @@ volume-based discounts, email double opt-in, and company verification via NIP.
   server response; localStorage is not written (partialize returns empty items when a token
   exists). This is a conscious trade-off: cart needs to survive page refresh for guests and be
   globally accessible without prop-drilling, which React Query alone cannot provide.
+- **Exception — purchase mode store**: `src/store/purchaseModeStore.ts` is a deliberate third
+  Zustand store. It holds `mode: "COMPANY" | "PRIVATE"` and persists to localStorage. This is
+  a UI preference, not server state — it drives how pricing data is displayed (company vs. base
+  price) across the whole app (catalog, product page, cart). Only meaningful for users with a
+  `company_id`; the backend ignores mode when no company exists. React Query cannot satisfy
+  this because the preference is local and must outlive component mounts.
 
 ## Workflow
 - Build features as **vertical slices**, one section at a time, in this order: **API →

@@ -1,8 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { getCart, getProductsByIds } from "../../api/cart";
+import { usePurchaseMode } from "../../store/purchaseModeStore";
 import { useCartStore } from "../../store/cartStore";
 import { cartEligibility, type UnavailableReason } from "../../utils/cartEligibility";
 import { useAuth } from "../user/useAuth";
+import type { QuoteItem } from "../../api/pricing";
 
 export interface CartLineItem {
   product_id: string;
@@ -22,6 +24,7 @@ export interface CartLineItem {
 
 export function useCartView() {
   const { isAuthenticated, user } = useAuth();
+  const mode = usePurchaseMode();
   const storeItems = useCartStore((s) => s.items);
 
   const authQuery = useQuery({
@@ -45,7 +48,12 @@ export function useCartView() {
   if (isAuthenticated && authQuery.data) {
     lines = authQuery.data.map((item): CartLineItem => {
       const storeItem = storeItems.find((s) => s.product_id === item.product.id);
-      const { available, reason } = cartEligibility(item.product, user?.company_id, item.quantity);
+      const { available, reason } = cartEligibility(
+        item.product,
+        user?.company_id,
+        item.quantity,
+        mode,
+      );
       return {
         product_id: item.product.id,
         name: item.product.name,
@@ -64,12 +72,17 @@ export function useCartView() {
     });
   } else if (!isAuthenticated && guestQuery.data) {
     const productMap = new Map(guestQuery.data.map((p) => [p.id, p]));
-    lines = storeItems
-      .flatMap((storeItem): CartLineItem[] => {
-        const product = productMap.get(storeItem.product_id);
-        if (!product) return [];
-        const { available, reason } = cartEligibility(product, user?.company_id, storeItem.quantity);
-        return [{
+    lines = storeItems.flatMap((storeItem): CartLineItem[] => {
+      const product = productMap.get(storeItem.product_id);
+      if (!product) return [];
+      const { available, reason } = cartEligibility(
+        product,
+        user?.company_id,
+        storeItem.quantity,
+        mode,
+      );
+      return [
+        {
           product_id: product.id,
           name: product.name,
           slug: product.slug,
@@ -83,10 +96,17 @@ export function useCartView() {
           selected: storeItem.selected,
           available,
           unavailableReason: reason,
-        }];
-      });
+        },
+      ];
+    });
   }
 
+  const quoteItems: QuoteItem[] = lines.map((l) => ({
+    product_id: l.product_id,
+    quantity: l.quantity,
+  }));
+
+  // Fallback subtotals using base_price (used before quote resolves)
   const availableSubtotal = lines
     .filter((l) => l.available)
     .reduce((sum, l) => sum + l.base_price * l.quantity, 0);
@@ -95,5 +115,5 @@ export function useCartView() {
     .filter((l) => l.available && l.selected)
     .reduce((sum, l) => sum + l.base_price * l.quantity, 0);
 
-  return { lines, availableSubtotal, selectedSubtotal, isLoading, isError };
+  return { lines, quoteItems, availableSubtotal, selectedSubtotal, isLoading, isError };
 }

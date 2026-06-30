@@ -1,15 +1,12 @@
-import { type ProductVolumeDiscountOut } from "../../api/catalog";
+import type { PricingTierOut } from "../../api/pricing";
 
 interface VolumeDiscountsProps {
-  discounts: ProductVolumeDiscountOut[];
-  basePrice: number;
+  tiers: PricingTierOut[];
+  nextTierMinQty?: (index: number) => number | undefined;
 }
 
-export default function VolumeDiscounts({
-  discounts,
-  basePrice,
-}: VolumeDiscountsProps) {
-  if (!discounts || discounts.length === 0) {
+export default function VolumeDiscounts({ tiers }: VolumeDiscountsProps) {
+  if (!tiers || tiers.length === 0) {
     return (
       <div className="bg-bg-surface border border-border-base/10 rounded-xl p-6 text-text-muted text-sm text-center">
         This product does not have dedicated quantity discounts.
@@ -34,14 +31,11 @@ export default function VolumeDiscounts({
           </tr>
         </thead>
         <tbody className="divide-y divide-border-base/20 bg-white">
-          {discounts.map((discount, idx) => {
-            const pct = parseFloat(discount.discount_percentage);
-            const calculatedPrice = basePrice * (1 - pct / 100);
-
-            const nextDiscount = discounts[idx + 1];
-            const rangeText = nextDiscount
-              ? `${discount.min_quantity} - ${nextDiscount.min_quantity - 1} pcs.`
-              : `${discount.min_quantity}+ pcs.`;
+          {tiers.map((tier, idx) => {
+            const nextTier = tiers[idx + 1];
+            const rangeText = nextTier
+              ? `${tier.min_quantity} - ${nextTier.min_quantity - 1} pcs.`
+              : `${tier.min_quantity}+ pcs.`;
 
             return (
               <tr key={idx}>
@@ -49,10 +43,10 @@ export default function VolumeDiscounts({
                   {rangeText}
                 </td>
                 <td className="px-6 py-4 text-sm text-green-600 font-semibold text-center">
-                  -{pct}%
+                  -{Number(tier.discount_percentage).toFixed(0)}%
                 </td>
                 <td className="px-6 py-4 text-sm text-text-primary font-mono font-medium text-right">
-                  ${calculatedPrice.toFixed(2)}
+                  ${Number(tier.unit_price).toFixed(2)}
                 </td>
               </tr>
             );

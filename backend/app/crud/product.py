@@ -44,7 +44,11 @@ async def get_products_by_ids(
 ) -> list[Product]:
     if not ids:
         return []
-    stmt = select(Product).where(Product.id.in_(ids))
+    stmt = (
+        select(Product)
+        .where(Product.id.in_(ids))
+        .options(selectinload(Product.volume_discounts))
+    )
     result = await db.scalars(stmt)
     return list(result.all())
 

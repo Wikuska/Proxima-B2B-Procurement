@@ -4,18 +4,37 @@ import { toast } from "sonner";
 import { type ProductListOut } from "../../api/catalog";
 import { useCartActions } from "../../hooks/cart/useCartActions";
 import { useAuth } from "../../hooks/user/useAuth";
+import { usePurchaseMode } from "../../store/purchaseModeStore";
 
 interface ProductCardProps {
   product: ProductListOut;
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
-  const { id, name, slug, sku, base_price, is_b2b_only, main_image_url, stock_quantity } =
-    product;
+  const {
+    id,
+    name,
+    slug,
+    sku,
+    base_price,
+    is_b2b_only,
+    main_image_url,
+    stock_quantity,
+    company_discount_percentage,
+    company_unit_price,
+  } = product;
   const { user } = useAuth();
+  const mode = usePurchaseMode();
   const { add, pendingProductIds } = useCartActions();
   const isPending = pendingProductIds.has(id);
-  const b2bBlocked = is_b2b_only && !user?.company_id;
+
+  const showCompanyPrice =
+    mode === "COMPANY" &&
+    !!user?.company_id &&
+    !!company_unit_price &&
+    Number(company_discount_percentage) > 0;
+
+  const b2bBlocked = is_b2b_only && !(!!user?.company_id && mode === "COMPANY");
 
   const handleQuickAdd = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -58,9 +77,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       </Link>
 
       <div className="p-5 flex flex-col flex-1">
-        <span className="text-[11px] text-text-muted font-mono mb-1">
-          {sku}
-        </span>
+        <span className="text-[11px] text-text-muted font-mono mb-1">{sku}</span>
 
         <Link
           to={`/product/${slug}`}
@@ -70,9 +87,22 @@ export default function ProductCard({ product }: ProductCardProps) {
         </Link>
 
         <div className="mt-auto flex items-center justify-between">
-          <span className="text-lg font-bold text-text-main">
-            ${Number(base_price).toFixed(2)}
-          </span>
+          <div className="flex flex-col">
+            {showCompanyPrice ? (
+              <>
+                <span className="text-xs text-text-muted line-through font-mono">
+                  ${Number(base_price).toFixed(2)}
+                </span>
+                <span className="text-lg font-bold text-accent">
+                  ${Number(company_unit_price).toFixed(2)}
+                </span>
+              </>
+            ) : (
+              <span className="text-lg font-bold text-text-main">
+                ${Number(base_price).toFixed(2)}
+              </span>
+            )}
+          </div>
           <button
             className="bg-bg-base border border-border-base hover:border-accent hover:bg-accent hover:text-white text-text-main p-2 rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
             aria-label="Add to cart"
