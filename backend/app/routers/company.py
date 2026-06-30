@@ -3,6 +3,7 @@ import uuid
 from app.core.dependencies import get_current_user, require_company_admin
 from app.database import get_db
 from app.models import User
+from app.schemas.address import AddressIn, AddressOut
 from app.schemas.common import MessageOut
 from app.schemas.company import (
     CompanyAffiliationOut,
@@ -11,6 +12,7 @@ from app.schemas.company import (
     CompanyRequestCreate,
     CompanyRequestOut,
 )
+from app.services import address as address_service
 from app.services import company as company_service
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -104,3 +106,33 @@ async def remove_member(
 ):
     await company_service.remove_company_member(db, admin, user_id)
     return MessageOut(message="Member removed successfully")
+
+
+@router.get("/addresses", response_model=list[AddressOut])
+async def list_company_addresses(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return await address_service.list_company_addresses(db, user)
+
+
+@router.post(
+    "/addresses",
+    response_model=AddressOut,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_company_address(
+    payload: AddressIn,
+    admin: User = Depends(require_company_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    return await address_service.create_company_address(db, admin, payload)
+
+
+@router.delete("/addresses/{address_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_company_address(
+    address_id: uuid.UUID,
+    admin: User = Depends(require_company_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    await address_service.delete_company_address(db, admin, address_id)

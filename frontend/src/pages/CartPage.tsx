@@ -1,11 +1,14 @@
 import { ShoppingBag } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import CartLineItem from "../components/cart/CartLineItem";
 import { useCartActions } from "../hooks/cart/useCartActions";
 import { useCartView } from "../hooks/cart/useCartView";
 import { useCartQuote } from "../hooks/pricing/useCartQuote";
+import { useAuth } from "../hooks/user/useAuth";
 
 export default function CartPage() {
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   const { lines, quoteItems, isLoading, isError } = useCartView();
   const { setQty, remove, toggleSelect, pendingProductIds } = useCartActions();
   const { data: quote } = useCartQuote(quoteItems);
@@ -178,14 +181,23 @@ export default function CartPage() {
 
             <div className="pt-2">
               <button
-                disabled
-                className="w-full py-3.5 bg-primary text-white rounded-lg font-semibold opacity-40 cursor-not-allowed text-base transition-opacity shadow-sm"
+                disabled={selectedCount === 0}
+                onClick={() => {
+                  if (!isAuthenticated) {
+                    navigate("/auth", { state: { from: "/checkout" } });
+                  } else {
+                    navigate("/checkout");
+                  }
+                }}
+                className="w-full py-3.5 bg-primary text-white rounded-lg font-semibold text-base transition-opacity shadow-sm hover:bg-accent disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Proceed to Checkout
               </button>
-              <p className="text-xs text-text-muted text-center mt-3">
-                Checkout coming soon
-              </p>
+              {selectedCount === 0 && (
+                <p className="text-xs text-text-muted text-center mt-3">
+                  Select at least one available item
+                </p>
+              )}
             </div>
           </div>
         </div>

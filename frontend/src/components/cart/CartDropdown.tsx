@@ -1,5 +1,6 @@
 import { ShoppingBag } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../../hooks/user/useAuth";
 import { useCartActions } from "../../hooks/cart/useCartActions";
 import { useCartView } from "../../hooks/cart/useCartView";
 import { useCartQuote } from "../../hooks/pricing/useCartQuote";
@@ -10,6 +11,8 @@ interface CartDropdownProps {
 }
 
 export default function CartDropdown({ onClose }: CartDropdownProps) {
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   const { lines, quoteItems, availableSubtotal, isLoading, isError } =
     useCartView();
   const { setQty, remove, pendingProductIds } = useCartActions();
@@ -102,8 +105,15 @@ export default function CartDropdown({ onClose }: CartDropdownProps) {
               View cart
             </Link>
             <button
-              disabled
-              className="flex-1 py-2.5 text-sm font-semibold bg-primary text-white rounded-xl opacity-40 cursor-not-allowed shadow-sm"
+              onClick={() => {
+                onClose();
+                if (!isAuthenticated) {
+                  navigate("/auth", { state: { from: "/checkout" } });
+                } else {
+                  navigate("/checkout");
+                }
+              }}
+              className="flex-1 py-2.5 text-sm font-semibold bg-primary text-white rounded-xl hover:bg-accent transition-colors shadow-sm"
             >
               Checkout
             </button>

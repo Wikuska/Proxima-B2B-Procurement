@@ -1,7 +1,7 @@
 import uuid
 
 from app.models import Category, Product
-from sqlalchemy import func, or_, select
+from sqlalchemy import func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -51,6 +51,20 @@ async def get_products_by_ids(
     )
     result = await db.scalars(stmt)
     return list(result.all())
+
+
+async def try_decrement_stock(db: AsyncSession, product_id: uuid.UUID, qty: int) -> bool:
+    """Atomically decrements stock only when sufficient quantity is available.
+
+    Returns True on success, False when stock is insufficient (no partial update).
+    """
+    stmt = (
+        update(Product)
+        .where(Product.id == product_id, Product.stock_quantity >= qty)
+        .values(stock_quantity=Product.stock_quantity - qty)
+    )
+    result = await db.execute(stmt)
+    return result.rowcount > 0
 
 
 async def get_product_by_slug(db: AsyncSession, slug: str) -> Product | None:

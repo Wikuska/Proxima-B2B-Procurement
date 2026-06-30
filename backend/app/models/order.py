@@ -3,7 +3,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING, List
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, Numeric, String, UniqueConstraint, func
+from sqlalchemy import Boolean, CheckConstraint, DateTime, ForeignKey, Integer, Numeric, String, UniqueConstraint, func
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -11,6 +11,7 @@ from .base import Base
 from .enums import OrderStatus, PurchaseType
 
 if TYPE_CHECKING:
+    from .company import Company
     from .product import Product
     from .user import User
 
@@ -19,7 +20,12 @@ class Address(Base):
     __tablename__ = "addresses"
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
-    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
+    user_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=True
+    )
+    company_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("companies.id", ondelete="CASCADE"), nullable=True
+    )
 
     label: Mapped[str | None] = mapped_column(String(100))
     street: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -29,7 +35,15 @@ class Address(Base):
     is_default: Mapped[bool] = mapped_column(Boolean, default=False)
 
     # Relations
-    user: Mapped["User"] = relationship(back_populates="addresses")
+    user: Mapped["User | None"] = relationship(back_populates="addresses")
+    company: Mapped["Company | None"] = relationship(back_populates="shipping_addresses")
+
+    __table_args__ = (
+        CheckConstraint(
+            "(user_id IS NOT NULL)::int + (company_id IS NOT NULL)::int = 1",
+            name="ck_address_owner",
+        ),
+    )
 
 
 class CartItem(Base):
@@ -84,6 +98,10 @@ class Order(Base):
     # Relations
     user: Mapped["User"] = relationship(back_populates="orders")
     items: Mapped[List["OrderItem"]] = relationship(back_populates="order")
+
+    @property
+    def item_count(self) -> int:
+        return len(self.items)
 
 
 class OrderItem(Base):
