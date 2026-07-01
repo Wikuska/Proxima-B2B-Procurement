@@ -1,19 +1,26 @@
 import uuid
 
-from app.models.order import Order, OrderItem
+from app.models.order import BillingDocument, Order, OrderItem
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 
-async def create_order(db: AsyncSession, order: Order, items: list[OrderItem]) -> Order:
+async def create_order(
+    db: AsyncSession,
+    order: Order,
+    items: list[OrderItem],
+    billing_document: BillingDocument,
+) -> Order:
     db.add(order)
     await db.flush()
     for item in items:
         item.order_id = order.id
         db.add(item)
+    billing_document.order_id = order.id
+    db.add(billing_document)
     await db.flush()
-    await db.refresh(order, ["items"])
+    await db.refresh(order, ["items", "billing_document"])
     return order
 
 
@@ -21,7 +28,7 @@ async def get_orders_for_user(db: AsyncSession, user_id: uuid.UUID) -> list[Orde
     stmt = (
         select(Order)
         .where(Order.user_id == user_id)
-        .options(selectinload(Order.items))
+        .options(selectinload(Order.items), selectinload(Order.billing_document))
         .order_by(Order.created_at.desc())
     )
     result = await db.scalars(stmt)
@@ -32,7 +39,7 @@ async def get_order(db: AsyncSession, order_id: uuid.UUID, user_id: uuid.UUID) -
     stmt = (
         select(Order)
         .where(Order.id == order_id, Order.user_id == user_id)
-        .options(selectinload(Order.items))
+        .options(selectinload(Order.items), selectinload(Order.billing_document))
     )
     result = await db.execute(stmt)
     return result.scalar_one_or_none()

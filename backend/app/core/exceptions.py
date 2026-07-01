@@ -147,3 +147,18 @@ class InvoiceRequiresCompanyException(AppException):
 class OrderNotFoundException(AppException):
     status_code = 404
     detail = "Order not found"
+
+
+class InvalidBillingDataException(AppException):
+    status_code = 400
+    detail = "Missing required fields for the selected document type"
+
+
+class CompanyBillingAddressMissingException(AppException):
+    status_code = 400
+    detail = "Company has no billing address configured. Contact your company admin."
+
+
+class DuplicateBillingAddressException(AppException):
+    status_code = 409
+    detail = "Company already has a billing address. Delete the existing one first."

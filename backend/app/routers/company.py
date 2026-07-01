@@ -108,12 +108,20 @@ async def remove_member(
     return MessageOut(message="Member removed successfully")
 
 
-@router.get("/addresses", response_model=list[AddressOut])
-async def list_company_addresses(
+@router.get("/addresses/shipping", response_model=list[AddressOut])
+async def list_company_shipping_addresses(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    return await address_service.list_company_addresses(db, user)
+    return await address_service.list_company_shipping_addresses(db, user)
+
+
+@router.get("/addresses/billing", response_model=AddressOut | None)
+async def get_company_billing_address(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return await address_service.get_company_billing_address(db, user)
 
 
 @router.post(

@@ -1,7 +1,10 @@
 import apiFetch from "./client";
 
+export type AddressType = "SHIPPING" | "BILLING";
+
 export interface AddressOut {
   id: string;
+  address_type: AddressType;
   label: string | null;
   street: string;
   city: string;
@@ -11,6 +14,7 @@ export interface AddressOut {
 }
 
 export interface AddressIn {
+  address_type?: AddressType;
   label?: string;
   street: string;
   city: string;
@@ -29,8 +33,11 @@ export const deletePersonalAddress = (id: string): Promise<void> =>
   apiFetch<void>(`/addresses/${id}`, { method: "DELETE" });
 
 // Company addresses
-export const getCompanyAddresses = (): Promise<AddressOut[]> =>
-  apiFetch<AddressOut[]>("/companies/addresses");
+export const getCompanyShippingAddresses = (): Promise<AddressOut[]> =>
+  apiFetch<AddressOut[]>("/companies/addresses/shipping");
+
+export const getCompanyBillingAddress = (): Promise<AddressOut | null> =>
+  apiFetch<AddressOut | null>("/companies/addresses/billing");
 
 export const createCompanyAddress = (data: AddressIn): Promise<AddressOut> =>
   apiFetch<AddressOut>("/companies/addresses", { method: "POST", body: data });

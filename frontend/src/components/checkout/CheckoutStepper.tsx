@@ -1,14 +1,14 @@
 interface CheckoutStepperProps {
-  currentStep: 1 | 2;
+  currentStep: 1 | 2 | 3;
 }
 
-const STEPS = ["Document & Address", "Review Order"];
+const STEPS = ["Shipping", "Document", "Review"];
 
 export default function CheckoutStepper({ currentStep }: CheckoutStepperProps) {
   return (
     <ol className="flex items-center gap-0 mb-10">
       {STEPS.map((label, i) => {
-        const stepNum = (i + 1) as 1 | 2;
+        const stepNum = (i + 1) as 1 | 2 | 3;
         const isActive = stepNum === currentStep;
         const isDone = stepNum < currentStep;
         return (

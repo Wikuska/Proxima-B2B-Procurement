@@ -3,12 +3,12 @@ from datetime import datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING, List
 
-from sqlalchemy import Boolean, CheckConstraint, DateTime, ForeignKey, Integer, Numeric, String, UniqueConstraint, func
+from sqlalchemy import Boolean, CheckConstraint, DateTime, ForeignKey, Index, Integer, Numeric, String, UniqueConstraint, func
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base
-from .enums import OrderStatus, PurchaseType
+from .enums import AddressType, DocumentType, OrderStatus, PurchaseType
 
 if TYPE_CHECKING:
     from .company import Company
@@ -27,6 +27,9 @@ class Address(Base):
         ForeignKey("companies.id", ondelete="CASCADE"), nullable=True
     )
 
+    address_type: Mapped[AddressType] = mapped_column(
+        SQLEnum(AddressType), default=AddressType.SHIPPING, nullable=False
+    )
     label: Mapped[str | None] = mapped_column(String(100))
     street: Mapped[str] = mapped_column(String(255), nullable=False)
     city: Mapped[str] = mapped_column(String(100), nullable=False)
@@ -36,12 +39,18 @@ class Address(Base):
 
     # Relations
     user: Mapped["User | None"] = relationship(back_populates="addresses")
-    company: Mapped["Company | None"] = relationship(back_populates="shipping_addresses")
+    company: Mapped["Company | None"] = relationship(back_populates="addresses")
 
     __table_args__ = (
         CheckConstraint(
             "(user_id IS NOT NULL)::int + (company_id IS NOT NULL)::int = 1",
             name="ck_address_owner",
+        ),
+        Index(
+            "ix_addresses_company_billing",
+            "company_id",
+            unique=True,
+            postgresql_where="address_type='BILLING'",
         ),
     )
 
@@ -77,11 +86,6 @@ class Order(Base):
     purchase_type: Mapped[PurchaseType] = mapped_column(
         SQLEnum(PurchaseType), nullable=False
     )
-
-    # Invoice Lock
-    billing_nip: Mapped[str | None] = mapped_column(String(20), nullable=True)
-    billing_company_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
-
     status: Mapped[OrderStatus] = mapped_column(
         SQLEnum(OrderStatus), default=OrderStatus.PENDING_PAYMENT, nullable=False
     )
@@ -98,6 +102,9 @@ class Order(Base):
     # Relations
     user: Mapped["User"] = relationship(back_populates="orders")
     items: Mapped[List["OrderItem"]] = relationship(back_populates="order")
+    billing_document: Mapped["BillingDocument"] = relationship(
+        back_populates="order", cascade="all, delete-orphan", uselist=False
+    )
 
     @property
     def item_count(self) -> int:
@@ -125,3 +132,46 @@ class OrderItem(Base):
     # Relations
     order: Mapped["Order"] = relationship(back_populates="items")
     product: Mapped["Product"] = relationship()
+
+
+class BillingDocument(Base):
+    __tablename__ = "billing_documents"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    order_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("orders.id", ondelete="CASCADE"), unique=True, nullable=False
+    )
+
+    document_type: Mapped[DocumentType] = mapped_column(
+        SQLEnum(DocumentType), nullable=False
+    )
+    document_number: Mapped[str | None] = mapped_column(
+        String(100), unique=True, nullable=True
+    )
+
+    # Company invoice fields
+    company_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    company_nip: Mapped[str | None] = mapped_column(String(20), nullable=True)
+
+    # Personal invoice fields
+    first_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    last_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
+
+    # Billing address (nullable — RECEIPT has none)
+    billing_street: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    billing_city: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    billing_postal_code: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    billing_country: Mapped[str | None] = mapped_column(String(100), nullable=True)
+
+    # Forward-looking fields (populated when invoice is generated)
+    pdf_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    issued_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    # Relations
+    order: Mapped["Order"] = relationship(back_populates="billing_document")

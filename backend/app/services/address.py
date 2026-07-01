@@ -2,7 +2,7 @@ import uuid
 
 from app.core.exceptions import (
     AddressNotFoundException,
-    InsufficientPermissionsException,
+    DuplicateBillingAddressException,
     NotInCompanyException,
 )
 from app.crud import address as address_crud
@@ -36,21 +36,34 @@ async def delete_personal_address(db: AsyncSession, user: User, address_id: uuid
 
 
 # ---------------------------------------------------------------------------
-# Company addresses (owned by a company, managed by company_admin)
+# Company addresses (owned by a company)
 # ---------------------------------------------------------------------------
 
 
-async def list_company_addresses(db: AsyncSession, user: User) -> list[Address]:
+async def list_company_shipping_addresses(db: AsyncSession, user: User) -> list[Address]:
+    """SHIPPING addresses visible to all company members (used in checkout address picker)."""
     if user.company_id is None:
         raise NotInCompanyException()
-    return await address_crud.get_company_addresses(db, user.company_id)
+    return await address_crud.get_company_shipping_addresses(db, user.company_id)
+
+
+async def get_company_billing_address(db: AsyncSession, user: User) -> Address | None:
+    if user.company_id is None:
+        raise NotInCompanyException()
+    return await address_crud.get_company_billing_address(db, user.company_id)
 
 
 async def create_company_address(db: AsyncSession, user: User, data: AddressIn) -> Address:
     # Caller already passed through require_company_admin; company_id is guaranteed.
-    address = await address_crud.create_address(db, data, company_id=user.company_id)
-    await db.commit()
-    return address
+    from sqlalchemy.exc import IntegrityError
+
+    try:
+        address = await address_crud.create_address(db, data, company_id=user.company_id)
+        await db.commit()
+        return address
+    except IntegrityError:
+        await db.rollback()
+        raise DuplicateBillingAddressException()
 
 
 async def delete_company_address(

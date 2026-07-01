@@ -1,6 +1,53 @@
 import { ArrowLeft } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
+import type { BillingDocumentOut } from "../../api/order";
 import { useOrder } from "../../hooks/order/useOrders";
+
+const DOC_TYPE_LABEL: Record<string, string> = {
+  RECEIPT: "Receipt",
+  PERSONAL_INVOICE: "Personal Invoice",
+  COMPANY_INVOICE: "Company Invoice",
+};
+
+function BillingDocumentSection({ doc }: { doc: BillingDocumentOut }) {
+  return (
+    <section className="bg-bg-surface border border-border-base/20 rounded-xl p-5 shadow-sm space-y-2">
+      <h3 className="text-sm font-semibold text-text-main mb-3">Billing Document</h3>
+      <p className="text-xs text-text-muted">
+        <span className="font-medium text-text-main">Type:</span>{" "}
+        {DOC_TYPE_LABEL[doc.document_type] ?? doc.document_type}
+      </p>
+      {doc.company_name && (
+        <p className="text-xs text-text-muted">
+          <span className="font-medium text-text-main">Company:</span> {doc.company_name}
+        </p>
+      )}
+      {doc.company_nip && (
+        <p className="text-xs text-text-muted font-mono">
+          <span className="font-medium text-text-main not-font-mono">NIP:</span> {doc.company_nip}
+        </p>
+      )}
+      {doc.first_name && doc.last_name && (
+        <p className="text-xs text-text-muted">
+          <span className="font-medium text-text-main">Name:</span> {doc.first_name} {doc.last_name}
+        </p>
+      )}
+      {doc.billing_street && (
+        <p className="text-xs text-text-muted">
+          <span className="font-medium text-text-main">Billing address:</span>{" "}
+          {doc.billing_street}, {doc.billing_city} {doc.billing_postal_code},{" "}
+          {doc.billing_country}
+        </p>
+      )}
+      {doc.document_number && (
+        <p className="text-xs text-text-muted font-mono">
+          <span className="font-medium text-text-main not-font-mono">Invoice #:</span>{" "}
+          {doc.document_number}
+        </p>
+      )}
+    </section>
+  );
+}
 
 export default function OrderDetailPage() {
   const { orderId } = useParams<{ orderId: string }>();
@@ -29,9 +76,9 @@ export default function OrderDetailPage() {
             month: "long",
             year: "numeric",
           })}{" "}
-          · {order.purchase_type === "B2B" ? "Invoice" : "Receipt"} · Status:{" "}
+          · {order.purchase_type === "B2B" ? "Company (B2B)" : "Private (B2C)"} · Status:{" "}
           <span className="font-medium text-text-main">
-            {order.status.replace("_", " ")}
+            {order.status.replace(/_/g, " ")}
           </span>
         </p>
       </div>
@@ -79,16 +126,8 @@ export default function OrderDetailPage() {
         </p>
       </section>
 
-      {/* Billing (B2B) */}
-      {order.purchase_type === "B2B" && order.billing_company_name && (
-        <section className="bg-bg-surface border border-border-base/20 rounded-xl p-5 shadow-sm">
-          <h3 className="text-sm font-semibold text-text-main mb-3">Billing</h3>
-          <p className="text-sm text-text-muted">{order.billing_company_name}</p>
-          {order.billing_nip && (
-            <p className="text-xs text-text-muted font-mono mt-1">NIP: {order.billing_nip}</p>
-          )}
-        </section>
-      )}
+      {/* Billing document */}
+      <BillingDocumentSection doc={order.billing_document} />
     </div>
   );
 }

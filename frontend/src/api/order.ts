@@ -2,6 +2,7 @@ import apiFetch from "./client";
 import type { AddressIn } from "./address";
 
 export type PurchaseType = "B2B" | "B2C";
+export type DocumentType = "RECEIPT" | "PERSONAL_INVOICE" | "COMPANY_INVOICE";
 export type OrderStatus =
   | "PENDING_PAYMENT"
   | "PAID"
@@ -10,6 +11,35 @@ export type OrderStatus =
   | "DELIVERED"
   | "CANCELLED"
   | "RETURNED";
+
+export interface BillingDocumentIn {
+  document_type: DocumentType;
+  company_name?: string;
+  company_nip?: string;
+  first_name?: string;
+  last_name?: string;
+  billing_street?: string;
+  billing_city?: string;
+  billing_postal_code?: string;
+  billing_country?: string;
+}
+
+export interface BillingDocumentOut {
+  id: string;
+  document_type: DocumentType;
+  document_number: string | null;
+  company_name: string | null;
+  company_nip: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  billing_street: string | null;
+  billing_city: string | null;
+  billing_postal_code: string | null;
+  billing_country: string | null;
+  pdf_url: string | null;
+  issued_at: string | null;
+  created_at: string;
+}
 
 export interface OrderItemOut {
   id: string;
@@ -27,12 +57,11 @@ export interface OrderOut {
   purchase_type: PurchaseType;
   total_amount: string;
   created_at: string;
-  billing_nip: string | null;
-  billing_company_name: string | null;
   shipping_street: string;
   shipping_city: string;
   shipping_postal_code: string;
   shipping_country: string;
+  billing_document: BillingDocumentOut;
   items: OrderItemOut[];
 }
 
@@ -48,6 +77,7 @@ export interface OrderSummaryOut {
 export interface OrderCreate {
   product_ids: string[];
   purchase_type: PurchaseType;
+  document: BillingDocumentIn;
   address_id?: string;
   shipping_address?: AddressIn;
   save_address?: boolean;

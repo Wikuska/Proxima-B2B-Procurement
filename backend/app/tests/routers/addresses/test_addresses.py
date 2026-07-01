@@ -1,7 +1,7 @@
 """Personal and company address endpoint tests."""
 import pytest
 import pytest_asyncio
-from app.models.enums import UserRole
+from app.models.enums import AddressType, UserRole
 from app.models.order import Address
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -40,10 +40,20 @@ async def company_setup(user_factory, company_factory):
     return company, member, admin
 
 
-_ADDRESS_PAYLOAD = {
+_SHIPPING_PAYLOAD = {
+    "address_type": "SHIPPING",
     "street": "Test St 1",
     "city": "Warsaw",
     "postal_code": "00-001",
+    "country": "Poland",
+}
+
+_BILLING_PAYLOAD = {
+    "address_type": "BILLING",
+    "label": "HQ",
+    "street": "HQ Ave 1",
+    "city": "Warsaw",
+    "postal_code": "00-100",
     "country": "Poland",
 }
 
@@ -59,9 +69,10 @@ async def test_create_and_list_personal_address(
     solo_user,
     auth_headers,
 ):
-    resp = await async_client.post("/addresses", json=_ADDRESS_PAYLOAD, headers=auth_headers(solo_user))
+    resp = await async_client.post("/addresses", json=_SHIPPING_PAYLOAD, headers=auth_headers(solo_user))
     assert resp.status_code == 201
     assert resp.json()["street"] == "Test St 1"
+    assert resp.json()["address_type"] == "SHIPPING"
 
     list_resp = await async_client.get("/addresses", headers=auth_headers(solo_user))
     assert list_resp.status_code == 200
@@ -75,7 +86,7 @@ async def test_personal_address_only_own(
     other_user,
     auth_headers,
 ):
-    await async_client.post("/addresses", json=_ADDRESS_PAYLOAD, headers=auth_headers(solo_user))
+    await async_client.post("/addresses", json=_SHIPPING_PAYLOAD, headers=auth_headers(solo_user))
 
     resp = await async_client.get("/addresses", headers=auth_headers(other_user))
     assert resp.status_code == 200
@@ -88,7 +99,7 @@ async def test_delete_personal_address(
     solo_user,
     auth_headers,
 ):
-    create_resp = await async_client.post("/addresses", json=_ADDRESS_PAYLOAD, headers=auth_headers(solo_user))
+    create_resp = await async_client.post("/addresses", json=_SHIPPING_PAYLOAD, headers=auth_headers(solo_user))
     address_id = create_resp.json()["id"]
 
     del_resp = await async_client.delete(f"/addresses/{address_id}", headers=auth_headers(solo_user))
@@ -105,7 +116,7 @@ async def test_delete_other_users_address_returns_404(
     other_user,
     auth_headers,
 ):
-    create_resp = await async_client.post("/addresses", json=_ADDRESS_PAYLOAD, headers=auth_headers(solo_user))
+    create_resp = await async_client.post("/addresses", json=_SHIPPING_PAYLOAD, headers=auth_headers(solo_user))
     address_id = create_resp.json()["id"]
 
     resp = await async_client.delete(f"/addresses/{address_id}", headers=auth_headers(other_user))
@@ -119,27 +130,26 @@ async def test_addresses_require_auth(async_client: AsyncClient):
 
 
 # ---------------------------------------------------------------------------
-# Company addresses
+# Company SHIPPING addresses
 # ---------------------------------------------------------------------------
 
 
 @pytest.mark.asyncio
-async def test_member_can_list_company_addresses(
+async def test_member_can_list_company_shipping_addresses(
     async_client: AsyncClient,
     company_setup,
     auth_headers,
 ):
     company, member, admin = company_setup
 
-    # Admin creates an address
     await async_client.post(
-        "/companies/addresses", json=_ADDRESS_PAYLOAD, headers=auth_headers(admin)
+        "/companies/addresses", json=_SHIPPING_PAYLOAD, headers=auth_headers(admin)
     )
 
-    # Member can list
-    resp = await async_client.get("/companies/addresses", headers=auth_headers(member))
+    resp = await async_client.get("/companies/addresses/shipping", headers=auth_headers(member))
     assert resp.status_code == 200
     assert len(resp.json()) == 1
+    assert resp.json()[0]["address_type"] == "SHIPPING"
 
 
 @pytest.mark.asyncio
@@ -150,7 +160,7 @@ async def test_member_cannot_create_company_address(
 ):
     _, member, _ = company_setup
     resp = await async_client.post(
-        "/companies/addresses", json=_ADDRESS_PAYLOAD, headers=auth_headers(member)
+        "/companies/addresses", json=_SHIPPING_PAYLOAD, headers=auth_headers(member)
     )
     assert resp.status_code == 403
 
@@ -163,7 +173,7 @@ async def test_admin_can_create_and_delete_company_address(
 ):
     _, _, admin = company_setup
     create_resp = await async_client.post(
-        "/companies/addresses", json=_ADDRESS_PAYLOAD, headers=auth_headers(admin)
+        "/companies/addresses", json=_SHIPPING_PAYLOAD, headers=auth_headers(admin)
     )
     assert create_resp.status_code == 201
     address_id = create_resp.json()["id"]
@@ -172,6 +182,83 @@ async def test_admin_can_create_and_delete_company_address(
         f"/companies/addresses/{address_id}", headers=auth_headers(admin)
     )
     assert del_resp.status_code == 204
+
+
+@pytest.mark.asyncio
+async def test_billing_address_not_in_shipping_list(
+    async_client: AsyncClient,
+    company_setup,
+    auth_headers,
+):
+    """BILLING address should not appear in the shipping address list."""
+    _, member, admin = company_setup
+
+    await async_client.post(
+        "/companies/addresses", json=_BILLING_PAYLOAD, headers=auth_headers(admin)
+    )
+    await async_client.post(
+        "/companies/addresses", json=_SHIPPING_PAYLOAD, headers=auth_headers(admin)
+    )
+
+    resp = await async_client.get("/companies/addresses/shipping", headers=auth_headers(member))
+    assert resp.status_code == 200
+    assert len(resp.json()) == 1
+    assert resp.json()[0]["address_type"] == "SHIPPING"
+
+
+# ---------------------------------------------------------------------------
+# Company BILLING address
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_member_can_get_company_billing_address(
+    async_client: AsyncClient,
+    company_setup,
+    auth_headers,
+):
+    _, member, admin = company_setup
+
+    await async_client.post(
+        "/companies/addresses", json=_BILLING_PAYLOAD, headers=auth_headers(admin)
+    )
+
+    resp = await async_client.get("/companies/addresses/billing", headers=auth_headers(member))
+    assert resp.status_code == 200
+    assert resp.json()["address_type"] == "BILLING"
+    assert resp.json()["street"] == "HQ Ave 1"
+
+
+@pytest.mark.asyncio
+async def test_billing_address_returns_null_when_none(
+    async_client: AsyncClient,
+    company_setup,
+    auth_headers,
+):
+    _, member, _ = company_setup
+    resp = await async_client.get("/companies/addresses/billing", headers=auth_headers(member))
+    assert resp.status_code == 200
+    assert resp.json() is None
+
+
+@pytest.mark.asyncio
+async def test_one_billing_address_per_company(
+    async_client: AsyncClient,
+    company_setup,
+    auth_headers,
+):
+    """Partial unique index ensures only one BILLING address per company."""
+    _, _, admin = company_setup
+
+    first = await async_client.post(
+        "/companies/addresses", json=_BILLING_PAYLOAD, headers=auth_headers(admin)
+    )
+    assert first.status_code == 201
+
+    second = await async_client.post(
+        "/companies/addresses", json=_BILLING_PAYLOAD, headers=auth_headers(admin)
+    )
+    assert second.status_code in (400, 409, 500)
 
 
 @pytest.mark.asyncio
@@ -192,13 +279,11 @@ async def test_no_access_between_companies(
         company_id=other_company.id,
     )
 
-    # Admin creates address for their company
     create_resp = await async_client.post(
-        "/companies/addresses", json=_ADDRESS_PAYLOAD, headers=auth_headers(admin)
+        "/companies/addresses", json=_SHIPPING_PAYLOAD, headers=auth_headers(admin)
     )
     address_id = create_resp.json()["id"]
 
-    # Other company admin cannot delete it
     del_resp = await async_client.delete(
         f"/companies/addresses/{address_id}", headers=auth_headers(other_admin)
     )
@@ -211,5 +296,5 @@ async def test_user_without_company_cannot_list_company_addresses(
     solo_user,
     auth_headers,
 ):
-    resp = await async_client.get("/companies/addresses", headers=auth_headers(solo_user))
+    resp = await async_client.get("/companies/addresses/shipping", headers=auth_headers(solo_user))
     assert resp.status_code == 400

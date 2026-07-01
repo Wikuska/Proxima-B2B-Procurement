@@ -3,10 +3,11 @@ import uuid
 
 from app.core.exceptions import (
     B2BRestrictedException,
+    CompanyBillingAddressMissingException,
     EmptyOrderException,
     InsufficientStockException,
+    InvalidBillingDataException,
     InvalidShippingAddressException,
-    InvoiceRequiresCompanyException,
     OrderNotFoundException,
     ProductUnavailableException,
 )
@@ -14,36 +15,38 @@ from app.crud import address as address_crud
 from app.crud import cart as cart_crud
 from app.crud import order as order_crud
 from app.crud import product as product_crud
-from app.models.enums import OrderStatus, PurchaseType
-from app.models.order import Order, OrderItem
+from app.models.enums import DocumentType, OrderStatus, PurchaseType
+from app.models.order import BillingDocument, Order, OrderItem
 from app.models.user import User
-from app.schemas.order import OrderCreate
+from app.schemas.order import BillingDocumentIn, OrderCreate
 from app.services import pricing
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def create_order(db: AsyncSession, user: User, payload: OrderCreate) -> Order:
-    # 1. B2B requires a company account
-    if payload.purchase_type == PurchaseType.B2B and user.company_id is None:
-        raise InvoiceRequiresCompanyException()
+    mode = "COMPANY" if payload.purchase_type == PurchaseType.B2B else "PRIVATE"
 
-    # 2. Intersect requested product_ids with the user's actual cart items
+    # 1. B2B purchase type requires company membership
+    if payload.purchase_type == PurchaseType.B2B and user.company_id is None:
+        from app.core.exceptions import NotInCompanyException
+        raise NotInCompanyException()
+
+    # 3. Intersect requested product_ids with the user's actual cart items
     cart_items = await cart_crud.get_cart_items(db, user.id)
     requested = set(payload.product_ids)
     items_to_order = [ci for ci in cart_items if ci.product_id in requested]
     if not items_to_order:
         raise EmptyOrderException()
 
-    # 3. Resolve shipping address → snapshot fields
+    # 2. Resolve shipping address → snapshot fields
     shipping = await _resolve_shipping(db, user, payload)
 
     # 4. Compute authoritative prices
-    mode = "COMPANY" if payload.purchase_type == PurchaseType.B2B else "PRIVATE"
     pricing_req = types.SimpleNamespace(mode=mode, items=items_to_order)
     quote = await pricing.process_quote(db, pricing_req, user)
     lines_by_pid = {line["product_id"]: line for line in quote["lines"]}
 
-    # 5. Load product metadata and validate each line; atomically decrement stock
+    # 5. Load product metadata, validate b2b_only restriction, atomically decrement stock
     product_ids = [ci.product_id for ci in items_to_order]
     products = await product_crud.get_products_by_ids(db, product_ids)
     products_map = {p.id: p for p in products}
@@ -53,7 +56,9 @@ async def create_order(db: AsyncSession, user: User, payload: OrderCreate) -> Or
         product = products_map.get(ci.product_id)
         if product is None or not product.is_active:
             raise ProductUnavailableException()
-        if product.is_b2b_only and user.company_id is None:
+
+        # B2B-only products are hard-blocked in B2C (even for company members)
+        if product.is_b2b_only and payload.purchase_type == PurchaseType.B2C:
             raise B2BRestrictedException()
 
         ok = await product_crud.try_decrement_stock(db, ci.product_id, ci.quantity)
@@ -72,33 +77,24 @@ async def create_order(db: AsyncSession, user: User, payload: OrderCreate) -> Or
             )
         )
 
-    # 6. Build billing snapshot (B2B only)
-    billing_nip = None
-    billing_company_name = None
-    if payload.purchase_type == PurchaseType.B2B and user.company_id is not None:
-        from app.crud import company as company_crud
-        company = await company_crud.get_company_by_id(db, user.company_id)
-        if company is not None:
-            billing_nip = company.nip
-            billing_company_name = company.name
+    # 6. Build BillingDocument snapshot
+    billing_document = await _build_billing_document(db, user, payload, mode)
 
     order = Order(
         user_id=user.id,
         purchase_type=payload.purchase_type,
         status=OrderStatus.PENDING_PAYMENT,
         total_amount=quote["grand_total"],
-        billing_nip=billing_nip,
-        billing_company_name=billing_company_name,
         **shipping,
     )
 
-    # 7. Persist order + items, clear ordered cart items — single commit
-    created = await order_crud.create_order(db, order, order_items)
+    # 7. Persist order + items + billing document, clear ordered cart items
+    created = await order_crud.create_order(db, order, order_items, billing_document)
     for ci in items_to_order:
         await db.delete(ci)
 
     await db.commit()
-    await db.refresh(created, ["items"])
+    await db.refresh(created, ["items", "billing_document"])
     return created
 
 
@@ -118,15 +114,89 @@ async def get_order(db: AsyncSession, user: User, order_id: uuid.UUID) -> Order:
 # ---------------------------------------------------------------------------
 
 
-async def _resolve_shipping(
-    db: AsyncSession, user: User, payload: OrderCreate
-) -> dict:
+async def _build_billing_document(
+    db: AsyncSession, user: User, payload: OrderCreate, mode: str
+) -> BillingDocument:
+    """
+    COMPANY mode → force COMPANY_INVOICE, snapshot from DB (company + billing address).
+    PRIVATE mode → validate required fields per document_type, use input data.
+    """
+    if mode == "COMPANY":
+        from app.crud import company as company_crud
+
+        company = await company_crud.get_company_by_id(db, user.company_id)
+        billing_addr = await address_crud.get_company_billing_address(db, user.company_id)
+        if billing_addr is None:
+            raise CompanyBillingAddressMissingException()
+
+        return BillingDocument(
+            document_type=DocumentType.COMPANY_INVOICE,
+            company_name=company.name,
+            company_nip=company.nip,
+            billing_street=billing_addr.street,
+            billing_city=billing_addr.city,
+            billing_postal_code=billing_addr.postal_code,
+            billing_country=billing_addr.country,
+        )
+
+    # PRIVATE mode
+    doc = payload.document
+    _validate_private_billing(doc)
+
+    return BillingDocument(
+        document_type=doc.document_type,
+        company_name=doc.company_name,
+        company_nip=doc.company_nip,
+        first_name=doc.first_name,
+        last_name=doc.last_name,
+        billing_street=doc.billing_street,
+        billing_city=doc.billing_city,
+        billing_postal_code=doc.billing_postal_code,
+        billing_country=doc.billing_country,
+    )
+
+
+def _validate_private_billing(doc: BillingDocumentIn) -> None:
+    """Raises InvalidBillingDataException if required fields are missing for the document type."""
+    if doc.document_type == DocumentType.RECEIPT:
+        return
+
+    if doc.document_type == DocumentType.PERSONAL_INVOICE:
+        missing = not doc.first_name or not doc.last_name
+        if missing:
+            raise InvalidBillingDataException()
+
+    if doc.document_type == DocumentType.COMPANY_INVOICE:
+        missing = not doc.company_name or not doc.company_nip
+        if missing:
+            raise InvalidBillingDataException()
+
+    # PERSONAL_INVOICE and COMPANY_INVOICE both require billing address
+    address_fields = [
+        doc.billing_street,
+        doc.billing_city,
+        doc.billing_postal_code,
+        doc.billing_country,
+    ]
+    if not all(address_fields):
+        raise InvalidBillingDataException()
+
+
+async def _resolve_shipping(db: AsyncSession, user: User, payload: OrderCreate) -> dict:
     """Returns a dict of shipping_* fields ready to unpack into Order()."""
     if payload.purchase_type == PurchaseType.B2B:
         if payload.address_id is None:
             raise InvalidShippingAddressException()
         address = await address_crud.get_address(db, payload.address_id)
-        if address is None or address.company_id != user.company_id:
+        # Must be a SHIPPING address belonging to the user's company
+        from app.models.enums import AddressType
+
+        if (
+            address is None
+            or address.company_id is None
+            or address.company_id != user.company_id
+            or address.address_type != AddressType.SHIPPING
+        ):
             raise InvalidShippingAddressException()
     else:
         # B2C: address_id (personal) or inline shipping_address
@@ -140,8 +210,8 @@ async def _resolve_shipping(
                     db, payload.shipping_address, user_id=user.id
                 )
             else:
-                # Ephemeral — construct an unsaved object just to read fields
                 from app.models.order import Address
+
                 address = Address(
                     user_id=user.id,
                     street=payload.shipping_address.street,

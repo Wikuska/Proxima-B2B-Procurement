@@ -5,7 +5,8 @@ import {
   createPersonalAddress,
   deleteCompanyAddress,
   deletePersonalAddress,
-  getCompanyAddresses,
+  getCompanyBillingAddress,
+  getCompanyShippingAddresses,
   getPersonalAddresses,
 } from "../../api/address";
 import type { AddressIn } from "../../api/address";
@@ -41,10 +42,17 @@ export function useDeletePersonalAddress() {
   });
 }
 
-export function useCompanyAddresses() {
+export function useCompanyShippingAddresses() {
   return useQuery({
-    queryKey: ["addresses", "company"],
-    queryFn: getCompanyAddresses,
+    queryKey: ["addresses", "company", "shipping"],
+    queryFn: getCompanyShippingAddresses,
+  });
+}
+
+export function useCompanyBillingAddress() {
+  return useQuery({
+    queryKey: ["addresses", "company", "billing"],
+    queryFn: getCompanyBillingAddress,
   });
 }
 

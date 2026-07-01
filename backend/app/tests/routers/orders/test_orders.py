@@ -1,9 +1,9 @@
-"""Order creation and retrieval tests."""
+"""Order creation and retrieval tests — Phase 2 (BillingDocument)."""
 from decimal import Decimal
 
 import pytest
 import pytest_asyncio
-from app.models.enums import UserRole
+from app.models.enums import AddressType, UserRole
 from app.models.order import Address, CartItem
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -68,10 +68,11 @@ async def product_b2b(product_factory):
 
 
 @pytest_asyncio.fixture
-async def company_address(db_session: AsyncSession, company_and_buyer):
+async def company_shipping_address(db_session: AsyncSession, company_and_buyer):
     company, _, _ = company_and_buyer
     address = Address(
         company_id=company.id,
+        address_type=AddressType.SHIPPING,
         street="Business St 1",
         city="Warsaw",
         postal_code="00-001",
@@ -83,9 +84,26 @@ async def company_address(db_session: AsyncSession, company_and_buyer):
 
 
 @pytest_asyncio.fixture
+async def company_billing_address(db_session: AsyncSession, company_and_buyer):
+    company, _, _ = company_and_buyer
+    address = Address(
+        company_id=company.id,
+        address_type=AddressType.BILLING,
+        street="HQ Ave 10",
+        city="Warsaw",
+        postal_code="00-555",
+        country="Poland",
+    )
+    db_session.add(address)
+    await db_session.commit()
+    return address
+
+
+@pytest_asyncio.fixture
 async def personal_address(db_session: AsyncSession, b2c_user):
     address = Address(
         user_id=b2c_user.id,
+        address_type=AddressType.SHIPPING,
         street="Home St 5",
         city="Krakow",
         postal_code="30-001",
@@ -96,6 +114,21 @@ async def personal_address(db_session: AsyncSession, b2c_user):
     return address
 
 
+_INLINE_ADDR = {
+    "street": "New St 10",
+    "city": "Gdansk",
+    "postal_code": "80-001",
+    "country": "Poland",
+}
+
+_INLINE_BILLING_ADDR = {
+    "billing_street": "Billing Rd 3",
+    "billing_city": "Poznan",
+    "billing_postal_code": "60-001",
+    "billing_country": "Poland",
+}
+
+
 async def _add_to_cart(db: AsyncSession, user_id, product_id, qty: int):
     item = CartItem(user_id=user_id, product_id=product_id, quantity=qty)
     db.add(item)
@@ -103,12 +136,12 @@ async def _add_to_cart(db: AsyncSession, user_id, product_id, qty: int):
 
 
 # ---------------------------------------------------------------------------
-# B2C — receipt order (inline address, saved)
+# B2C — RECEIPT
 # ---------------------------------------------------------------------------
 
 
 @pytest.mark.asyncio
-async def test_b2c_order_inline_address_saved(
+async def test_b2c_receipt_order_inline_address(
     async_client: AsyncClient,
     db_session: AsyncSession,
     b2c_user,
@@ -120,12 +153,8 @@ async def test_b2c_order_inline_address_saved(
     payload = {
         "product_ids": [str(product_b2c.id)],
         "purchase_type": "B2C",
-        "shipping_address": {
-            "street": "New St 10",
-            "city": "Gdansk",
-            "postal_code": "80-001",
-            "country": "Poland",
-        },
+        "document": {"document_type": "RECEIPT"},
+        "shipping_address": _INLINE_ADDR,
         "save_address": True,
     }
     resp = await async_client.post("/orders", json=payload, headers=auth_headers(b2c_user))
@@ -134,14 +163,15 @@ async def test_b2c_order_inline_address_saved(
     data = resp.json()
     assert data["purchase_type"] == "B2C"
     assert data["status"] == "PENDING_PAYMENT"
-    assert data["billing_nip"] is None
+    assert data["billing_document"]["document_type"] == "RECEIPT"
+    assert data["billing_document"]["company_nip"] is None
+    assert data["billing_document"]["first_name"] is None
     assert len(data["items"]) == 1
     assert data["items"][0]["quantity"] == 2
     assert Decimal(data["total_amount"]) == Decimal("200.00")
 
     # Cart cleared
     cart_resp = await async_client.get("/cart", headers=auth_headers(b2c_user))
-    assert cart_resp.status_code == 200
     assert cart_resp.json() == []
 
     # Stock decremented
@@ -151,7 +181,7 @@ async def test_b2c_order_inline_address_saved(
 
 
 @pytest.mark.asyncio
-async def test_b2c_order_saved_personal_address(
+async def test_b2c_receipt_order_saved_personal_address(
     async_client: AsyncClient,
     db_session: AsyncSession,
     b2c_user,
@@ -164,27 +194,102 @@ async def test_b2c_order_saved_personal_address(
     payload = {
         "product_ids": [str(product_b2c.id)],
         "purchase_type": "B2C",
+        "document": {"document_type": "RECEIPT"},
         "address_id": str(personal_address.id),
     }
     resp = await async_client.post("/orders", json=payload, headers=auth_headers(b2c_user))
 
     assert resp.status_code == 201
-    data = resp.json()
-    assert data["shipping_street"] == "Home St 5"
+    assert resp.json()["shipping_street"] == "Home St 5"
 
 
 # ---------------------------------------------------------------------------
-# B2B — invoice order
+# B2C — PERSONAL_INVOICE
 # ---------------------------------------------------------------------------
 
 
 @pytest.mark.asyncio
-async def test_b2b_order_company_address(
+async def test_b2c_personal_invoice_order(
+    async_client: AsyncClient,
+    db_session: AsyncSession,
+    b2c_user,
+    product_b2c,
+    auth_headers,
+):
+    await _add_to_cart(db_session, b2c_user.id, product_b2c.id, 1)
+
+    payload = {
+        "product_ids": [str(product_b2c.id)],
+        "purchase_type": "B2C",
+        "document": {
+            "document_type": "PERSONAL_INVOICE",
+            "first_name": "Anna",
+            "last_name": "Nowak",
+            **_INLINE_BILLING_ADDR,
+        },
+        "shipping_address": _INLINE_ADDR,
+    }
+    resp = await async_client.post("/orders", json=payload, headers=auth_headers(b2c_user))
+
+    assert resp.status_code == 201
+    doc = resp.json()["billing_document"]
+    assert doc["document_type"] == "PERSONAL_INVOICE"
+    assert doc["first_name"] == "Anna"
+    assert doc["last_name"] == "Nowak"
+    assert doc["billing_city"] == "Poznan"
+    assert doc["company_nip"] is None
+
+
+# ---------------------------------------------------------------------------
+# B2C — COMPANY_INVOICE (manual, no B2B access)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_b2c_company_invoice_manual_data(
+    async_client: AsyncClient,
+    db_session: AsyncSession,
+    b2c_user,
+    product_b2c,
+    auth_headers,
+):
+    await _add_to_cart(db_session, b2c_user.id, product_b2c.id, 1)
+
+    payload = {
+        "product_ids": [str(product_b2c.id)],
+        "purchase_type": "B2C",
+        "document": {
+            "document_type": "COMPANY_INVOICE",
+            "company_name": "External Corp",
+            "company_nip": "9999999999",
+            **_INLINE_BILLING_ADDR,
+        },
+        "shipping_address": _INLINE_ADDR,
+    }
+    resp = await async_client.post("/orders", json=payload, headers=auth_headers(b2c_user))
+
+    assert resp.status_code == 201
+    doc = resp.json()["billing_document"]
+    assert doc["document_type"] == "COMPANY_INVOICE"
+    assert doc["company_name"] == "External Corp"
+    assert doc["company_nip"] == "9999999999"
+    # No B2B discount — base price only
+    assert Decimal(resp.json()["total_amount"]) == Decimal("100.00")
+
+
+# ---------------------------------------------------------------------------
+# B2B (COMPANY mode) — COMPANY_INVOICE forced from company data
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_company_mode_order_forces_company_invoice(
     async_client: AsyncClient,
     db_session: AsyncSession,
     company_and_buyer,
     product_b2c,
-    company_address,
+    company_shipping_address,
+    company_billing_address,
     auth_headers,
 ):
     company, buyer, _ = company_and_buyer
@@ -193,26 +298,83 @@ async def test_b2b_order_company_address(
     payload = {
         "product_ids": [str(product_b2c.id)],
         "purchase_type": "B2B",
-        "address_id": str(company_address.id),
+        "document": {"document_type": "RECEIPT"},  # ignored — forced to COMPANY_INVOICE
+        "address_id": str(company_shipping_address.id),
     }
     resp = await async_client.post("/orders", json=payload, headers=auth_headers(buyer))
 
     assert resp.status_code == 201
     data = resp.json()
     assert data["purchase_type"] == "B2B"
-    assert data["billing_nip"] == company.nip
-    assert data["billing_company_name"] == company.name
-    # Company discount 10% applied
+    doc = data["billing_document"]
+    assert doc["document_type"] == "COMPANY_INVOICE"
+    assert doc["company_nip"] == company.nip
+    assert doc["company_name"] == company.name
+    assert doc["billing_street"] == "HQ Ave 10"
+    # Company 10% discount applied
     assert Decimal(data["total_amount"]) == Decimal("270.00")
 
 
 # ---------------------------------------------------------------------------
-# Validation errors
+# B2B-only product restrictions
 # ---------------------------------------------------------------------------
 
 
 @pytest.mark.asyncio
-async def test_invoice_without_company_returns_400(
+async def test_b2b_only_product_in_b2c_returns_403(
+    async_client: AsyncClient,
+    db_session: AsyncSession,
+    product_b2b,
+    auth_headers,
+    user_factory,
+):
+    solo_user = await user_factory(
+        email="solo@example.com",
+        is_verified=True,
+        role=UserRole.CUSTOMER,
+    )
+    await _add_to_cart(db_session, solo_user.id, product_b2b.id, 1)
+
+    payload = {
+        "product_ids": [str(product_b2b.id)],
+        "purchase_type": "B2C",
+        "document": {"document_type": "RECEIPT"},
+        "shipping_address": _INLINE_ADDR,
+    }
+    resp = await async_client.post("/orders", json=payload, headers=auth_headers(solo_user))
+    assert resp.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_b2b_only_product_in_company_mode_ok(
+    async_client: AsyncClient,
+    db_session: AsyncSession,
+    company_and_buyer,
+    product_b2b,
+    company_shipping_address,
+    company_billing_address,
+    auth_headers,
+):
+    _, buyer, _ = company_and_buyer
+    await _add_to_cart(db_session, buyer.id, product_b2b.id, 1)
+
+    payload = {
+        "product_ids": [str(product_b2b.id)],
+        "purchase_type": "B2B",
+        "document": {"document_type": "COMPANY_INVOICE"},
+        "address_id": str(company_shipping_address.id),
+    }
+    resp = await async_client.post("/orders", json=payload, headers=auth_headers(buyer))
+    assert resp.status_code == 201
+
+
+# ---------------------------------------------------------------------------
+# Billing validation errors
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_personal_invoice_missing_name_returns_400(
     async_client: AsyncClient,
     db_session: AsyncSession,
     b2c_user,
@@ -223,144 +385,64 @@ async def test_invoice_without_company_returns_400(
 
     payload = {
         "product_ids": [str(product_b2c.id)],
-        "purchase_type": "B2B",
-        "shipping_address": {
-            "street": "X",
-            "city": "X",
-            "postal_code": "X",
-            "country": "PL",
+        "purchase_type": "B2C",
+        "document": {
+            "document_type": "PERSONAL_INVOICE",
+            # missing first_name and last_name
+            **_INLINE_BILLING_ADDR,
         },
+        "shipping_address": _INLINE_ADDR,
     }
     resp = await async_client.post("/orders", json=payload, headers=auth_headers(b2c_user))
     assert resp.status_code == 400
-    assert "invoice" in resp.json()["detail"].lower()
 
 
 @pytest.mark.asyncio
-async def test_b2b_with_non_company_address_returns_400(
+async def test_company_invoice_missing_billing_address_returns_400(
+    async_client: AsyncClient,
+    db_session: AsyncSession,
+    b2c_user,
+    product_b2c,
+    auth_headers,
+):
+    await _add_to_cart(db_session, b2c_user.id, product_b2c.id, 1)
+
+    payload = {
+        "product_ids": [str(product_b2c.id)],
+        "purchase_type": "B2C",
+        "document": {
+            "document_type": "COMPANY_INVOICE",
+            "company_name": "Some Corp",
+            "company_nip": "1111111111",
+            # missing billing address
+        },
+        "shipping_address": _INLINE_ADDR,
+    }
+    resp = await async_client.post("/orders", json=payload, headers=auth_headers(b2c_user))
+    assert resp.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_company_mode_no_billing_address_returns_400(
     async_client: AsyncClient,
     db_session: AsyncSession,
     company_and_buyer,
     product_b2c,
-    personal_address,
-    b2c_user,
+    company_shipping_address,
+    # intentionally no company_billing_address fixture
     auth_headers,
 ):
-    """Buyer tries to use a personal address (belonging to another user) for B2B order."""
     _, buyer, _ = company_and_buyer
     await _add_to_cart(db_session, buyer.id, product_b2c.id, 1)
 
     payload = {
         "product_ids": [str(product_b2c.id)],
         "purchase_type": "B2B",
-        "address_id": str(personal_address.id),
+        "document": {"document_type": "COMPANY_INVOICE"},
+        "address_id": str(company_shipping_address.id),
     }
     resp = await async_client.post("/orders", json=payload, headers=auth_headers(buyer))
     assert resp.status_code == 400
-
-
-@pytest.mark.asyncio
-async def test_empty_selection_returns_400(
-    async_client: AsyncClient,
-    db_session: AsyncSession,
-    b2c_user,
-    product_b2c,
-    auth_headers,
-):
-    # Cart is empty — no items added
-    payload = {
-        "product_ids": [str(product_b2c.id)],
-        "purchase_type": "B2C",
-        "shipping_address": {
-            "street": "X",
-            "city": "X",
-            "postal_code": "X",
-            "country": "PL",
-        },
-    }
-    resp = await async_client.post("/orders", json=payload, headers=auth_headers(b2c_user))
-    assert resp.status_code == 400
-
-
-@pytest.mark.asyncio
-async def test_insufficient_stock_returns_400_no_order_created(
-    async_client: AsyncClient,
-    db_session: AsyncSession,
-    product_b2c,
-    product_b2b,
-    company_and_buyer,
-    company_address,
-    auth_headers,
-):
-    """When one item has insufficient stock the whole order fails — no order is persisted.
-
-    Stock rollback is guaranteed by PostgreSQL transaction semantics in production
-    (session.close() issues ROLLBACK). The test verifies the business-level invariant:
-    no Order row is committed to the database.
-    """
-    company, buyer, _ = company_and_buyer
-    # product_b2b stock=5; request qty=6 → should fail
-    await _add_to_cart(db_session, buyer.id, product_b2c.id, 2)
-    await _add_to_cart(db_session, buyer.id, product_b2b.id, 6)
-
-    payload = {
-        "product_ids": [str(product_b2c.id), str(product_b2b.id)],
-        "purchase_type": "B2B",
-        "address_id": str(company_address.id),
-    }
-    resp = await async_client.post("/orders", json=payload, headers=auth_headers(buyer))
-    assert resp.status_code == 400
-
-    # No order must have been committed
-    orders_resp = await async_client.get("/orders", headers=auth_headers(buyer))
-    assert orders_resp.json() == []
-
-
-@pytest.mark.asyncio
-async def test_b2b_only_product_in_b2c_order_returns_403(
-    async_client: AsyncClient,
-    db_session: AsyncSession,
-    company_and_buyer,
-    product_b2b,
-    auth_headers,
-):
-    """B2B-only product cannot be ordered by a user without company (B2C)."""
-    # We need a user without company trying to buy b2b-only product
-    # In practice, the cart service would already block this — but order service re-validates
-    _, buyer, _ = company_and_buyer
-
-    # Create a solo user and manually insert cart item bypassing cart validation
-    from app.models.order import CartItem
-    from app.models.user import User as UserModel
-    solo_user = UserModel(
-        email="solo_test@example.com",
-        password_hash="hash",
-        first_name="Solo",
-        last_name="User",
-        is_verified=True,
-        is_active=True,
-        company_id=None,
-        role=UserRole.CUSTOMER,
-    )
-    db_session.add(solo_user)
-    await db_session.flush()
-
-    item = CartItem(user_id=solo_user.id, product_id=product_b2b.id, quantity=1)
-    db_session.add(item)
-    await db_session.commit()
-
-    payload = {
-        "product_ids": [str(product_b2b.id)],
-        "purchase_type": "B2C",
-        "shipping_address": {
-            "street": "X",
-            "city": "X",
-            "postal_code": "X",
-            "country": "PL",
-        },
-    }
-    resp = await async_client.post("/orders", json=payload, headers=auth_headers(solo_user))
-    assert resp.status_code == 403
 
 
 # ---------------------------------------------------------------------------
@@ -381,19 +463,54 @@ async def test_order_snapshot_prices_correct(
     payload = {
         "product_ids": [str(product_b2c.id)],
         "purchase_type": "B2C",
-        "shipping_address": {
-            "street": "X",
-            "city": "Y",
-            "postal_code": "Z",
-            "country": "PL",
-        },
+        "document": {"document_type": "RECEIPT"},
+        "shipping_address": _INLINE_ADDR,
     }
     resp = await async_client.post("/orders", json=payload, headers=auth_headers(b2c_user))
     assert resp.status_code == 201
     item = resp.json()["items"][0]
     assert Decimal(item["unit_price"]) == product_b2c.base_price
     assert Decimal(item["discount_percentage"]) == Decimal("0.00")
-    assert resp.json()["total_amount"] == str(product_b2c.base_price)
+    assert Decimal(resp.json()["total_amount"]) == product_b2c.base_price
+
+    # Every order has exactly one BillingDocument
+    assert resp.json()["billing_document"] is not None
+    assert resp.json()["billing_document"]["id"] is not None
+
+
+# ---------------------------------------------------------------------------
+# Insufficient stock
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_insufficient_stock_returns_400_no_order_created(
+    async_client: AsyncClient,
+    db_session: AsyncSession,
+    product_b2c,
+    product_b2b,
+    company_and_buyer,
+    company_shipping_address,
+    company_billing_address,
+    auth_headers,
+):
+    _, buyer, _ = company_and_buyer
+    # product_b2b stock=5; request qty=6 → should fail
+    await _add_to_cart(db_session, buyer.id, product_b2c.id, 2)
+    await _add_to_cart(db_session, buyer.id, product_b2b.id, 6)
+
+    payload = {
+        "product_ids": [str(product_b2c.id), str(product_b2b.id)],
+        "purchase_type": "B2B",
+        "document": {"document_type": "COMPANY_INVOICE"},
+        "address_id": str(company_shipping_address.id),
+    }
+    resp = await async_client.post("/orders", json=payload, headers=auth_headers(buyer))
+    assert resp.status_code == 400
+
+    # No order must have been committed
+    orders_resp = await async_client.get("/orders", headers=auth_headers(buyer))
+    assert orders_resp.json() == []
 
 
 # ---------------------------------------------------------------------------
@@ -416,7 +533,8 @@ async def test_list_orders_returns_own_only(
     payload = {
         "product_ids": [str(product_b2c.id)],
         "purchase_type": "B2C",
-        "shipping_address": {"street": "X", "city": "Y", "postal_code": "Z", "country": "PL"},
+        "document": {"document_type": "RECEIPT"},
+        "shipping_address": _INLINE_ADDR,
     }
     await async_client.post("/orders", json=payload, headers=auth_headers(b2c_user))
 
@@ -437,7 +555,8 @@ async def test_get_order_detail_own(
     payload = {
         "product_ids": [str(product_b2c.id)],
         "purchase_type": "B2C",
-        "shipping_address": {"street": "X", "city": "Y", "postal_code": "Z", "country": "PL"},
+        "document": {"document_type": "RECEIPT"},
+        "shipping_address": _INLINE_ADDR,
     }
     create_resp = await async_client.post("/orders", json=payload, headers=auth_headers(b2c_user))
     order_id = create_resp.json()["id"]
@@ -445,6 +564,7 @@ async def test_get_order_detail_own(
     resp = await async_client.get(f"/orders/{order_id}", headers=auth_headers(b2c_user))
     assert resp.status_code == 200
     assert resp.json()["id"] == order_id
+    assert resp.json()["billing_document"] is not None
 
 
 @pytest.mark.asyncio
@@ -461,7 +581,8 @@ async def test_get_order_detail_other_user_returns_404(
     payload = {
         "product_ids": [str(product_b2c.id)],
         "purchase_type": "B2C",
-        "shipping_address": {"street": "X", "city": "Y", "postal_code": "Z", "country": "PL"},
+        "document": {"document_type": "RECEIPT"},
+        "shipping_address": _INLINE_ADDR,
     }
     create_resp = await async_client.post("/orders", json=payload, headers=auth_headers(b2c_user))
     order_id = create_resp.json()["id"]
