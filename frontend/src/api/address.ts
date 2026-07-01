@@ -42,5 +42,8 @@ export const getCompanyBillingAddress = (): Promise<AddressOut | null> =>
 export const createCompanyAddress = (data: AddressIn): Promise<AddressOut> =>
   apiFetch<AddressOut>("/companies/addresses", { method: "POST", body: data });
 
+export const updateCompanyAddress = (id: string, data: AddressIn): Promise<AddressOut> =>
+  apiFetch<AddressOut>(`/companies/addresses/${id}`, { method: "PUT", body: data });
+
 export const deleteCompanyAddress = (id: string): Promise<void> =>
   apiFetch<void>(`/companies/addresses/${id}`, { method: "DELETE" });

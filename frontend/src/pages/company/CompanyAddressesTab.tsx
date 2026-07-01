@@ -1,17 +1,15 @@
-import { Trash2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import {
   useCompanyBillingAddress,
   useCompanyShippingAddresses,
   useCreateCompanyAddress,
   useDeleteCompanyAddress,
+  useUpdateCompanyAddress,
 } from "../../hooks/address/useAddresses";
 import AddressForm from "../../components/checkout/AddressForm";
 import { useAuth } from "../../hooks/user/useAuth";
-
-const _BILLING_PAYLOAD_DEFAULTS = {
-  address_type: "BILLING" as const,
-};
+import type { AddressOut } from "../../api/address";
 
 function AddressCard({
   label,
@@ -20,7 +18,9 @@ function AddressCard({
   postal_code,
   country,
   onDelete,
+  onEdit,
   canDelete,
+  canEdit,
 }: {
   label?: string | null;
   street: string;
@@ -28,7 +28,9 @@ function AddressCard({
   postal_code: string;
   country: string;
   onDelete?: () => void;
+  onEdit?: () => void;
   canDelete?: boolean;
+  canEdit?: boolean;
 }) {
   return (
     <div className="flex items-start justify-between gap-4 p-4 bg-bg-surface border border-border-base/20 rounded-xl shadow-sm">
@@ -42,15 +44,26 @@ function AddressCard({
           {street}, {city} {postal_code}, {country}
         </p>
       </div>
-      {canDelete && onDelete && (
-        <button
-          onClick={onDelete}
-          className="text-text-muted hover:text-red-500 transition-colors shrink-0 mt-0.5"
-          aria-label="Delete address"
-        >
-          <Trash2 size={16} />
-        </button>
-      )}
+      <div className="flex items-center gap-2 shrink-0 mt-0.5">
+        {canEdit && onEdit && (
+          <button
+            onClick={onEdit}
+            className="text-text-muted hover:text-primary transition-colors"
+            aria-label="Edit address"
+          >
+            <Pencil size={16} />
+          </button>
+        )}
+        {canDelete && onDelete && (
+          <button
+            onClick={onDelete}
+            className="text-text-muted hover:text-red-500 transition-colors"
+            aria-label="Delete address"
+          >
+            <Trash2 size={16} />
+          </button>
+        )}
+      </div>
     </div>
   );
 }
@@ -61,12 +74,23 @@ export default function CompanyAddressesTab() {
     useCompanyShippingAddresses();
   const { data: billingAddress, isLoading: loadingBilling } = useCompanyBillingAddress();
   const createAddress = useCreateCompanyAddress();
+  const updateAddress = useUpdateCompanyAddress();
   const deleteAddress = useDeleteCompanyAddress();
   const [showShippingForm, setShowShippingForm] = useState(false);
-  const [showBillingForm, setShowBillingForm] = useState(false);
+  const [editingBilling, setEditingBilling] = useState(false);
 
   if (loadingShipping || loadingBilling)
     return <p className="text-sm text-text-muted">Loading…</p>;
+
+  const billingInitialValues = billingAddress
+    ? {
+        label: billingAddress.label ?? undefined,
+        street: billingAddress.street,
+        city: billingAddress.city,
+        postal_code: billingAddress.postal_code,
+        country: billingAddress.country,
+      }
+    : undefined;
 
   return (
     <div className="max-w-lg space-y-10">
@@ -104,7 +128,7 @@ export default function CompanyAddressesTab() {
           </div>
         ) : (
           <ul className="space-y-3">
-            {shippingAddresses.map((a) => (
+            {shippingAddresses.map((a: AddressOut) => (
               <li key={a.id}>
                 <AddressCard
                   label={a.label}
@@ -123,50 +147,45 @@ export default function CompanyAddressesTab() {
 
       {/* ── BILLING address ── */}
       <section className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold text-text-main">Billing Address (HQ)</h2>
-          {isCompanyAdmin && !billingAddress && (
-            <button
-              onClick={() => setShowBillingForm((v) => !v)}
-              className="text-sm text-primary hover:underline"
-            >
-              {showBillingForm ? "Cancel" : "+ Set billing address"}
-            </button>
-          )}
-        </div>
+        <h2 className="text-base font-semibold text-text-main">Billing Address (HQ)</h2>
 
         <p className="text-xs text-text-muted">
           Used for company invoices. One billing address per company.
         </p>
 
-        {showBillingForm && isCompanyAdmin && !billingAddress && (
+        {editingBilling && billingAddress && isCompanyAdmin ? (
           <div className="bg-bg-surface border border-border-base/20 rounded-xl p-4 shadow-sm">
             <AddressForm
               showSaveOption={false}
+              defaultValues={billingInitialValues}
               onSubmit={(data) => {
-                createAddress.mutate(
-                  { ...data, ..._BILLING_PAYLOAD_DEFAULTS },
-                  { onSuccess: () => setShowBillingForm(false) },
+                updateAddress.mutate(
+                  { id: billingAddress.id, data: { ...data, address_type: "BILLING" } },
+                  { onSuccess: () => setEditingBilling(false) },
                 );
               }}
             />
+            <button
+              onClick={() => setEditingBilling(false)}
+              className="mt-3 text-sm text-text-muted hover:underline"
+            >
+              Cancel
+            </button>
           </div>
-        )}
-
-        {billingAddress ? (
+        ) : billingAddress ? (
           <AddressCard
             label={billingAddress.label}
             street={billingAddress.street}
             city={billingAddress.city}
             postal_code={billingAddress.postal_code}
             country={billingAddress.country}
-            canDelete={isCompanyAdmin}
-            onDelete={() => deleteAddress.mutate(billingAddress.id)}
+            canEdit={isCompanyAdmin}
+            onEdit={() => setEditingBilling(true)}
           />
         ) : (
           <div className="p-8 bg-bg-surface border border-dashed border-border-base/40 rounded-xl text-center text-text-muted text-sm">
             {isCompanyAdmin
-              ? "No billing address set. Add one to enable company invoices."
+              ? "No billing address set. Contact support to configure one."
               : "No billing address configured. Contact your company admin."}
           </div>
         )}

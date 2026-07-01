@@ -17,19 +17,24 @@ type FormValues = z.infer<typeof schema>;
 interface AddressFormProps {
   onSubmit: (data: AddressIn, save: boolean) => void;
   showSaveOption?: boolean;
+  defaultValues?: Partial<FormValues>;
 }
 
 const inputClass =
   "w-full px-3 py-2 text-sm border border-border-base rounded-lg focus:outline-none focus:border-border-focus bg-bg-surface text-text-main";
 const errorClass = "text-xs text-red-500 mt-1";
 
-export default function AddressForm({ onSubmit, showSaveOption = true }: AddressFormProps) {
+export default function AddressForm({
+  onSubmit,
+  showSaveOption = true,
+  defaultValues,
+}: AddressFormProps) {
   const [save, setSave] = useState(false);
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<FormValues>({ resolver: zodResolver(schema) });
+  } = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues });
 
   function submit(values: FormValues) {
     const { label, ...rest } = values;

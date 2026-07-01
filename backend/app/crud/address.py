@@ -75,6 +75,16 @@ async def create_address(
     return address
 
 
+async def update_address(db: AsyncSession, address: Address, data: AddressIn) -> Address:
+    address.label = data.label
+    address.street = data.street
+    address.city = data.city
+    address.postal_code = data.postal_code
+    address.country = data.country
+    await db.flush()
+    return address
+
+
 async def delete_address(db: AsyncSession, address: Address) -> None:
     await db.delete(address)
     await db.flush()

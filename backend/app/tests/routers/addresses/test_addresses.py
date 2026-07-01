@@ -298,3 +298,89 @@ async def test_user_without_company_cannot_list_company_addresses(
 ):
     resp = await async_client.get("/companies/addresses/shipping", headers=auth_headers(solo_user))
     assert resp.status_code == 400
+
+
+# ---------------------------------------------------------------------------
+# PUT /companies/addresses/{id} — update company address
+# ---------------------------------------------------------------------------
+
+_UPDATE_PAYLOAD = {
+    "address_type": "BILLING",
+    "label": "New HQ",
+    "street": "New St 99",
+    "city": "Krakow",
+    "postal_code": "30-001",
+    "country": "Poland",
+}
+
+
+@pytest.mark.asyncio
+async def test_admin_can_update_company_address(
+    async_client: AsyncClient,
+    company_setup,
+    auth_headers,
+):
+    _, _, admin = company_setup
+
+    create_resp = await async_client.post(
+        "/companies/addresses", json=_BILLING_PAYLOAD, headers=auth_headers(admin)
+    )
+    assert create_resp.status_code == 201
+    address_id = create_resp.json()["id"]
+
+    put_resp = await async_client.put(
+        f"/companies/addresses/{address_id}",
+        json=_UPDATE_PAYLOAD,
+        headers=auth_headers(admin),
+    )
+    assert put_resp.status_code == 200
+    data = put_resp.json()
+    assert data["street"] == "New St 99"
+    assert data["city"] == "Krakow"
+    assert data["label"] == "New HQ"
+
+
+@pytest.mark.asyncio
+async def test_member_cannot_update_company_address(
+    async_client: AsyncClient,
+    company_setup,
+    auth_headers,
+):
+    _, member, admin = company_setup
+
+    create_resp = await async_client.post(
+        "/companies/addresses", json=_BILLING_PAYLOAD, headers=auth_headers(admin)
+    )
+    address_id = create_resp.json()["id"]
+
+    resp = await async_client.put(
+        f"/companies/addresses/{address_id}",
+        json=_UPDATE_PAYLOAD,
+        headers=auth_headers(member),
+    )
+    assert resp.status_code == 403
+
+
+# ---------------------------------------------------------------------------
+# DELETE billing address is blocked (400)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_cannot_delete_billing_address(
+    async_client: AsyncClient,
+    company_setup,
+    auth_headers,
+):
+    _, _, admin = company_setup
+
+    create_resp = await async_client.post(
+        "/companies/addresses", json=_BILLING_PAYLOAD, headers=auth_headers(admin)
+    )
+    assert create_resp.status_code == 201
+    address_id = create_resp.json()["id"]
+
+    del_resp = await async_client.delete(
+        f"/companies/addresses/{address_id}", headers=auth_headers(admin)
+    )
+    assert del_resp.status_code == 400

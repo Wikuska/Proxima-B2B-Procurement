@@ -8,6 +8,7 @@ import {
   getCompanyBillingAddress,
   getCompanyShippingAddresses,
   getPersonalAddresses,
+  updateCompanyAddress,
 } from "../../api/address";
 import type { AddressIn } from "../../api/address";
 
@@ -63,6 +64,19 @@ export function useCreateCompanyAddress() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["addresses", "company"] });
       toast.success("Address saved");
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+}
+
+export function useUpdateCompanyAddress() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: AddressIn }) =>
+      updateCompanyAddress(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["addresses", "company"] });
+      toast.success("Address updated");
     },
     onError: (err: Error) => toast.error(err.message),
   });

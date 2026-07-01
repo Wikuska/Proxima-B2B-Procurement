@@ -162,3 +162,8 @@ class CompanyBillingAddressMissingException(AppException):
 class DuplicateBillingAddressException(AppException):
     status_code = 409
     detail = "Company already has a billing address. Delete the existing one first."
+
+
+class CannotDeleteBillingAddressException(AppException):
+    status_code = 400
+    detail = "The billing address cannot be deleted — edit it instead."

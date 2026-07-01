@@ -2,10 +2,12 @@ import uuid
 
 from app.core.exceptions import (
     AddressNotFoundException,
+    CannotDeleteBillingAddressException,
     DuplicateBillingAddressException,
     NotInCompanyException,
 )
 from app.crud import address as address_crud
+from app.models.enums import AddressType
 from app.models.order import Address
 from app.models.user import User
 from app.schemas.address import AddressIn
@@ -66,11 +68,24 @@ async def create_company_address(db: AsyncSession, user: User, data: AddressIn) 
         raise DuplicateBillingAddressException()
 
 
+async def update_company_address(
+    db: AsyncSession, user: User, address_id: uuid.UUID, data: AddressIn
+) -> Address:
+    address = await address_crud.get_address(db, address_id)
+    if address is None or address.company_id != user.company_id:
+        raise AddressNotFoundException()
+    updated = await address_crud.update_address(db, address, data)
+    await db.commit()
+    return updated
+
+
 async def delete_company_address(
     db: AsyncSession, user: User, address_id: uuid.UUID
 ) -> None:
     address = await address_crud.get_address(db, address_id)
     if address is None or address.company_id != user.company_id:
         raise AddressNotFoundException()
+    if address.address_type == AddressType.BILLING:
+        raise CannotDeleteBillingAddressException()
     await address_crud.delete_address(db, address)
     await db.commit()

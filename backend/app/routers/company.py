@@ -137,6 +137,16 @@ async def create_company_address(
     return await address_service.create_company_address(db, admin, payload)
 
 
+@router.put("/addresses/{address_id}", response_model=AddressOut)
+async def update_company_address(
+    address_id: uuid.UUID,
+    payload: AddressIn,
+    admin: User = Depends(require_company_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    return await address_service.update_company_address(db, admin, address_id, payload)
+
+
 @router.delete("/addresses/{address_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_company_address(
     address_id: uuid.UUID,
