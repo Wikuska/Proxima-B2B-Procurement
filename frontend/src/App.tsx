@@ -19,6 +19,8 @@ import {
 import CompanyAddressesTab from "./pages/company/CompanyAddressesTab";
 import CompanyMembersTab from "./pages/company/CompanyMembersTab";
 import CompanyOrdersTab from "./pages/company/CompanyOrdersTab";
+import CompanyOverviewTab from "./pages/company/CompanyOverviewTab";
+import CompanySettingsTab from "./pages/company/CompanySettingsTab";
 import JoinRequestsTab from "./pages/company/JoinRequestsTab";
 import OrderDetailPage from "./pages/profile/OrderDetailPage";
 import OrdersTab from "./pages/profile/OrdersTab";
@@ -84,22 +86,24 @@ export default function App() {
             <Route path="orders" element={<OrdersTab />} />
             <Route path="orders/:orderId" element={<OrderDetailPage />} />
           </Route>
+        </Route>
 
-          {/* Company dashboard */}
-          <Route
-            path="/company"
-            element={
-              <ProtectedRoute allow={["COMPANY_ADMIN", "ADMIN"]}>
-                <CompanyPage />
-              </ProtectedRoute>
-            }
-          >
-            <Route index element={<Navigate to="requests" replace />} />
-            <Route path="requests" element={<JoinRequestsTab />} />
-            <Route path="orders" element={<CompanyOrdersTab />} />
-            <Route path="members" element={<CompanyMembersTab />} />
-            <Route path="addresses" element={<CompanyAddressesTab />} />
-          </Route>
+        {/* Company dashboard — standalone app shell, no site NavBar/footer */}
+        <Route
+          path="/company"
+          element={
+            <ProtectedRoute allow={["COMPANY_ADMIN", "ADMIN"]}>
+              <CompanyPage />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Navigate to="overview" replace />} />
+          <Route path="overview" element={<CompanyOverviewTab />} />
+          <Route path="orders" element={<CompanyOrdersTab />} />
+          <Route path="members" element={<CompanyMembersTab />} />
+          <Route path="addresses" element={<CompanyAddressesTab />} />
+          <Route path="requests" element={<JoinRequestsTab />} />
+          <Route path="settings" element={<CompanySettingsTab />} />
         </Route>
       </Routes>
 

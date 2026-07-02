@@ -36,7 +36,7 @@ export default function CompanyMembersTab() {
           <h2 className="text-xs font-bold text-primary uppercase tracking-wider mb-3">
             You
           </h2>
-          <div className="flex justify-between items-center p-5 bg-bg-surface border border-border-base/30 rounded-xl shadow-sm">
+          <div className="flex justify-between items-center p-5 bg-bg-surface border border-border-base/40 rounded-xl shadow-sm">
             <div>
               <p className="font-semibold text-text-main text-lg">
                 {self.first_name} {self.last_name}
@@ -59,7 +59,7 @@ export default function CompanyMembersTab() {
             {others.map((member) => (
               <li
                 key={member.id}
-                className="flex justify-between items-center p-5 bg-bg-surface border border-border-base/30 rounded-xl shadow-sm transition-shadow hover:shadow-md"
+                className="flex justify-between items-center p-5 bg-bg-surface border border-border-base/40 rounded-xl shadow-sm transition-shadow hover:shadow-md"
               >
                 <div>
                   <p className="font-semibold text-text-main">

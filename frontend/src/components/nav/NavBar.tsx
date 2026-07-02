@@ -5,7 +5,6 @@ import { useCategories } from "../../hooks/catalog/categories";
 import { useCartView } from "../../hooks/cart/useCartView";
 import { useDelayedUnmount } from "../../hooks/common/useDelayedUnmount";
 import CartDropdown from "../cart/CartDropdown";
-import RoleGuard from "../common/RoleGuard";
 import NavAuthButtons from "./NavAuthButtons";
 import NavCategoryMenu from "./NavCategoryMenu";
 import NavRegionMenu from "./NavRegionMenu";
@@ -124,12 +123,6 @@ export default function NavBar() {
           <NavLink to="/contact" className={navLinkClass}>
             Contact
           </NavLink>
-
-          <RoleGuard allow={["COMPANY_ADMIN", "ADMIN"]}>
-            <NavLink to="/company" className={navLinkClass}>
-              Company
-            </NavLink>
-          </RoleGuard>
         </nav>
 
         <div className="flex items-center gap-6 h-full">

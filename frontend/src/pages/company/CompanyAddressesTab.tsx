@@ -33,7 +33,7 @@ function AddressCard({
   canEdit?: boolean;
 }) {
   return (
-    <div className="flex items-start justify-between gap-4 p-4 bg-bg-surface border border-border-base/20 rounded-xl shadow-sm">
+    <div className="flex items-start justify-between gap-4 p-4 bg-bg-surface border border-border-base/40 rounded-xl shadow-sm">
       <div>
         {label && (
           <p className="text-xs font-semibold text-text-muted mb-0.5 uppercase tracking-wide">
@@ -109,7 +109,7 @@ export default function CompanyAddressesTab() {
         </div>
 
         {showShippingForm && isCompanyAdmin && (
-          <div className="bg-bg-surface border border-border-base/20 rounded-xl p-4 shadow-sm">
+          <div className="bg-bg-surface border border-border-base/40 rounded-xl p-4 shadow-sm">
             <AddressForm
               showSaveOption={false}
               onSubmit={(data) => {
@@ -154,7 +154,7 @@ export default function CompanyAddressesTab() {
         </p>
 
         {editingBilling && billingAddress && isCompanyAdmin ? (
-          <div className="bg-bg-surface border border-border-base/20 rounded-xl p-4 shadow-sm">
+          <div className="bg-bg-surface border border-border-base/40 rounded-xl p-4 shadow-sm">
             <AddressForm
               showSaveOption={false}
               defaultValues={billingInitialValues}
