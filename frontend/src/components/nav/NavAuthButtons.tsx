@@ -4,7 +4,10 @@ import { ChevronDown, User } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "../../store/authStore";
 import { useAuth } from "../../hooks/user/useAuth";
+import { useDelayedUnmount } from "../../hooks/common/useDelayedUnmount";
 import { profileTabs } from "../../config/profileTabs";
+
+const DROPDOWN_EXIT_DURATION_MS = 100;
 
 export default function NavAuthButtons() {
   const { token, clearAuth } = useAuthStore();
@@ -14,6 +17,10 @@ export default function NavAuthButtons() {
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const shouldRenderDropdown = useDelayedUnmount(
+    isOpen,
+    DROPDOWN_EXIT_DURATION_MS,
+  );
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -44,8 +51,12 @@ export default function NavAuthButtons() {
             />
           </button>
 
-          {isOpen && (
-            <div className="absolute left-1/2 -translate-x-1/2 mt-7 w-48 bg-bg-surface border border-border-base/20 rounded-xl shadow-lg py-1 z-50">
+          {shouldRenderDropdown && (
+            <div
+              className={`absolute left-1/2 -translate-x-1/2 mt-7 w-48 bg-bg-surface border border-border-base/20 rounded-xl shadow-lg py-1 z-50 origin-top ${
+                isOpen ? "animate-pop-down" : "animate-pop-up"
+              }`}
+            >
               {profileTabs.map(({ to, label }) => (
                 <Link
                   key={to}
@@ -78,7 +89,9 @@ export default function NavAuthButtons() {
     <>
       <button
         onClick={() =>
-          navigate("/auth", { state: { from: location.pathname } })
+          navigate("/auth", {
+            state: { from: location.pathname, backgroundLocation: location },
+          })
         }
         className="text-sm font-medium hover:text-accent transition-colors self-center"
       >
@@ -86,6 +99,7 @@ export default function NavAuthButtons() {
       </button>
       <Link
         to="/auth?mode=register"
+        state={{ backgroundLocation: location }}
         className="bg-primary hover:bg-primary/90 text-white text-xs font-semibold px-4 py-2 rounded-md transition-all shadow-sm"
       >
         Register

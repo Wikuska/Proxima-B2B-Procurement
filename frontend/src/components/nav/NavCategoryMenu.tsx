@@ -3,15 +3,22 @@ import { Link } from "react-router-dom";
 
 interface NavCategoryMenuProps {
   categories: CategoryResponse[];
+  /** Whether the menu should be entering (`true`) or exiting (`false`). */
+  isOpen: boolean;
   onClose: () => void;
 }
 
 export default function NavCategoryMenu({
   categories,
+  isOpen,
   onClose,
 }: NavCategoryMenuProps) {
   return (
-    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-[800px] bg-bg-surface border border-border-base/30 rounded-xl shadow-xl p-5 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+    <div
+      className={`absolute top-full left-1/2 -translate-x-1/2 mt-2 w-[800px] bg-bg-surface border border-border-base/30 rounded-xl shadow-xl p-5 z-50 origin-top ${
+        isOpen ? "animate-pop-down" : "animate-pop-up"
+      }`}
+    >
       <div className="mb-5 pb-5 border-b border-border-base/20">
         <Link
           to="/catalog"

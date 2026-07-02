@@ -1,5 +1,5 @@
 import { ShoppingBag } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import CartLineItem from "../components/cart/CartLineItem";
 import { useCartActions } from "../hooks/cart/useCartActions";
 import { useCartView } from "../hooks/cart/useCartView";
@@ -9,6 +9,7 @@ import { useAuth } from "../hooks/user/useAuth";
 export default function CartPage() {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { lines, quoteItems, isLoading, isError } = useCartView();
   const { setQty, remove, toggleSelect, pendingProductIds } = useCartActions();
   const { data: quote } = useCartQuote(quoteItems);
@@ -184,7 +185,12 @@ export default function CartPage() {
                 disabled={selectedCount === 0}
                 onClick={() => {
                   if (!isAuthenticated) {
-                    navigate("/auth", { state: { from: "/checkout" } });
+                    navigate("/auth", {
+                      state: {
+                        from: "/checkout",
+                        backgroundLocation: location,
+                      },
+                    });
                   } else {
                     navigate("/checkout");
                   }

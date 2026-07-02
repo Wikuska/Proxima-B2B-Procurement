@@ -12,9 +12,11 @@ interface ProtectedRouteProps {
 /**
  * Wraps routes that require authentication (and optionally a specific role).
  *
- * Not wired into any route yet — provided for upcoming roadmap steps
- * (dashboards, account pages). Unauthenticated users are redirected to /auth
- * with the attempted path so they can be returned after signing in.
+ * Unauthenticated users are redirected to the full-page `/auth` (not the
+ * modal) with the attempted path so they can be returned after signing in.
+ * This is a deliberate trade-off: a server-side redirect has no prior client
+ * location to use as `backgroundLocation`, so the blurred-modal treatment
+ * only applies when auth is opened client-side (nav buttons, cart CTAs).
  */
 export default function ProtectedRoute({
   children,

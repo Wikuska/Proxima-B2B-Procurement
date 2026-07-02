@@ -12,9 +12,18 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 interface SignInFormProps {
   onSwitchToSignUp: () => void;
+  /**
+   * Optional override for the post-login redirect, used by `AuthModal` to
+   * close the modal and return to (or past) the background page instead of
+   * the default `navigate(from || "/")`.
+   */
+  onSuccess?: (from: string) => void;
 }
 
-export default function SignInForm({ onSwitchToSignUp }: SignInFormProps) {
+export default function SignInForm({
+  onSwitchToSignUp,
+  onSuccess,
+}: SignInFormProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const setToken = useAuthStore((state) => state.setToken);
@@ -36,8 +45,12 @@ export default function SignInForm({ onSwitchToSignUp }: SignInFormProps) {
       setToken(data.access_token);
       // Discard any cached profile so the next render fetches the new user.
       queryClient.removeQueries({ queryKey: ["me"] });
-      const from = (location.state as { from?: string })?.from || "/";
-      navigate(from, { replace: true });
+      const from = (location.state as { from?: string })?.from ?? "";
+      if (onSuccess) {
+        onSuccess(from);
+      } else {
+        navigate(from || "/", { replace: true });
+      }
     },
     onError: (error) => {
       if (error instanceof ApiError) {
@@ -75,28 +88,30 @@ export default function SignInForm({ onSwitchToSignUp }: SignInFormProps) {
           {...register("email")}
         />
 
-        <FormInput
-          id="signin-password"
-          label="Password"
-          type="password"
-          placeholder="••••••••"
-          required
-          error={errors.password?.message}
-          {...register("password")}
-        />
+        <div>
+          <FormInput
+            id="signin-password"
+            label="Password"
+            type="password"
+            placeholder="••••••••"
+            required
+            error={errors.password?.message}
+            {...register("password")}
+          />
 
-        <div className="flex items-center justify-between text-sm">
-          {errors.root ? (
-            <p className="text-sm text-red-500">{errors.root.message}</p>
-          ) : (
-            <span />
-          )}
-          <a
-            href="#"
-            className="font-semibold text-primary hover:text-accent transition-colors"
-          >
-            Forgot password?
-          </a>
+          <div className="flex items-center justify-between text-sm mt-2">
+            {errors.root ? (
+              <p className="text-sm text-red-500">{errors.root.message}</p>
+            ) : (
+              <span />
+            )}
+            <a
+              href="#"
+              className="font-semibold text-primary hover:text-accent transition-colors"
+            >
+              Forgot password?
+            </a>
+          </div>
         </div>
 
         <FormButton
@@ -108,7 +123,7 @@ export default function SignInForm({ onSwitchToSignUp }: SignInFormProps) {
         </FormButton>
       </form>
 
-      <p className="mt-8 text-center text-sm text-text-muted">
+      <p className="mt-2 text-center text-sm text-text-muted">
         Don't have an account?{" "}
         <button
           onClick={onSwitchToSignUp}
