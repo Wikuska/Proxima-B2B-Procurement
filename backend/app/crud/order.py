@@ -1,5 +1,6 @@
 import uuid
 
+from app.models.enums import PurchaseType
 from app.models.order import BillingDocument, Order, OrderItem
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -24,13 +25,19 @@ async def create_order(
     return order
 
 
-async def get_orders_for_user(db: AsyncSession, user_id: uuid.UUID) -> list[Order]:
+async def get_orders_for_user(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+    purchase_type: PurchaseType | None = None,
+) -> list[Order]:
     stmt = (
         select(Order)
         .where(Order.user_id == user_id)
         .options(selectinload(Order.items), selectinload(Order.billing_document))
         .order_by(Order.created_at.desc())
     )
+    if purchase_type is not None:
+        stmt = stmt.where(Order.purchase_type == purchase_type)
     result = await db.scalars(stmt)
     return list(result.all())
 

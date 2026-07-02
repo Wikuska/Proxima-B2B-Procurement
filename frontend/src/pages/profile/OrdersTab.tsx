@@ -1,5 +1,8 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useOrders } from "../../hooks/order/useOrders";
+import { useAuth } from "../../hooks/user/useAuth";
+import type { PurchaseType, OrderSummaryOut } from "../../api/order";
 
 const STATUS_STYLES: Record<string, string> = {
   PENDING_PAYMENT: "bg-yellow-500/10 text-yellow-600 border border-yellow-500/20",
@@ -11,12 +14,8 @@ const STATUS_STYLES: Record<string, string> = {
   RETURNED: "bg-gray-500/10 text-gray-500 border border-gray-500/20",
 };
 
-export default function OrdersTab() {
-  const { data: orders, isLoading, isError } = useOrders();
-
-  if (isLoading) return <p className="text-sm text-text-muted">Loading orders…</p>;
-  if (isError) return <p className="text-sm text-red-500">Failed to load orders.</p>;
-  if (!orders?.length) {
+function OrderList({ orders }: { orders: OrderSummaryOut[] }) {
+  if (!orders.length) {
     return (
       <div className="flex flex-col items-center justify-center p-12 bg-bg-surface border border-dashed border-border-base/40 rounded-xl text-text-muted">
         <p className="text-sm">No orders yet.</p>
@@ -63,6 +62,44 @@ export default function OrdersTab() {
           </div>
         </Link>
       ))}
+    </div>
+  );
+}
+
+export default function OrdersTab() {
+  const { user } = useAuth();
+  const hasCompany = !!user?.company_id;
+
+  const [segment, setSegment] = useState<PurchaseType>("B2C");
+  const activeFilter: PurchaseType | undefined = hasCompany ? segment : undefined;
+
+  const { data: orders, isLoading, isError } = useOrders(activeFilter);
+
+  if (isLoading) return <p className="text-sm text-text-muted">Loading orders…</p>;
+  if (isError) return <p className="text-sm text-red-500">Failed to load orders.</p>;
+
+  return (
+    <div className="space-y-5">
+      {/* Segmented control — only shown for company members */}
+      {hasCompany && (
+        <div className="inline-flex rounded-lg border border-border-base/30 bg-bg-surface overflow-hidden text-sm">
+          {(["B2C", "B2B"] as PurchaseType[]).map((type) => (
+            <button
+              key={type}
+              onClick={() => setSegment(type)}
+              className={`px-5 py-2 font-medium transition-colors ${
+                segment === type
+                  ? "bg-primary text-white"
+                  : "text-text-muted hover:text-text-main"
+              }`}
+            >
+              {type === "B2C" ? "Private" : "Company"}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <OrderList orders={orders ?? []} />
     </div>
   );
 }

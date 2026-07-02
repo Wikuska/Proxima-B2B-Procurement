@@ -98,8 +98,10 @@ async def create_order(db: AsyncSession, user: User, payload: OrderCreate) -> Or
     return created
 
 
-async def list_orders(db: AsyncSession, user: User) -> list[Order]:
-    return await order_crud.get_orders_for_user(db, user.id)
+async def list_orders(
+    db: AsyncSession, user: User, purchase_type: PurchaseType | None = None
+) -> list[Order]:
+    return await order_crud.get_orders_for_user(db, user.id, purchase_type)
 
 
 async def get_order(db: AsyncSession, user: User, order_id: uuid.UUID) -> Order:

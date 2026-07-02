@@ -86,8 +86,10 @@ export interface OrderCreate {
 export const createOrder = (data: OrderCreate): Promise<OrderOut> =>
   apiFetch<OrderOut>("/orders", { method: "POST", body: data });
 
-export const getOrders = (): Promise<OrderSummaryOut[]> =>
-  apiFetch<OrderSummaryOut[]>("/orders");
+export const getOrders = (purchaseType?: PurchaseType): Promise<OrderSummaryOut[]> => {
+  const qs = purchaseType ? `?purchase_type=${purchaseType}` : "";
+  return apiFetch<OrderSummaryOut[]>(`/orders${qs}`);
+};
 
 export const getOrder = (id: string): Promise<OrderOut> =>
   apiFetch<OrderOut>(`/orders/${id}`);

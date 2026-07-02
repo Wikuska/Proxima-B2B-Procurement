@@ -1,7 +1,11 @@
 import { useState } from "react";
 import { Navigate } from "react-router-dom";
 import type { AddressIn } from "../../api/address";
-import type { BillingDocumentIn, DocumentType, PurchaseType } from "../../api/order";
+import type {
+  BillingDocumentIn,
+  DocumentType,
+  PurchaseType,
+} from "../../api/order";
 import CheckoutStepper from "../../components/checkout/CheckoutStepper";
 import AddressPicker from "../../components/checkout/AddressPicker";
 import {
@@ -42,16 +46,28 @@ const emptyBilling: BillingFormState = {
   billingCountry: "",
 };
 
-function isBillingComplete(f: BillingFormState, isCompanyMode: boolean): boolean {
+function isBillingComplete(
+  f: BillingFormState,
+  isCompanyMode: boolean,
+): boolean {
   if (isCompanyMode) return true;
   if (f.documentType === "RECEIPT") return true;
-  const hasAddr = !!f.billingStreet && !!f.billingCity && !!f.billingPostalCode && !!f.billingCountry;
-  if (f.documentType === "PERSONAL_INVOICE") return !!f.firstName && !!f.lastName && hasAddr;
-  if (f.documentType === "COMPANY_INVOICE") return !!f.companyName && !!f.companyNip && hasAddr;
+  const hasAddr =
+    !!f.billingStreet &&
+    !!f.billingCity &&
+    !!f.billingPostalCode &&
+    !!f.billingCountry;
+  if (f.documentType === "PERSONAL_INVOICE")
+    return !!f.firstName && !!f.lastName && hasAddr;
+  if (f.documentType === "COMPANY_INVOICE")
+    return !!f.companyName && !!f.companyNip && hasAddr;
   return false;
 }
 
-function buildBillingDocumentIn(f: BillingFormState, isCompanyMode: boolean): BillingDocumentIn {
+function buildBillingDocumentIn(
+  f: BillingFormState,
+  isCompanyMode: boolean,
+): BillingDocumentIn {
   if (isCompanyMode) return { document_type: "COMPANY_INVOICE" };
   if (f.documentType === "RECEIPT") return { document_type: "RECEIPT" };
   const base = {
@@ -74,9 +90,13 @@ export default function CheckoutPage() {
   const { lines, quoteItems } = useCartView();
   const selectedLines = lines.filter((l) => l.available && l.selected);
 
+  // Whether any selected line is a B2B-only product.
+  const hasB2bSelected = selectedLines.some((l) => l.is_b2b_only);
+  const hasCompany = !!user?.company_id;
+
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [purchaseType, setPurchaseType] = useState<PurchaseType>(
-    purchaseModeStore === "COMPANY" && !!user?.company_id ? "B2B" : "B2C",
+    purchaseModeStore === "COMPANY" && hasCompany ? "B2B" : "B2C",
   );
   const [addressId, setAddressId] = useState<string | null>(null);
   const [inlineAddress, setInlineAddress] = useState<AddressIn | null>(null);
@@ -90,8 +110,11 @@ export default function CheckoutPage() {
   const { data: quote } = useCartQuote(quoteItems);
   const createOrder = useCreateOrder();
 
-  const isCompanyMode = purchaseType === "B2B";
-  const hasB2B = !!user?.company_id;
+  // When cart has b2b-only items and user has a company → force B2B regardless of stored mode.
+  const effectivePurchaseType: PurchaseType =
+    hasB2bSelected && hasCompany ? "B2B" : purchaseType;
+  const isCompanyMode = effectivePurchaseType === "B2B";
+  const hasB2B = hasCompany;
   const grandTotal = quote ? Number(quote.grand_total) : null;
 
   function changePurchaseType(type: PurchaseType) {
@@ -100,21 +123,26 @@ export default function CheckoutPage() {
     setInlineAddress(null);
   }
 
-  const selectedAddress =
-    isCompanyMode
-      ? companyAddresses.find((a) => a.id === addressId)
-      : personalAddresses.find((a) => a.id === addressId);
+  const selectedAddress = isCompanyMode
+    ? companyAddresses.find((a) => a.id === addressId)
+    : personalAddresses.find((a) => a.id === addressId);
+
+  // B2B-only products without a company account → hard block on step 1.
+  const b2bBlockedNoCompany = hasB2bSelected && !hasCompany;
 
   const canProceedToDocument =
-    isCompanyMode ? !!addressId : !!addressId || !!inlineAddress;
+    !b2bBlockedNoCompany &&
+    (isCompanyMode ? !!addressId : !!addressId || !!inlineAddress);
 
   function handlePlaceOrder() {
     const payload = {
       product_ids: selectedLines.map((l) => l.product_id),
-      purchase_type: purchaseType,
+      purchase_type: effectivePurchaseType,
       document: buildBillingDocumentIn(billing, isCompanyMode),
       ...(addressId ? { address_id: addressId } : {}),
-      ...(inlineAddress ? { shipping_address: inlineAddress, save_address: saveAddress } : {}),
+      ...(inlineAddress
+        ? { shipping_address: inlineAddress, save_address: saveAddress }
+        : {}),
     };
     createOrder.mutate(payload);
   }
@@ -131,44 +159,85 @@ export default function CheckoutPage() {
       {/* ── Step 1: Purchase type + Shipping address ── */}
       {step === 1 && (
         <div className="space-y-8">
-          <section className="bg-bg-surface border border-border-base/20 rounded-2xl p-6 shadow-sm">
-            <h2 className="text-base font-semibold text-text-main mb-4">Purchase type</h2>
-            <div className="flex gap-6">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name="purchase-type"
-                  value="B2C"
-                  checked={purchaseType === "B2C"}
-                  onChange={() => changePurchaseType("B2C")}
-                  className="accent-primary"
-                />
-                <span className="text-sm text-text-main">Private (B2C)</span>
-              </label>
-              <label
-                className={`flex items-center gap-2 ${hasB2B ? "cursor-pointer" : "opacity-40 cursor-not-allowed"}`}
-              >
-                <input
-                  type="radio"
-                  name="purchase-type"
-                  value="B2B"
-                  checked={purchaseType === "B2B"}
-                  onChange={() => changePurchaseType("B2B")}
-                  disabled={!hasB2B}
-                  className="accent-primary"
-                />
-                <span className="text-sm text-text-main">Company (B2B)</span>
-              </label>
-            </div>
-            {!hasB2B && (
-              <p className="text-xs text-text-muted mt-2">
-                Company mode requires a company account.
+          {/* B2B-only blocker — no company account */}
+          {b2bBlockedNoCompany && (
+            <div className="p-4 bg-red-50 border border-red-200 rounded-2xl text-sm text-red-700 space-y-2">
+              <p className="font-semibold">Company account required</p>
+              <p>
+                Your cart contains products available to company accounts only.
+                Remove them from the cart or{" "}
+                <a
+                  href="/profile/company-affiliation"
+                  className="underline font-medium"
+                >
+                  join a company
+                </a>{" "}
+                to continue.
               </p>
+            </div>
+          )}
+
+          <section className="bg-bg-surface border border-border-base/20 rounded-2xl p-6 shadow-sm">
+            <h2 className="text-base font-semibold text-text-main mb-4">
+              Purchase type
+            </h2>
+
+            {/* Forced B2B — cart has b2b-only + user has company */}
+            {hasB2bSelected && hasCompany ? (
+              <div className="flex items-center gap-3 p-3 bg-primary/5 border border-primary/20 rounded-xl">
+                <span className="text-sm font-semibold text-primary">
+                  Company (B2B)
+                </span>
+                <span className="text-xs text-text-muted">
+                  your cart contains company-only products
+                </span>
+              </div>
+            ) : (
+              <>
+                <div className="flex gap-6">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="purchase-type"
+                      value="B2C"
+                      checked={effectivePurchaseType === "B2C"}
+                      onChange={() => changePurchaseType("B2C")}
+                      className="accent-primary"
+                    />
+                    <span className="text-sm text-text-main">
+                      Private (B2C)
+                    </span>
+                  </label>
+                  <label
+                    className={`flex items-center gap-2 ${hasB2B ? "cursor-pointer" : "opacity-40 cursor-not-allowed"}`}
+                  >
+                    <input
+                      type="radio"
+                      name="purchase-type"
+                      value="B2B"
+                      checked={effectivePurchaseType === "B2B"}
+                      onChange={() => changePurchaseType("B2B")}
+                      disabled={!hasB2B}
+                      className="accent-primary"
+                    />
+                    <span className="text-sm text-text-main">
+                      Company (B2B)
+                    </span>
+                  </label>
+                </div>
+                {!hasB2B && (
+                  <p className="text-xs text-text-muted mt-2">
+                    Company mode requires a company account.
+                  </p>
+                )}
+              </>
             )}
           </section>
 
           <section className="bg-bg-surface border border-border-base/20 rounded-2xl p-6 shadow-sm">
-            <h2 className="text-base font-semibold text-text-main mb-4">Shipping address</h2>
+            <h2 className="text-base font-semibold text-text-main mb-4">
+              Shipping address
+            </h2>
             {isCompanyMode ? (
               <AddressPicker
                 variant="company"
@@ -209,7 +278,9 @@ export default function CheckoutPage() {
       {step === 2 && (
         <div className="space-y-8">
           {isCompanyMode ? (
-            <CompanyInvoiceReadOnly billingAddress={companyBillingAddress ?? null} />
+            <CompanyInvoiceReadOnly
+              billingAddress={companyBillingAddress ?? null}
+            />
           ) : (
             <PrivateBillingForm billing={billing} onChange={setBilling} />
           )}
@@ -236,20 +307,32 @@ export default function CheckoutPage() {
       {step === 3 && (
         <div className="space-y-6">
           <section className="bg-bg-surface border border-border-base/20 rounded-2xl p-6 shadow-sm">
-            <h2 className="text-base font-semibold text-text-main mb-4">Items</h2>
+            <h2 className="text-base font-semibold text-text-main mb-4">
+              Items
+            </h2>
             <div className="divide-y divide-border-base/10">
               {selectedLines.map((l) => {
-                const priceLine = quote?.lines.find((ql) => ql.product_id === l.product_id);
+                const priceLine = quote?.lines.find(
+                  (ql) => ql.product_id === l.product_id,
+                );
                 return (
-                  <div key={l.product_id} className="py-3 flex justify-between items-center gap-4">
+                  <div
+                    key={l.product_id}
+                    className="py-3 flex justify-between items-center gap-4"
+                  >
                     <div>
-                      <p className="text-sm font-medium text-text-main">{l.name}</p>
+                      <p className="text-sm font-medium text-text-main">
+                        {l.name}
+                      </p>
                       <p className="text-xs text-text-muted">
                         {l.sku} · qty {l.quantity}
                       </p>
                     </div>
                     <p className="text-sm font-semibold text-text-main font-mono whitespace-nowrap">
-                      ${priceLine ? Number(priceLine.line_total).toFixed(2) : (l.base_price * l.quantity).toFixed(2)}
+                      $
+                      {priceLine
+                        ? Number(priceLine.line_total).toFixed(2)
+                        : (l.base_price * l.quantity).toFixed(2)}
                     </p>
                   </div>
                 );
@@ -266,7 +349,9 @@ export default function CheckoutPage() {
           </section>
 
           <section className="bg-bg-surface border border-border-base/20 rounded-2xl p-6 shadow-sm space-y-3">
-            <h2 className="text-base font-semibold text-text-main">Delivery & Document</h2>
+            <h2 className="text-base font-semibold text-text-main">
+              Delivery & Document
+            </h2>
             <div className="text-sm text-text-muted space-y-1">
               <p>
                 <span className="font-medium text-text-main">Document:</span>{" "}
@@ -335,13 +420,16 @@ function CompanyInvoiceReadOnly({
 }) {
   return (
     <section className="bg-bg-surface border border-border-base/20 rounded-2xl p-6 shadow-sm space-y-4">
-      <h2 className="text-base font-semibold text-text-main">Billing document</h2>
+      <h2 className="text-base font-semibold text-text-main">
+        Billing document
+      </h2>
       <div className="p-4 bg-bg-base border border-primary/20 rounded-xl space-y-1">
         <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-2">
           Company Invoice
         </p>
         <p className="text-sm text-text-muted">
-          Invoice data will be taken from your company profile (name, NIP) and the registered billing address.
+          Invoice data will be taken from your company profile (name, NIP) and
+          the registered billing address.
         </p>
         {billingAddress ? (
           <p className="text-sm text-text-main mt-2">
@@ -351,7 +439,8 @@ function CompanyInvoiceReadOnly({
           </p>
         ) : (
           <p className="text-sm text-red-500 mt-2">
-            ⚠ Your company has no billing address set. Ask a company admin to add one before placing an order.
+            ⚠ Your company has no billing address set. Ask a company admin to
+            add one before placing an order.
           </p>
         )}
       </div>
@@ -366,16 +455,22 @@ function PrivateBillingForm({
   billing: BillingFormState;
   onChange: (b: BillingFormState) => void;
 }) {
-  function set<K extends keyof BillingFormState>(key: K, value: BillingFormState[K]) {
+  function set<K extends keyof BillingFormState>(
+    key: K,
+    value: BillingFormState[K],
+  ) {
     onChange({ ...billing, [key]: value });
   }
 
   const needsBillingAddr =
-    billing.documentType === "PERSONAL_INVOICE" || billing.documentType === "COMPANY_INVOICE";
+    billing.documentType === "PERSONAL_INVOICE" ||
+    billing.documentType === "COMPANY_INVOICE";
 
   return (
     <section className="bg-bg-surface border border-border-base/20 rounded-2xl p-6 shadow-sm space-y-5">
-      <h2 className="text-base font-semibold text-text-main">Billing document</h2>
+      <h2 className="text-base font-semibold text-text-main">
+        Billing document
+      </h2>
 
       {/* Document type radio */}
       <div className="space-y-2">

@@ -598,3 +598,86 @@ async def test_orders_require_auth(async_client: AsyncClient):
 
     resp = await async_client.post("/orders", json={})
     assert resp.status_code == 401
+
+
+# ---------------------------------------------------------------------------
+# GET /orders?purchase_type= filtering
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_get_orders_filter_by_purchase_type(
+    async_client: AsyncClient,
+    db_session: AsyncSession,
+    company_and_buyer,
+    product_b2c,
+    company_shipping_address,
+    company_billing_address,
+    auth_headers,
+):
+    """B2C and B2B orders are created; ?purchase_type= returns only matching ones."""
+    _, buyer, _ = company_and_buyer
+
+    # Place a B2C order
+    await _add_to_cart(db_session, buyer.id, product_b2c.id, 1)
+    b2c_payload = {
+        "product_ids": [str(product_b2c.id)],
+        "purchase_type": "B2C",
+        "document": {"document_type": "RECEIPT"},
+        "shipping_address": _INLINE_ADDR,
+    }
+    await async_client.post("/orders", json=b2c_payload, headers=auth_headers(buyer))
+
+    # Place a B2B order
+    await _add_to_cart(db_session, buyer.id, product_b2c.id, 1)
+    b2b_payload = {
+        "product_ids": [str(product_b2c.id)],
+        "purchase_type": "B2B",
+        "document": {"document_type": "COMPANY_INVOICE"},
+        "address_id": str(company_shipping_address.id),
+    }
+    await async_client.post("/orders", json=b2b_payload, headers=auth_headers(buyer))
+
+    # No filter → both orders
+    all_resp = await async_client.get("/orders", headers=auth_headers(buyer))
+    assert all_resp.status_code == 200
+    assert len(all_resp.json()) == 2
+
+    # Filter B2C
+    b2c_resp = await async_client.get("/orders?purchase_type=B2C", headers=auth_headers(buyer))
+    assert b2c_resp.status_code == 200
+    b2c_orders = b2c_resp.json()
+    assert len(b2c_orders) == 1
+    assert b2c_orders[0]["purchase_type"] == "B2C"
+
+    # Filter B2B
+    b2b_resp = await async_client.get("/orders?purchase_type=B2B", headers=auth_headers(buyer))
+    assert b2b_resp.status_code == 200
+    b2b_orders = b2b_resp.json()
+    assert len(b2b_orders) == 1
+    assert b2b_orders[0]["purchase_type"] == "B2B"
+
+
+@pytest.mark.asyncio
+async def test_get_orders_filter_returns_own_only(
+    async_client: AsyncClient,
+    db_session: AsyncSession,
+    b2c_user,
+    product_b2c,
+    auth_headers,
+    user_factory,
+):
+    """Filtered results still respect user ownership."""
+    other = await user_factory(email="other2@example.com", is_verified=True)
+    await _add_to_cart(db_session, b2c_user.id, product_b2c.id, 1)
+    payload = {
+        "product_ids": [str(product_b2c.id)],
+        "purchase_type": "B2C",
+        "document": {"document_type": "RECEIPT"},
+        "shipping_address": _INLINE_ADDR,
+    }
+    await async_client.post("/orders", json=payload, headers=auth_headers(b2c_user))
+
+    resp = await async_client.get("/orders?purchase_type=B2C", headers=auth_headers(other))
+    assert resp.status_code == 200
+    assert resp.json() == []
