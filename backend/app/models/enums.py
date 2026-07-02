@@ -26,3 +26,14 @@ class OrderStatus(str, enum.Enum):
     DELIVERED = "DELIVERED"
     CANCELLED = "CANCELLED"
     RETURNED = "RETURNED"
+
+
+class DocumentType(str, enum.Enum):
+    RECEIPT = "RECEIPT"
+    PERSONAL_INVOICE = "PERSONAL_INVOICE"
+    COMPANY_INVOICE = "COMPANY_INVOICE"
+
+
+class AddressType(str, enum.Enum):
+    SHIPPING = "SHIPPING"
+    BILLING = "BILLING"

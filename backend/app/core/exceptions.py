@@ -122,3 +122,48 @@ class B2BRestrictedException(AppException):
 class InsufficientStockException(AppException):
     status_code = 400
     detail = "Requested quantity exceeds available stock"
+
+
+class EmptyOrderException(AppException):
+    status_code = 400
+    detail = "No eligible cart items selected for this order"
+
+
+class AddressNotFoundException(AppException):
+    status_code = 404
+    detail = "Address not found"
+
+
+class InvalidShippingAddressException(AppException):
+    status_code = 400
+    detail = "The selected address does not match the order type"
+
+
+class InvoiceRequiresCompanyException(AppException):
+    status_code = 400
+    detail = "An invoice purchase requires a company account"
+
+
+class OrderNotFoundException(AppException):
+    status_code = 404
+    detail = "Order not found"
+
+
+class InvalidBillingDataException(AppException):
+    status_code = 400
+    detail = "Missing required fields for the selected document type"
+
+
+class CompanyBillingAddressMissingException(AppException):
+    status_code = 400
+    detail = "Company has no billing address configured. Contact your company admin."
+
+
+class DuplicateBillingAddressException(AppException):
+    status_code = 409
+    detail = "Company already has a billing address. Delete the existing one first."
+
+
+class CannotDeleteBillingAddressException(AppException):
+    status_code = 400
+    detail = "The billing address cannot be deleted — edit it instead."

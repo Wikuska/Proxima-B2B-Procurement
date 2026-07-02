@@ -1,7 +1,9 @@
 import uuid
 
+from app.core.dependencies import get_optional_current_user
 from app.crud import product as product_crud
 from app.database import get_db
+from app.models import User
 from app.schemas import CategoryOut, PaginatedProductListOut, ProductDetailsOut
 from app.schemas.product import ProductSnapshotOut
 from app.services import catalog as catalog_service
@@ -25,10 +27,11 @@ async def get_products_by_category(
     page: int = Query(1, ge=1, description="Page number"),
     size: int = Query(24, ge=1, le=100, description="Items per page"),
     db: AsyncSession = Depends(get_db),
+    user: User | None = Depends(get_optional_current_user),
 ):
     """Returns a paginated list of products belonging ONLY to a specific category."""
     return await catalog_service.fetch_products_for_catalog(
-        db, category_slug=category_slug, page=page, size=size
+        db, category_slug=category_slug, page=page, size=size, user=user
     )
 
 
@@ -38,10 +41,11 @@ async def get_all_products(
     page: int = Query(1, ge=1, description="Page number"),
     size: int = Query(24, ge=1, le=100, description="Items per page"),
     db: AsyncSession = Depends(get_db),
+    user: User | None = Depends(get_optional_current_user),
 ):
     """Returns a slimmed-down list of ALL products, useful for global text search."""
     return await catalog_service.fetch_products_for_catalog(
-        db, search_query=search_query, page=page, size=size
+        db, search_query=search_query, page=page, size=size, user=user
     )
 
 

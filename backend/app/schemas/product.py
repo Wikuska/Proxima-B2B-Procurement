@@ -13,6 +13,8 @@ class ProductListOut(BaseModel):
     stock_quantity: int
     main_image_url: str | None
     is_b2b_only: bool
+    company_discount_percentage: Decimal | None = None
+    company_unit_price: Decimal | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

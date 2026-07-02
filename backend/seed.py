@@ -9,7 +9,20 @@ from datetime import datetime, timezone
 from decimal import Decimal
 
 from app.database import AsyncSessionLocal
-from app.models import Category, Company, CompanyRequest, Product, ProductVolumeDiscount, User, UserRole
+from app.models import (
+    Address,
+    AddressType,
+    CartItem,
+    Category,
+    Company,
+    CompanyRequest,
+    Order,
+    OrderItem,
+    Product,
+    ProductVolumeDiscount,
+    User,
+    UserRole,
+)
 from pwdlib import PasswordHash
 from sqlalchemy import delete
 
@@ -513,10 +526,14 @@ async def seed():
         print("🧪 Starting Proxima Lab Supply seed...")
 
         print("🧹 Clearing existing data...")
+        await db.execute(delete(OrderItem))
+        await db.execute(delete(Order))
+        await db.execute(delete(CartItem))
         await db.execute(delete(ProductVolumeDiscount))
         await db.execute(delete(Product))
         await db.execute(delete(Category))
         await db.execute(delete(CompanyRequest))
+        await db.execute(delete(Address))
         await db.execute(delete(User))
         await db.execute(delete(Company))
         await db.commit()
@@ -544,7 +561,7 @@ async def seed():
         users_to_create = [
             # Global Admin
             User(
-                email="admin@proxima.local",
+                email="admin@proxima.com",
                 password_hash=test_password_hash,
                 first_name="Super",
                 last_name="Admin",
@@ -593,6 +610,21 @@ async def seed():
         db.add_all(users_to_create)
         await db.flush()
         print(f"   ✓ Created {len(users_to_create)} test users")
+
+        # COMPANY BILLING ADDRESS
+        print("📍 Creating Acme billing address...")
+        acme_billing = Address(
+            company_id=acme_company_id,
+            address_type=AddressType.BILLING,
+            label="Siedziba główna",
+            street="ul. Naukowa 12",
+            city="Warszawa",
+            postal_code="00-001",
+            country="Poland",
+        )
+        db.add(acme_billing)
+        await db.flush()
+        print(f"   ✓ {acme_billing.street}, {acme_billing.city}")
 
         # CATEGORIES
         print("📂 Creating categories...")

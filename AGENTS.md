@@ -34,9 +34,17 @@ volume-based discounts, email double opt-in, and company verification via NIP.
   handler in `main.py` maps them to HTTP responses. Do not raise `HTTPException` in services.
 - All primary keys are UUIDs (anti-enumeration). Money is `Numeric(10, 2)` / `Decimal` — never
   float. Timestamps are timezone-aware.
-- Preserve historical immutability: orders snapshot billing data (`billing_nip`,
-  `billing_company_name`) and line items snapshot `unit_price`, `product_name`, `product_sku`.
+- Preserve historical immutability: orders snapshot fiscal data in a `BillingDocument` row (1:1
+  with `Order`, `cascade all, delete-orphan`). `BillingDocument` stores `document_type`
+  (`RECEIPT | PERSONAL_INVOICE | COMPANY_INVOICE`), names, NIP, and billing address — all frozen
+  at order time. Line items also snapshot `unit_price`, `product_name`, `product_sku`.
   Never recompute these from current `Product`/`Company` rows.
+- `purchase_type` (B2B/B2C) is orthogonal to `document_type`. B2B always forces `COMPANY_INVOICE`
+  (data auto-filled from `Company` + its `BILLING` `Address`). B2C allows any document type —
+  COMPANY_INVOICE in B2C means manual entry, no company discount. `is_b2b_only` products are
+  hard-blocked in B2C `purchase_type` (even for users with `company_id`).
+- `Address.address_type` partitions company addresses: `SHIPPING` (book, many) vs `BILLING`
+  (HQ/registered, at most one — partial unique index `ix_addresses_company_billing`).
 - Use async SQLAlchemy throughout (`AsyncSession`, `select()`, `await db.execute/scalars`).
 
 ## Conventions
@@ -54,6 +62,12 @@ volume-based discounts, email double opt-in, and company verification via NIP.
   server response; localStorage is not written (partialize returns empty items when a token
   exists). This is a conscious trade-off: cart needs to survive page refresh for guests and be
   globally accessible without prop-drilling, which React Query alone cannot provide.
+- **Exception — purchase mode store**: `src/store/purchaseModeStore.ts` is a deliberate third
+  Zustand store. It holds `mode: "COMPANY" | "PRIVATE"` and persists to localStorage. This is
+  a UI preference, not server state — it drives how pricing data is displayed (company vs. base
+  price) across the whole app (catalog, product page, cart). Only meaningful for users with a
+  `company_id`; the backend ignores mode when no company exists. React Query cannot satisfy
+  this because the preference is local and must outlive component mounts.
 
 ## Workflow
 - Build features as **vertical slices**, one section at a time, in this order: **API →

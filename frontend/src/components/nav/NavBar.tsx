@@ -8,6 +8,7 @@ import RoleGuard from "../common/RoleGuard";
 import NavAuthButtons from "./NavAuthButtons";
 import NavCategoryMenu from "./NavCategoryMenu";
 import NavRegionMenu from "./NavRegionMenu";
+import PurchaseModeToggle from "./PurchaseModeToggle";
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   `py-2 border-b-2 transition-colors ${
@@ -124,6 +125,7 @@ export default function NavBar() {
         </nav>
 
         <div className="flex items-center gap-6 h-full">
+          <PurchaseModeToggle />
           <div className="relative" ref={cartRef}>
             <button
               onClick={() => setIsCartOpen((prev) => !prev)}

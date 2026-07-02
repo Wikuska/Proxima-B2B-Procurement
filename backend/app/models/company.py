@@ -3,7 +3,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING, List
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Numeric, String, Text, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, Numeric, String, func
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -11,6 +11,7 @@ from .base import Base
 from .enums import RequestStatus
 
 if TYPE_CHECKING:
+    from .order import Address
     from .user import User
 
 
@@ -20,7 +21,6 @@ class Company(Base):
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     nip: Mapped[str] = mapped_column(String(20), unique=True, nullable=False)
-    address: Mapped[str | None] = mapped_column(Text, nullable=True)
     phone: Mapped[str | None] = mapped_column(String(50), nullable=True)
     discount_percentage: Mapped[Decimal] = mapped_column(
         Numeric(5, 2), default=Decimal("0.00")
@@ -33,6 +33,7 @@ class Company(Base):
 
     # Relations
     users: Mapped[List["User"]] = relationship(back_populates="company")
+    addresses: Mapped[List["Address"]] = relationship(back_populates="company")
 
 
 class CompanyRequest(Base):

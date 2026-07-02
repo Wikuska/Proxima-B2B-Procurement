@@ -1,13 +1,20 @@
 import { useParams } from "react-router-dom";
 import { useProduct } from "../hooks/catalog/products";
+import { useProductPricing } from "../hooks/pricing/useProductPricing";
+import { usePurchaseMode } from "../store/purchaseModeStore";
+import { useAuth } from "../hooks/user/useAuth";
 import AddToCart from "../components/product/AddToCart";
 import VolumeDiscounts from "../components/product/VolumeDiscounts";
 import ErrorState from "../components/common/ErrorState";
+import ProductImage from "../components/product/ProductImage";
 
 export default function ProductDetailsPage() {
   const { productSlug } = useParams<{ productSlug: string }>();
+  const mode = usePurchaseMode();
+  const { user } = useAuth();
 
   const { data: product, isLoading, isError } = useProduct(productSlug || "");
+  const { data: pricing } = useProductPricing(productSlug || "");
 
   if (isLoading) {
     return <ErrorState type="loading" message="Loading product details..." />;
@@ -22,7 +29,17 @@ export default function ProductDetailsPage() {
     );
   }
 
-  const basePrice = product.base_price || 0;
+  const basePrice = Number(product.base_price) || 0;
+
+  const showCompanyPrice =
+    mode === "COMPANY" &&
+    !!user?.company_id &&
+    !!pricing &&
+    Number(pricing.company_discount_percentage) > 0;
+
+  const displayPrice = showCompanyPrice
+    ? Number(pricing!.unit_price)
+    : basePrice;
 
   const isDescriptionLong =
     product.description && product.description.length > 150;
@@ -30,20 +47,12 @@ export default function ProductDetailsPage() {
   return (
     <div className="max-w-[1400px] mx-auto px-4 lg:px-8 pt-10 lg:pt-14 pb-12 flex flex-col gap-12">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-16 items-center">
-        <div className="bg-bg-surface border border-border-base/20 rounded-2xl p-6 flex items-center justify-center sticky top-24 w-full h-[450px] lg:h-[500px] shadow-[0_4px_24px_rgba(38,84,124,0.10)]">
-          {product.main_image_url ? (
-            <img
-              src={product.main_image_url}
-              alt={product.name || "Product image"}
-              className="w-full h-full object-cover rounded-xl"
-            />
-          ) : (
-            <div className="w-full h-full bg-bg-base rounded-xl flex items-center justify-center border border-dashed border-border-base/30">
-              <span className="text-text-muted text-sm">
-                No image available
-              </span>
-            </div>
-          )}
+        <div className="bg-bg-surface border border-border-base/20 rounded-2xl p-6 sticky top-24 w-full shadow-[0_4px_24px_rgba(38,84,124,0.10)]">
+          <ProductImage
+            src={product.main_image_url}
+            alt={product.name || "Product image"}
+            className="rounded-xl"
+          />
         </div>
 
         <div className="flex flex-col gap-6 justify-center">
@@ -80,11 +89,26 @@ export default function ProductDetailsPage() {
               </a>
             )}
           </div>
+
           {/* Price & Stock */}
           <div className="flex flex-col gap-2 bg-bg-base p-4 rounded-xl border border-border-base/20 shadow-sm">
-            <div className="text-3xl font-bold text-text-primary font-mono">
-              ${Number(basePrice).toFixed(2)}
-            </div>
+            {showCompanyPrice ? (
+              <div className="flex flex-col gap-0.5">
+                <span className="text-sm text-text-muted line-through font-mono">
+                  ${basePrice.toFixed(2)}
+                </span>
+                <span className="text-3xl font-bold text-accent font-mono">
+                  ${displayPrice.toFixed(2)}
+                </span>
+                <span className="text-xs text-green-600 font-medium">
+                  Company discount: -{Number(pricing!.company_discount_percentage).toFixed(0)}%
+                </span>
+              </div>
+            ) : (
+              <div className="text-3xl font-bold text-text-primary font-mono">
+                ${displayPrice.toFixed(2)}
+              </div>
+            )}
 
             <div className="text-sm font-medium flex items-center gap-2">
               {product.stock_quantity > 0 && product.is_active ? (
@@ -125,10 +149,7 @@ export default function ProductDetailsPage() {
             specified quantity threshold is exceeded.
           </p>
         </div>
-        <VolumeDiscounts
-          discounts={product.volume_discounts}
-          basePrice={basePrice}
-        />
+        <VolumeDiscounts tiers={pricing?.tiers ?? []} />
       </section>
 
       <section id="full-description" className="w-full scroll-mt-28">

@@ -4,6 +4,8 @@ import MainLayout from "./layouts/MainLayout";
 import {
   AuthPage,
   CartPage,
+  CheckoutConfirmationPage,
+  CheckoutPage,
   CompanyPage,
   ContactPage,
   HomePage,
@@ -12,9 +14,12 @@ import {
   ProfilePage,
   VerifyEmailPage,
 } from "./pages";
+import CompanyAddressesTab from "./pages/company/CompanyAddressesTab";
 import CompanyMembersTab from "./pages/company/CompanyMembersTab";
 import CompanyOrdersTab from "./pages/company/CompanyOrdersTab";
 import JoinRequestsTab from "./pages/company/JoinRequestsTab";
+import OrderDetailPage from "./pages/profile/OrderDetailPage";
+import OrdersTab from "./pages/profile/OrdersTab";
 import CompanyAffiliationTab from "./pages/profile/CompanyAffiliationTab";
 
 export default function App() {
@@ -29,6 +34,26 @@ export default function App() {
         <Route path="/product/:productSlug" element={<ProductDetailsPage />} />
         <Route path="/cart" element={<CartPage />} />
         <Route path="/contact" element={<ContactPage />} />
+
+        {/* Checkout */}
+        <Route
+          path="/checkout"
+          element={
+            <ProtectedRoute>
+              <CheckoutPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/checkout/confirmation/:orderId"
+          element={
+            <ProtectedRoute>
+              <CheckoutConfirmationPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Profile */}
         <Route
           path="/profile"
           element={
@@ -39,7 +64,11 @@ export default function App() {
         >
           <Route index element={<Navigate to="company-affiliation" replace />} />
           <Route path="company-affiliation" element={<CompanyAffiliationTab />} />
+          <Route path="orders" element={<OrdersTab />} />
+          <Route path="orders/:orderId" element={<OrderDetailPage />} />
         </Route>
+
+        {/* Company dashboard */}
         <Route
           path="/company"
           element={
@@ -52,6 +81,7 @@ export default function App() {
           <Route path="requests" element={<JoinRequestsTab />} />
           <Route path="orders" element={<CompanyOrdersTab />} />
           <Route path="members" element={<CompanyMembersTab />} />
+          <Route path="addresses" element={<CompanyAddressesTab />} />
         </Route>
       </Route>
     </Routes>

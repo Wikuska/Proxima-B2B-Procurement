@@ -1,3 +1,6 @@
+import uuid
+from decimal import Decimal
+
 import pytest
 import pytest_asyncio
 from app.core.security import create_access_token
@@ -5,6 +8,7 @@ from app.core.settings import settings
 from app.database import get_db
 from app.main import app
 from app.models import Base, Company, User
+from app.models.product import Category, Product, ProductVolumeDiscount
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.pool import NullPool
@@ -115,3 +119,56 @@ async def company_factory(db_session: AsyncSession):
         return company
 
     return _create_company
+
+
+@pytest_asyncio.fixture
+async def product_factory(db_session: AsyncSession):
+    """Factory fixture to dynamically create products for tests."""
+    _category: Category | None = None
+
+    async def _create_product(**kwargs):
+        nonlocal _category
+        if "category_id" not in kwargs:
+            if _category is None:
+                _category = Category(
+                    name="Test Category",
+                    slug=f"test-cat-{uuid.uuid4().hex[:8]}",
+                )
+                db_session.add(_category)
+                await db_session.flush()
+            kwargs["category_id"] = _category.id
+
+        product_data = {
+            "name": "Test Product",
+            "slug": f"test-product-{uuid.uuid4().hex[:8]}",
+            "sku": f"TEST-{uuid.uuid4().hex[:6].upper()}",
+            "base_price": Decimal("10.00"),
+            "stock_quantity": 100,
+            "is_active": True,
+            "is_b2b_only": False,
+        }
+        product_data.update(kwargs)
+
+        product = Product(**product_data)
+        db_session.add(product)
+        await db_session.commit()
+        return product
+
+    return _create_product
+
+
+@pytest_asyncio.fixture
+async def volume_discount_factory(db_session: AsyncSession):
+    """Factory fixture to dynamically create volume discounts for tests."""
+
+    async def _create_discount(product_id: uuid.UUID, min_quantity: int, discount_percentage: Decimal):
+        discount = ProductVolumeDiscount(
+            product_id=product_id,
+            min_quantity=min_quantity,
+            discount_percentage=discount_percentage,
+        )
+        db_session.add(discount)
+        await db_session.commit()
+        return discount
+
+    return _create_discount
