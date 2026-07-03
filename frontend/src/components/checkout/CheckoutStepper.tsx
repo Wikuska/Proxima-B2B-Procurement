@@ -1,10 +1,17 @@
-interface CheckoutStepperProps {
-  currentStep: 1 | 2 | 3;
-}
+import { useLocation } from "react-router-dom";
 
 const STEPS = ["Shipping", "Document", "Review"];
+const STEP_PATHS = ["shipping", "document", "review"];
 
-export default function CheckoutStepper({ currentStep }: CheckoutStepperProps) {
+function stepFromPathname(pathname: string): 1 | 2 | 3 {
+  const index = STEP_PATHS.findIndex((path) => pathname.endsWith(path));
+  return ((index === -1 ? 0 : index) + 1) as 1 | 2 | 3;
+}
+
+export default function CheckoutStepper() {
+  const { pathname } = useLocation();
+  const currentStep = stepFromPathname(pathname);
+
   return (
     <ol className="flex items-center gap-0 mb-10">
       {STEPS.map((label, i) => {

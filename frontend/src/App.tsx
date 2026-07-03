@@ -7,13 +7,16 @@ import {
   AuthPage,
   CartPage,
   CheckoutConfirmationPage,
-  CheckoutPage,
+  CheckoutFlow,
   CompanyPage,
   ContactPage,
+  DocumentStep,
   HomePage,
   ProductDetailsPage,
   ProductsPage,
   ProfilePage,
+  ReviewStep,
+  ShippingStep,
   VerifyEmailPage,
 } from "./pages";
 import CompanyAddressesTab from "./pages/company/CompanyAddressesTab";
@@ -54,10 +57,15 @@ export default function App() {
             path="/checkout"
             element={
               <ProtectedRoute>
-                <CheckoutPage />
+                <CheckoutFlow />
               </ProtectedRoute>
             }
-          />
+          >
+            <Route index element={<Navigate to="shipping" replace />} />
+            <Route path="shipping" element={<ShippingStep />} />
+            <Route path="document" element={<DocumentStep />} />
+            <Route path="review" element={<ReviewStep />} />
+          </Route>
           <Route
             path="/checkout/confirmation/:orderId"
             element={

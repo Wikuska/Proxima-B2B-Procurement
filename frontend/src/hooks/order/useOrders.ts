@@ -33,6 +33,8 @@ export function useCreateOrder() {
       // Invalidate server cart cache
       queryClient.invalidateQueries({ queryKey: ["cart"] });
       queryClient.invalidateQueries({ queryKey: ["orders"] });
+      // Order may have persisted a new personal address (save_address: true).
+      queryClient.invalidateQueries({ queryKey: ["addresses"] });
       navigate(`/checkout/confirmation/${order.id}`);
     },
     onError: (err: Error) => {
