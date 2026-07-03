@@ -68,7 +68,6 @@ volume-based discounts, email double opt-in, and company verification via NIP.
   price) across the whole app (catalog, product page, cart). Only meaningful for users with a
   `company_id`; the backend ignores mode when no company exists. React Query cannot satisfy
   this because the preference is local and must outlive component mounts.
-
 ## Workflow
 - Build features as **vertical slices**, one section at a time, in this order: **API →
   tests → frontend**. Finish and verify a slice end-to-end before starting the next section.

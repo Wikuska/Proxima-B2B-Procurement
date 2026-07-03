@@ -67,6 +67,27 @@ async def try_decrement_stock(db: AsyncSession, product_id: uuid.UUID, qty: int)
     return result.rowcount > 0
 
 
+async def get_related_products(
+    db: AsyncSession,
+    category_id: uuid.UUID,
+    exclude_id: uuid.UUID,
+    limit: int = 8,
+) -> list[Product]:
+    """Returns active products from the same category, excluding the given product."""
+    stmt = (
+        select(Product)
+        .where(
+            Product.category_id == category_id,
+            Product.id != exclude_id,
+            Product.is_active,
+        )
+        .order_by(Product.name)
+        .limit(limit)
+    )
+    result = await db.scalars(stmt)
+    return list(result.all())
+
+
 async def get_product_by_slug(db: AsyncSession, slug: str) -> Product | None:
     stmt = (
         select(Product)

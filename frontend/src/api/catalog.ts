@@ -80,3 +80,10 @@ export const fetchProductBySlug = (slug: string) => {
     method: "GET",
   });
 };
+
+export const fetchRelatedProducts = (slug: string, limit = 8) => {
+  return apiFetch<ProductListOut[]>(
+    `/catalog/products/${slug}/related?limit=${limit}`,
+    { method: "GET" },
+  );
+};
