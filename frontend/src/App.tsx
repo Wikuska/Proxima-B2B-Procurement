@@ -25,6 +25,7 @@ import JoinRequestsTab from "./pages/company/JoinRequestsTab";
 import OrderDetailPage from "./pages/profile/OrderDetailPage";
 import OrdersTab from "./pages/profile/OrdersTab";
 import CompanyAffiliationTab from "./pages/profile/CompanyAffiliationTab";
+import ShippingAddressesTab from "./pages/profile/ShippingAddressesTab";
 
 export default function App() {
   const location = useLocation();
@@ -85,6 +86,7 @@ export default function App() {
             />
             <Route path="orders" element={<OrdersTab />} />
             <Route path="orders/:orderId" element={<OrderDetailPage />} />
+            <Route path="addresses" element={<ShippingAddressesTab />} />
           </Route>
         </Route>
 

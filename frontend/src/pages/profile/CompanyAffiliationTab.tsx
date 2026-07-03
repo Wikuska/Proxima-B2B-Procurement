@@ -53,8 +53,8 @@ function AffiliationCard({
     : "—";
 
   return (
-    <div className="max-w-lg space-y-8">
-      <div className="bg-bg-surface border border-border-base/30 rounded-xl p-6 space-y-5 shadow-sm">
+    <div className="w-full h-full flex flex-col">
+      <div className="bg-bg-base border border-border-base/40 rounded-lg p-6 shadow-sm">
         <div>
           <h2 className="text-xl font-bold text-text-main">
             {affiliation.company_name}
@@ -64,7 +64,7 @@ function AffiliationCard({
           </p>
         </div>
 
-        <div className="divide-y divide-border-base/20">
+        <div className="divide-y divide-border-base/20 mt-5">
           <div className="flex justify-between items-center py-3">
             <span className="text-sm text-text-muted">Role</span>
             <span
@@ -79,20 +79,20 @@ function AffiliationCard({
           </div>
           <div className="flex justify-between items-center py-3">
             <span className="text-sm text-text-muted">Company discount</span>
-            <span className="text-sm font-medium text-text-main">
+            <span className="text-sm font-bold text-text-main">
               {discount > 0 ? `${discount}%` : "No discount"}
             </span>
           </div>
           <div className="flex justify-between items-center py-3">
             <span className="text-sm text-text-muted">Member since</span>
-            <span className="text-sm font-medium text-text-main">
+            <span className="text-sm font-bold text-text-main">
               {joinedAt}
             </span>
           </div>
         </div>
       </div>
 
-      <div className="pt-6 border-t border-border-base/30">
+      <div className="mt-auto pt-6 border-t border-border-base/30">
         <h3 className="text-sm font-semibold text-red-600 mb-1">Danger Zone</h3>
         <p className="text-xs text-text-muted mb-4 leading-relaxed">
           Leaving the company will revoke your access to corporate discounts and
@@ -102,7 +102,7 @@ function AffiliationCard({
         <button
           onClick={onLeave}
           disabled={isLeaving}
-          className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors shadow-sm"
+          className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-md transition-colors shadow-sm"
         >
           {isLeaving ? "Leaving..." : "Leave company"}
         </button>
@@ -189,7 +189,7 @@ export default function CompanyAffiliationTab() {
           {loadingRequests ? (
             <p className="text-text-muted text-sm">Loading...</p>
           ) : !requests?.length ? (
-            <div className="flex flex-col items-center justify-center p-8 bg-bg-surface border border-dashed border-border-base/40 rounded-xl">
+            <div className="flex flex-col items-center justify-center p-8 bg-bg-base border border-dashed border-border-base/40 rounded-lg">
               <p className="text-text-muted text-sm text-center">
                 You haven't sent any requests yet.
               </p>
@@ -199,7 +199,7 @@ export default function CompanyAffiliationTab() {
               {requests.map((req) => (
                 <li
                   key={req.id}
-                  className="flex justify-between items-center p-3.5 bg-bg-surface border border-border-base/20 rounded-xl shadow-sm"
+                  className="flex justify-between items-center p-3.5 bg-bg-base border border-border-base/40 rounded-lg shadow-sm"
                 >
                   <span className="font-mono text-sm text-text-main">
                     {formatNip(req.requested_nip)}

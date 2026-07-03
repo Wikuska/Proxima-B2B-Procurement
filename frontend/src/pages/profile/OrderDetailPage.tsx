@@ -11,7 +11,7 @@ const DOC_TYPE_LABEL: Record<string, string> = {
 
 function BillingDocumentSection({ doc }: { doc: BillingDocumentOut }) {
   return (
-    <section className="bg-bg-surface border border-border-base/20 rounded-xl p-5 shadow-sm space-y-2">
+    <section className="bg-bg-base border border-border-base/40 rounded-lg p-5 shadow-sm space-y-2">
       <h3 className="text-sm font-semibold text-text-main mb-3">Billing Document</h3>
       <p className="text-xs text-text-muted">
         <span className="font-medium text-text-main">Type:</span>{" "}
@@ -84,7 +84,7 @@ export default function OrderDetailPage() {
       </div>
 
       {/* Items */}
-      <section className="bg-bg-surface border border-border-base/20 rounded-xl p-5 shadow-sm">
+      <section className="bg-bg-base border border-border-base/40 rounded-lg p-5 shadow-sm">
         <h3 className="text-sm font-semibold text-text-main mb-3">Items</h3>
         <div className="divide-y divide-border-base/10">
           {order.items.map((item) => (
@@ -118,7 +118,7 @@ export default function OrderDetailPage() {
       </section>
 
       {/* Delivery */}
-      <section className="bg-bg-surface border border-border-base/20 rounded-xl p-5 shadow-sm space-y-2">
+      <section className="bg-bg-base border border-border-base/40 rounded-lg p-5 shadow-sm space-y-2">
         <h3 className="text-sm font-semibold text-text-main mb-3">Delivery</h3>
         <p className="text-sm text-text-muted">
           {order.shipping_street}, {order.shipping_city}{" "}

@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import { Bell, Store } from "lucide-react";
 import { Link, NavLink, Outlet } from "react-router-dom";
+import { getInitials } from "../utils/getInitials";
 
 export interface DashboardNavItem {
   to: string;
@@ -18,19 +19,6 @@ interface AppDashboardLayoutProps {
   brandSubtitle: string;
   navItems: DashboardNavItem[];
   user: DashboardUser;
-}
-
-function getInitials(name: string) {
-  return (
-    name
-      .trim()
-      .split(/\s+/)
-      .map((part) => part[0])
-      .filter(Boolean)
-      .slice(0, 2)
-      .join("")
-      .toUpperCase() || "?"
-  );
 }
 
 /**
