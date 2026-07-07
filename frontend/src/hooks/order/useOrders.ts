@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
-import { createOrder, getOrder, getOrders } from "../../api/order";
+import { createOrder, getCheckoutOptions, getOrder, getOrders } from "../../api/order";
 import type { OrderCreate, PurchaseType } from "../../api/order";
 import { useCartStore } from "../../store/cartStore";
 
@@ -9,6 +9,14 @@ export function useOrders(purchaseType?: PurchaseType) {
   return useQuery({
     queryKey: ["orders", purchaseType ?? "all"],
     queryFn: () => getOrders(purchaseType),
+  });
+}
+
+export function useCheckoutOptions() {
+  return useQuery({
+    queryKey: ["orders", "checkout-options"],
+    queryFn: getCheckoutOptions,
+    staleTime: Infinity,
   });
 }
 

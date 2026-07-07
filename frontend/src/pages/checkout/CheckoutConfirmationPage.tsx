@@ -1,6 +1,7 @@
 import { CheckCircle } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { useOrder } from "../../hooks/order/useOrders";
+import { DELIVERY_LABELS, PAYMENT_LABELS } from "../../api/order";
 
 export default function CheckoutConfirmationPage() {
   const { orderId } = useParams<{ orderId: string }>();
@@ -47,12 +48,48 @@ export default function CheckoutConfirmationPage() {
             </div>
           ))}
         </div>
-        <div className="border-t border-border-base/10 mt-3 pt-3 flex justify-between">
-          <span className="text-sm font-bold text-text-main">Total</span>
-          <span className="text-sm font-bold font-mono text-text-main">
-            ${Number(order.total_amount).toFixed(2)}
-          </span>
+        <div className="border-t border-border-base/10 mt-3 pt-3 space-y-1.5">
+          <div className="flex justify-between text-xs text-text-muted">
+            <span>Shipping ({DELIVERY_LABELS[order.shipment.delivery_method]})</span>
+            <span className="font-mono">
+              {Number(order.shipment.shipping_cost) === 0
+                ? "Free"
+                : `$${Number(order.shipment.shipping_cost).toFixed(2)}`}
+            </span>
+          </div>
+          <div className="flex justify-between pt-1">
+            <span className="text-sm font-bold text-text-main">Total</span>
+            <span className="text-sm font-bold font-mono text-text-main">
+              ${Number(order.total_amount).toFixed(2)}
+            </span>
+          </div>
         </div>
+      </div>
+
+      <div className="bg-bg-surface border border-border-base/20 rounded-2xl p-6 text-left shadow-sm mb-8 space-y-1.5">
+        <h2 className="text-sm font-semibold text-text-main mb-2">Delivery</h2>
+        <p className="text-sm text-text-muted">
+          <span className="font-medium text-text-main">Recipient:</span>{" "}
+          {order.shipment.recipient_name} · {order.shipment.recipient_phone}
+        </p>
+        <p className="text-sm text-text-muted">
+          <span className="font-medium text-text-main">Ship to:</span>{" "}
+          {order.shipment.shipping_street}, {order.shipment.shipping_city}{" "}
+          {order.shipment.shipping_postal_code}, {order.shipment.shipping_country}
+        </p>
+        <p className="text-sm text-text-muted">
+          <span className="font-medium text-text-main">Method:</span>{" "}
+          {DELIVERY_LABELS[order.shipment.delivery_method]}
+        </p>
+        <p className="text-sm text-text-muted">
+          <span className="font-medium text-text-main">Payment:</span>{" "}
+          {PAYMENT_LABELS[order.payment_method]}
+        </p>
+        {order.note && (
+          <p className="text-sm text-text-muted">
+            <span className="font-medium text-text-main">Note:</span> {order.note}
+          </p>
+        )}
       </div>
 
       <div className="flex gap-3 justify-center">

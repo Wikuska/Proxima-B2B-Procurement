@@ -1,6 +1,11 @@
 import { ArrowLeft } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
-import type { BillingDocumentOut } from "../../api/order";
+import {
+  DELIVERY_LABELS,
+  PAYMENT_LABELS,
+  type BillingDocumentOut,
+  type ShipmentOut,
+} from "../../api/order";
 import { useOrder } from "../../hooks/order/useOrders";
 
 const DOC_TYPE_LABEL: Record<string, string> = {
@@ -45,6 +50,38 @@ function BillingDocumentSection({ doc }: { doc: BillingDocumentOut }) {
           {doc.document_number}
         </p>
       )}
+    </section>
+  );
+}
+
+function ShipmentSection({
+  shipment,
+  paymentMethod,
+}: {
+  shipment: ShipmentOut;
+  paymentMethod: string;
+}) {
+  return (
+    <section className="bg-bg-base border border-border-base/40 rounded-lg p-5 shadow-sm space-y-2">
+      <h3 className="text-sm font-semibold text-text-main mb-3">Delivery</h3>
+      <p className="text-sm text-text-muted">
+        <span className="font-medium text-text-main">Recipient:</span>{" "}
+        {shipment.recipient_name} · {shipment.recipient_phone}
+        {shipment.recipient_email && <> · {shipment.recipient_email}</>}
+      </p>
+      <p className="text-sm text-text-muted">
+        <span className="font-medium text-text-main">Ship to:</span>{" "}
+        {shipment.shipping_street}, {shipment.shipping_city}{" "}
+        {shipment.shipping_postal_code}, {shipment.shipping_country}
+      </p>
+      <p className="text-sm text-text-muted">
+        <span className="font-medium text-text-main">Method:</span>{" "}
+        {DELIVERY_LABELS[shipment.delivery_method]}
+      </p>
+      <p className="text-sm text-text-muted">
+        <span className="font-medium text-text-main">Payment:</span>{" "}
+        {PAYMENT_LABELS[paymentMethod as keyof typeof PAYMENT_LABELS] ?? paymentMethod}
+      </p>
     </section>
   );
 }
@@ -109,25 +146,37 @@ export default function OrderDetailPage() {
             </div>
           ))}
         </div>
-        <div className="border-t border-border-base/10 mt-3 pt-3 flex justify-between">
-          <span className="text-sm font-bold text-text-main">Total</span>
-          <span className="text-base font-bold font-mono text-text-main">
-            ${Number(order.total_amount).toFixed(2)}
-          </span>
+        <div className="border-t border-border-base/10 mt-3 pt-3 space-y-1.5">
+          <div className="flex justify-between text-xs text-text-muted">
+            <span>Shipping ({DELIVERY_LABELS[order.shipment.delivery_method]})</span>
+            <span className="font-mono">
+              {Number(order.shipment.shipping_cost) === 0
+                ? "Free"
+                : `$${Number(order.shipment.shipping_cost).toFixed(2)}`}
+            </span>
+          </div>
+          <div className="flex justify-between pt-1">
+            <span className="text-sm font-bold text-text-main">Total</span>
+            <span className="text-base font-bold font-mono text-text-main">
+              ${Number(order.total_amount).toFixed(2)}
+            </span>
+          </div>
         </div>
       </section>
 
       {/* Delivery */}
-      <section className="bg-bg-base border border-border-base/40 rounded-lg p-5 shadow-sm space-y-2">
-        <h3 className="text-sm font-semibold text-text-main mb-3">Delivery</h3>
-        <p className="text-sm text-text-muted">
-          {order.shipping_street}, {order.shipping_city}{" "}
-          {order.shipping_postal_code}, {order.shipping_country}
-        </p>
-      </section>
+      <ShipmentSection shipment={order.shipment} paymentMethod={order.payment_method} />
 
       {/* Billing document */}
       <BillingDocumentSection doc={order.billing_document} />
+
+      {/* Note */}
+      {order.note && (
+        <section className="bg-bg-base border border-border-base/40 rounded-lg p-5 shadow-sm">
+          <h3 className="text-sm font-semibold text-text-main mb-2">Note</h3>
+          <p className="text-sm text-text-muted whitespace-pre-wrap">{order.note}</p>
+        </section>
+      )}
     </div>
   );
 }

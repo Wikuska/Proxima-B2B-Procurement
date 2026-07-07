@@ -1,57 +1,8 @@
-import { Navigate, useNavigate, useOutletContext } from "react-router-dom";
-import type { DocumentType } from "../../../api/order";
-import type { BillingFormState, CheckoutContext } from "../checkoutTypes";
+import type { DocumentType } from "../../api/order";
+import type { BillingFormState } from "./checkoutTypes";
 
 const inputClass =
-  "w-full px-3 py-2 text-sm border border-border-base rounded-lg focus:outline-none focus:border-border-focus bg-bg-surface text-text-main";
-
-export default function DocumentStep() {
-  const navigate = useNavigate();
-  const {
-    canProceedToDocument,
-    isCompanyMode,
-    companyBillingAddress,
-    billing,
-    setBilling,
-    isBillingComplete,
-  } = useOutletContext<CheckoutContext>();
-
-  if (!canProceedToDocument) {
-    return <Navigate to="/checkout/shipping" replace />;
-  }
-
-  return (
-    <div className="space-y-8">
-      {isCompanyMode ? (
-        <CompanyInvoiceReadOnly
-          billingAddress={companyBillingAddress ?? null}
-        />
-      ) : (
-        <PrivateBillingForm billing={billing} onChange={setBilling} />
-      )}
-
-      <div className="flex gap-3">
-        <button
-          onClick={() => navigate("/checkout/shipping")}
-          className="flex-1 py-3.5 border border-border-base text-text-muted rounded-lg font-semibold text-sm hover:text-primary hover:border-primary transition-colors"
-        >
-          Back
-        </button>
-        <button
-          onClick={() => navigate("/checkout/review")}
-          disabled={!isBillingComplete}
-          className="flex-1 py-3.5 bg-primary text-white rounded-lg font-semibold text-sm hover:bg-accent transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
-        >
-          Review Order
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Sub-components
-// ---------------------------------------------------------------------------
+  "w-full px-3 py-2 text-sm border border-border-base rounded-lg focus:outline-none focus:border-primary bg-bg-surface text-text-main";
 
 interface AddressOut {
   street: string;
@@ -61,16 +12,14 @@ interface AddressOut {
   label?: string | null;
 }
 
-function CompanyInvoiceReadOnly({
+export function CompanyInvoiceReadOnly({
   billingAddress,
 }: {
   billingAddress: AddressOut | null;
 }) {
   return (
     <section className="bg-bg-surface border border-border-base/20 rounded-2xl p-6 shadow-sm space-y-4">
-      <h2 className="text-base font-semibold text-text-main">
-        Billing document
-      </h2>
+      <h2 className="text-xl font-bold text-text-main">Billing document</h2>
       <div className="p-4 bg-bg-base border border-primary/20 rounded-xl space-y-1">
         <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-2">
           Company Invoice
@@ -96,7 +45,7 @@ function CompanyInvoiceReadOnly({
   );
 }
 
-function PrivateBillingForm({
+export function PrivateBillingForm({
   billing,
   onChange,
 }: {
@@ -116,9 +65,7 @@ function PrivateBillingForm({
 
   return (
     <section className="bg-bg-surface border border-border-base/20 rounded-2xl p-6 shadow-sm space-y-5">
-      <h2 className="text-base font-semibold text-text-main">
-        Billing document
-      </h2>
+      <h2 className="text-xl font-bold text-text-main">Billing document</h2>
 
       {/* Document type radio */}
       <div className="space-y-2">

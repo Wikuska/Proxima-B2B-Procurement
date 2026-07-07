@@ -21,7 +21,7 @@ interface AddressFormProps {
 }
 
 const inputClass =
-  "w-full px-3 py-2 text-sm border border-border-base rounded-lg focus:outline-none focus:border-border-focus bg-bg-surface text-text-main";
+  "w-full px-3 py-2 text-sm border border-border-base rounded-lg focus:outline-none focus:border-primary bg-bg-surface text-text-main";
 const errorClass = "text-xs text-red-500 mt-1";
 
 export default function AddressForm({

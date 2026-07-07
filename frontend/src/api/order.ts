@@ -11,6 +11,17 @@ export type OrderStatus =
   | "DELIVERED"
   | "CANCELLED"
   | "RETURNED";
+export type DeliveryMethod =
+  | "COURIER"
+  | "COURIER_EXPRESS"
+  | "INPOST_LOCKER"
+  | "PICKUP";
+export type PaymentMethod =
+  | "BANK_TRANSFER"
+  | "CARD"
+  | "BLIK"
+  | "CASH_ON_DELIVERY"
+  | "DEFERRED";
 
 export interface BillingDocumentIn {
   document_type: DocumentType;
@@ -41,6 +52,19 @@ export interface BillingDocumentOut {
   created_at: string;
 }
 
+export interface ShipmentOut {
+  delivery_method: DeliveryMethod;
+  shipping_cost: string;
+  recipient_name: string;
+  recipient_phone: string;
+  recipient_email: string | null;
+  shipping_street: string;
+  shipping_city: string;
+  shipping_postal_code: string;
+  shipping_country: string;
+  created_at: string;
+}
+
 export interface OrderItemOut {
   id: string;
   product_id: string;
@@ -55,13 +79,12 @@ export interface OrderOut {
   id: string;
   status: OrderStatus;
   purchase_type: PurchaseType;
+  payment_method: PaymentMethod;
   total_amount: string;
+  note: string | null;
   created_at: string;
-  shipping_street: string;
-  shipping_city: string;
-  shipping_postal_code: string;
-  shipping_country: string;
   billing_document: BillingDocumentOut;
+  shipment: ShipmentOut;
   items: OrderItemOut[];
 }
 
@@ -81,7 +104,43 @@ export interface OrderCreate {
   address_id?: string;
   shipping_address?: AddressIn;
   save_address?: boolean;
+  delivery_method: DeliveryMethod;
+  payment_method: PaymentMethod;
+  recipient_name: string;
+  recipient_phone: string;
+  recipient_email?: string;
+  note?: string;
 }
+
+export interface DeliveryOptionOut {
+  delivery_method: DeliveryMethod;
+  cost: string;
+}
+
+export interface PaymentOptionOut {
+  payment_method: PaymentMethod;
+  b2b_only: boolean;
+}
+
+export interface CheckoutOptionsOut {
+  delivery_methods: DeliveryOptionOut[];
+  payment_methods: PaymentOptionOut[];
+}
+
+export const DELIVERY_LABELS: Record<DeliveryMethod, string> = {
+  COURIER: "Courier",
+  COURIER_EXPRESS: "Courier (Express)",
+  INPOST_LOCKER: "InPost Locker",
+  PICKUP: "Personal pickup",
+};
+
+export const PAYMENT_LABELS: Record<PaymentMethod, string> = {
+  BANK_TRANSFER: "Bank transfer",
+  CARD: "Credit / debit card",
+  BLIK: "BLIK",
+  CASH_ON_DELIVERY: "Cash on delivery",
+  DEFERRED: "Deferred payment (invoice)",
+};
 
 export const createOrder = (data: OrderCreate): Promise<OrderOut> =>
   apiFetch<OrderOut>("/orders", { method: "POST", body: data });
@@ -93,3 +152,6 @@ export const getOrders = (purchaseType?: PurchaseType): Promise<OrderSummaryOut[
 
 export const getOrder = (id: string): Promise<OrderOut> =>
   apiFetch<OrderOut>(`/orders/${id}`);
+
+export const getCheckoutOptions = (): Promise<CheckoutOptionsOut> =>
+  apiFetch<CheckoutOptionsOut>("/orders/checkout-options");

@@ -1,7 +1,10 @@
 import type { AddressIn, AddressOut } from "../../api/address";
 import type {
   BillingDocumentIn,
+  CheckoutOptionsOut,
+  DeliveryMethod,
   DocumentType,
+  PaymentMethod,
   PurchaseType,
 } from "../../api/order";
 import type { useCartQuote } from "../../hooks/pricing/useCartQuote";
@@ -74,6 +77,11 @@ export interface CheckoutContext {
   quote: ReturnType<typeof useCartQuote>["data"];
   grandTotal: number | null;
 
+  // Checkout options (delivery costs, payment b2b_only flags)
+  checkoutOptions: CheckoutOptionsOut | undefined;
+  shippingCost: number;
+  orderTotal: number | null;
+
   // Purchase type
   purchaseType: PurchaseType;
   effectivePurchaseType: PurchaseType;
@@ -96,12 +104,37 @@ export interface CheckoutContext {
   setSaveAddress: (save: boolean) => void;
   selectedAddress: AddressOut | undefined;
 
+  // Recipient
+  recipientName: string;
+  setRecipientName: (v: string) => void;
+  recipientPhone: string;
+  setRecipientPhone: (v: string) => void;
+  recipientEmail: string;
+  setRecipientEmail: (v: string) => void;
+
+  // Delivery & payment
+  deliveryMethod: DeliveryMethod;
+  setDeliveryMethod: (v: DeliveryMethod) => void;
+  paymentMethod: PaymentMethod;
+  setPaymentMethod: (v: PaymentMethod) => void;
+  // True once the user has reached the delivery step at least once — lets the
+  // order summary on step 1 keep showing the shipping cost after going back,
+  // instead of resetting to "not yet chosen".
+  deliveryConfirmed: boolean;
+  setDeliveryConfirmed: (v: boolean) => void;
+
   // Billing document
   billing: BillingFormState;
   setBilling: (b: BillingFormState) => void;
+  copyRecipientToBilling: () => void;
+
+  // Order note
+  note: string;
+  setNote: (v: string) => void;
 
   // Derived guards
-  canProceedToDocument: boolean;
+  canProceedToDelivery: boolean;
+  canProceedToSummary: boolean;
   isBillingComplete: boolean;
 
   // Submission
