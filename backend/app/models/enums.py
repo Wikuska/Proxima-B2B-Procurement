@@ -37,3 +37,18 @@ class DocumentType(str, enum.Enum):
 class AddressType(str, enum.Enum):
     SHIPPING = "SHIPPING"
     BILLING = "BILLING"
+
+
+class DeliveryMethod(str, enum.Enum):
+    COURIER = "COURIER"
+    COURIER_EXPRESS = "COURIER_EXPRESS"
+    INPOST_LOCKER = "INPOST_LOCKER"
+    PICKUP = "PICKUP"
+
+
+class PaymentMethod(str, enum.Enum):
+    BANK_TRANSFER = "BANK_TRANSFER"
+    CARD = "CARD"
+    BLIK = "BLIK"
+    CASH_ON_DELIVERY = "CASH_ON_DELIVERY"
+    DEFERRED = "DEFERRED"

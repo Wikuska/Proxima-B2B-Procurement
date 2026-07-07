@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from decimal import Decimal
 
-from app.models.enums import DocumentType, OrderStatus, PurchaseType
+from app.models.enums import DeliveryMethod, DocumentType, OrderStatus, PaymentMethod, PurchaseType
 from app.schemas.address import AddressIn
 from pydantic import BaseModel, ConfigDict, model_validator
 
@@ -66,6 +66,28 @@ class OrderCreate(BaseModel):
     shipping_address: AddressIn | None = None
     save_address: bool = False
 
+    delivery_method: DeliveryMethod
+    payment_method: PaymentMethod
+    recipient_name: str
+    recipient_phone: str
+    recipient_email: str | None = None
+    note: str | None = None
+
+
+class ShipmentOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    delivery_method: DeliveryMethod
+    shipping_cost: Decimal
+    recipient_name: str
+    recipient_phone: str
+    recipient_email: str | None
+    shipping_street: str
+    shipping_city: str
+    shipping_postal_code: str
+    shipping_country: str
+    created_at: datetime
+
 
 class OrderItemOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -85,15 +107,13 @@ class OrderOut(BaseModel):
     id: uuid.UUID
     status: OrderStatus
     purchase_type: PurchaseType
+    payment_method: PaymentMethod
     total_amount: Decimal
+    note: str | None
     created_at: datetime
 
-    shipping_street: str
-    shipping_city: str
-    shipping_postal_code: str
-    shipping_country: str
-
     billing_document: BillingDocumentOut
+    shipment: ShipmentOut
 
     items: list[OrderItemOut]
 
@@ -107,3 +127,18 @@ class OrderSummaryOut(BaseModel):
     total_amount: Decimal
     created_at: datetime
     item_count: int
+
+
+class DeliveryOptionOut(BaseModel):
+    delivery_method: DeliveryMethod
+    cost: Decimal
+
+
+class PaymentOptionOut(BaseModel):
+    payment_method: PaymentMethod
+    b2b_only: bool
+
+
+class CheckoutOptionsOut(BaseModel):
+    delivery_methods: list[DeliveryOptionOut]
+    payment_methods: list[PaymentOptionOut]
