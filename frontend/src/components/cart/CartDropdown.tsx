@@ -1,5 +1,5 @@
 import { ShoppingBag } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/user/useAuth";
 import { useCartActions } from "../../hooks/cart/useCartActions";
 import { useCartView } from "../../hooks/cart/useCartView";
@@ -13,6 +13,7 @@ interface CartDropdownProps {
 export default function CartDropdown({ onClose }: CartDropdownProps) {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { lines, quoteItems, availableSubtotal, isLoading, isError } =
     useCartView();
   const { setQty, remove, pendingProductIds } = useCartActions();
@@ -108,7 +109,12 @@ export default function CartDropdown({ onClose }: CartDropdownProps) {
               onClick={() => {
                 onClose();
                 if (!isAuthenticated) {
-                  navigate("/auth", { state: { from: "/checkout" } });
+                  navigate("/auth", {
+                    state: {
+                      from: "/checkout",
+                      backgroundLocation: location,
+                    },
+                  });
                 } else {
                   navigate("/checkout");
                 }

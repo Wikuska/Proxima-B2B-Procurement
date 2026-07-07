@@ -167,3 +167,8 @@ class DuplicateBillingAddressException(AppException):
 class CannotDeleteBillingAddressException(AppException):
     status_code = 400
     detail = "The billing address cannot be deleted — edit it instead."
+
+
+class InvalidPaymentMethodException(AppException):
+    status_code = 400
+    detail = "This payment method is not available for the selected purchase type"

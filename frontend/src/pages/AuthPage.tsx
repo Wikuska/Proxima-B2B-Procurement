@@ -1,18 +1,7 @@
-import { useState } from "react";
-import CreateAccountForm from "../components/forms/CreateAccountForm";
-import SignInForm from "../components/forms/SignInForm";
-import FormButton from "../components/forms/FormButton";
 import { FlaskConical } from "lucide-react";
-import { useSearchParams } from "react-router-dom";
-
-type AuthMode = "signin" | "signup";
+import AuthPanel from "../components/auth/AuthPanel";
 
 export default function AuthPage() {
-  const [searchParams] = useSearchParams();
-  const [authMode, setAuthMode] = useState<AuthMode>(
-    searchParams.get("mode") === "register" ? "signup" : "signin",
-  );
-
   return (
     <div className="flex min-h-screen w-full items-center justify-center bg-bg-base p-4 sm:p-8">
       <div className="flex w-full max-w-6xl flex-col overflow-hidden rounded-2xl bg-bg-surface shadow-2xl min-h-[800px] lg:flex-row lg:h-[740px]">
@@ -51,34 +40,8 @@ export default function AuthPage() {
           </div>
         </div>
 
-        <div className="relative flex w-full flex-col p-6 sm:p-12 lg:w-2/3 lg:h-full">
-          <div className="mb-6 flex self-start w-full sm:w-auto gap-8 flex-shrink-0">
-            <FormButton
-              variant="tab"
-              isActive={authMode === "signin"}
-              onClick={() => setAuthMode("signin")}
-            >
-              Sign in
-            </FormButton>
-
-            <FormButton
-              variant="tab"
-              isActive={authMode === "signup"}
-              onClick={() => setAuthMode("signup")}
-            >
-              Create account
-            </FormButton>
-          </div>
-
-          <div className="flex flex-grow items-center justify-center overflow-y-auto pr-1 w-full">
-            {authMode === "signin" ? (
-              <SignInForm onSwitchToSignUp={() => setAuthMode("signup")} />
-            ) : (
-              <CreateAccountForm
-                onSwitchToSignIn={() => setAuthMode("signin")}
-              />
-            )}
-          </div>
+        <div className="relative flex w-full flex-col lg:w-2/3 lg:h-full">
+          <AuthPanel />
         </div>
       </div>
     </div>

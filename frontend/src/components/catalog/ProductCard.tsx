@@ -51,7 +51,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   };
 
   return (
-    <div className="group flex flex-col bg-bg-surface border border-border-base/20 rounded-2xl overflow-hidden hover:shadow-xl hover:border-accent/30 transition-all duration-300">
+    <div className="group flex flex-col h-full bg-bg-surface border border-border-base/20 rounded-2xl overflow-hidden hover:shadow-xl hover:border-accent/30 transition-all duration-300">
       <Link
         to={`/product/${slug}`}
         className="relative bg-white p-4 border-b border-border-base/10 block overflow-hidden"
@@ -61,23 +61,23 @@ export default function ProductCard({ product }: ProductCardProps) {
         </div>
 
         {is_b2b_only && (
-          <span className="absolute top-3 left-3 bg-gray-800 text-white text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider">
+          <span className="absolute top-5 right-5 bg-accent/10 text-accent text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">
             B2B Only
           </span>
         )}
       </Link>
 
-      <div className="p-5 flex flex-col flex-1">
+      <div className="p-5 flex flex-col flex-grow">
         <span className="text-[11px] text-text-muted font-mono mb-1">{sku}</span>
 
         <Link
           to={`/product/${slug}`}
-          className="font-medium text-text-main text-sm leading-snug mb-4 group-hover:text-accent transition-colors"
+          className="font-medium text-text-main text-sm leading-snug mb-4 line-clamp-2 group-hover:text-accent transition-colors"
         >
           {name}
         </Link>
 
-        <div className="mt-auto flex items-center justify-between">
+        <div className="mt-auto flex flex-col gap-3">
           <div className="flex flex-col">
             {showCompanyPrice ? (
               <>
@@ -95,12 +95,12 @@ export default function ProductCard({ product }: ProductCardProps) {
             )}
           </div>
           <button
-            className="bg-bg-base border border-border-base hover:border-accent hover:bg-accent hover:text-white text-text-main p-2 rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-            aria-label="Add to cart"
+            className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-accent text-white text-sm font-medium py-2.5 rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
             disabled={isPending || b2bBlocked || stock_quantity <= 0}
             onClick={handleQuickAdd}
           >
-            <ShoppingCart size={18} />
+            <ShoppingCart size={16} />
+            Add to Cart
           </button>
         </div>
       </div>

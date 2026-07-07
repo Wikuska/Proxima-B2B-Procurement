@@ -10,6 +10,8 @@ interface AddressPickerProps {
   onSelectInline: (data: AddressIn, save: boolean) => void;
 }
 
+const INLINE_ID = "__inline__";
+
 export default function AddressPicker({
   variant,
   addresses,
@@ -18,8 +20,15 @@ export default function AddressPicker({
   onSelectInline,
 }: AddressPickerProps) {
   const [showForm, setShowForm] = useState(false);
+  const [submittedInline, setSubmittedInline] = useState<{
+    data: AddressIn;
+    save: boolean;
+  } | null>(null);
+  const [selection, setSelection] = useState<string | typeof INLINE_ID | "">(
+    "",
+  );
 
-  function formatAddress(a: AddressOut) {
+  function formatAddress(a: AddressOut | AddressIn) {
     return `${a.street}, ${a.city} ${a.postal_code}, ${a.country}`;
   }
 
@@ -55,6 +64,30 @@ export default function AddressPicker({
   }
 
   // Personal variant
+  function selectSaved(id: string) {
+    setShowForm(false);
+    setSelection(id);
+    onSelectSaved(id);
+  }
+
+  function selectInline() {
+    setShowForm(false);
+    setSelection(INLINE_ID);
+    if (submittedInline) {
+      onSelectInline(submittedInline.data, submittedInline.save);
+    }
+  }
+
+  function openAddForm() {
+    setShowForm(true);
+    setSelection("");
+    onSelectSaved("");
+  }
+
+  function openEditForm() {
+    setShowForm(true);
+  }
+
   return (
     <div className="space-y-3">
       {addresses.map((a) => (
@@ -63,11 +96,8 @@ export default function AddressPicker({
             type="radio"
             name="personal-address"
             value={a.id}
-            checked={selectedId === a.id && !showForm}
-            onChange={() => {
-              setShowForm(false);
-              onSelectSaved(a.id);
-            }}
+            checked={selectedId === a.id && !showForm && selection !== INLINE_ID}
+            onChange={() => selectSaved(a.id)}
             className="mt-0.5 accent-primary"
           />
           <span className="text-sm text-text-main">
@@ -77,25 +107,75 @@ export default function AddressPicker({
         </label>
       ))}
 
+      {/* Just-entered inline address, shown as a selected row once submitted */}
+      {submittedInline && !showForm && (
+        <label className="flex items-start gap-3 cursor-pointer">
+          <input
+            type="radio"
+            name="personal-address"
+            checked={selection === INLINE_ID}
+            onChange={selectInline}
+            className="mt-0.5 accent-primary"
+          />
+          <span className="text-sm text-text-main flex-1">
+            {submittedInline.data.label && (
+              <span className="font-medium mr-1">
+                {submittedInline.data.label}:
+              </span>
+            )}
+            {formatAddress(submittedInline.data)}
+            {submittedInline.save && (
+              <span className="block text-xs text-text-muted mt-0.5">
+                Will be saved for future orders
+              </span>
+            )}
+          </span>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              openEditForm();
+            }}
+            className="text-xs font-medium text-primary hover:text-accent shrink-0"
+          >
+            Edit
+          </button>
+        </label>
+      )}
+
       <label className="flex items-center gap-3 cursor-pointer">
         <input
           type="radio"
           name="personal-address"
           checked={showForm}
-          onChange={() => {
-            setShowForm(true);
-            onSelectSaved("");
-          }}
+          onChange={openAddForm}
           className="accent-primary"
         />
-        <span className="text-sm text-text-main font-medium">Add new address</span>
+        <span className="text-sm text-text-main font-medium">
+          {submittedInline ? "Add another address" : "Add new address"}
+        </span>
       </label>
 
       {showForm && (
         <div className="pl-7 pt-2">
           <AddressForm
             showSaveOption
+            defaultValues={
+              submittedInline
+                ? {
+                    street: submittedInline.data.street,
+                    city: submittedInline.data.city,
+                    postal_code: submittedInline.data.postal_code,
+                    country: submittedInline.data.country,
+                    label: submittedInline.data.label,
+                  }
+                : undefined
+            }
             onSubmit={(data, save) => {
+              setSubmittedInline({ data, save });
+              setShowForm(false);
+              setSelection(INLINE_ID);
               onSelectInline(data, save);
             }}
           />

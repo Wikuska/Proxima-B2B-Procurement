@@ -12,7 +12,7 @@ export default function MainLayout() {
         <Outlet />
       </main>
 
-      <footer className="bg-bg-surface border-t border-border-base/30 py-6">
+      <footer className="bg-bg-surface border-t border-border-base/30 py-5">
         <div className="max-w-7xl mx-auto px-4 text-center text-xs text-text-muted">
           &copy; {new Date().getFullYear()} Proxima. All rights reserved.
         </div>

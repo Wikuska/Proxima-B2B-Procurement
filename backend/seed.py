@@ -80,7 +80,7 @@ PRODUCTS = {
             Decimal("24.90"),
             250,
             False,
-            "https://images.unsplash.com/photo-1628863353691-0071c8c1874c?w=400&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8Y2hlbWljYWwlMjBsYWJ8ZW58MHx8MHx8fDA%3D",
+            "/products/acetone-hplc-grade.png",
         ),
         (
             "Ethanol Absolute 99.8%",
@@ -90,7 +90,7 @@ PRODUCTS = {
             Decimal("145.00"),
             80,
             True,
-            None,
+            "/products/ethanol-absolute-998.png",
         ),
         (
             "Hydrochloric Acid 37%",
@@ -100,7 +100,7 @@ PRODUCTS = {
             Decimal("89.00"),
             60,
             True,
-            None,
+            "/products/hydrochloric-acid-37.png",
         ),
         (
             "Sodium Hydroxide Pellets",
@@ -162,7 +162,7 @@ PRODUCTS = {
             Decimal("3450.00"),
             12,
             False,
-            "https://images.unsplash.com/photo-1526930382372-67bf22c0fce2?w=400&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8bWljcm9zY29wZXxlbnwwfHwwfHx8MA%3D%3D",
+            "/products/optical-microscope-bx200.png",
         ),
         (
             "Magnetic Hotplate Stirrer",
@@ -182,7 +182,7 @@ PRODUCTS = {
             Decimal("4200.00"),
             8,
             True,
-            None,
+            "/products/benchtop-centrifuge-6000.png",
         ),
         (
             "Vortex Mixer VM-300",
@@ -202,7 +202,7 @@ PRODUCTS = {
             Decimal("8900.00"),
             5,
             True,
-            None,
+            "/products/uv-vis-spectrophotometer.png",
         ),
         (
             "Peristaltic Pump PP-100",
@@ -224,7 +224,7 @@ PRODUCTS = {
             Decimal("48.00"),
             300,
             False,
-            "https://images.unsplash.com/photo-1617155093730-a8bf47be792d?w=400&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8bGFib3JhdG9yeSUyMGdsYXNzd2FyZXxlbnwwfHwwfHx8MA%3D%3D",
+            "/products/borosilicate-beaker-500ml.png",
         ),
         (
             "Erlenmeyer Flask 250mL",
@@ -296,7 +296,7 @@ PRODUCTS = {
             Decimal("28.50"),
             600,
             False,
-            "https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=400&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8bGFiJTIwZXF1aXBtZW50fGVufDB8fDB8fHww",
+            "/products/micropipette-tips-200ul.png",
         ),
         (
             "Polypropylene Tubes 15mL",
@@ -348,7 +348,7 @@ PRODUCTS = {
             Decimal("4800.00"),
             10,
             True,
-            None,
+            "/products/analytical-balance-0001g.png",
         ),
         (
             "Digital pH Meter HI-98103",
@@ -430,7 +430,7 @@ PRODUCTS = {
             Decimal("245.00"),
             35,
             True,
-            None,
+            "/products/chemical-spill-kit-20l.png",
         ),
         (
             "Eyewash Station Portable",
@@ -440,7 +440,7 @@ PRODUCTS = {
             Decimal("189.00"),
             20,
             True,
-            None,
+            "/products/eyewash-station-portable.png",
         ),
         (
             "Chemical Resistant Apron",
@@ -502,7 +502,7 @@ PRODUCTS = {
             Decimal("1650.00"),
             10,
             True,
-            None,
+            "/products/fume-hood-storage-cabinet.png",
         ),
         (
             "Wall-Mount Drying Rack",

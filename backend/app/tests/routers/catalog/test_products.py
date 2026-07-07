@@ -431,3 +431,122 @@ async def test_get_product_details_without_discounts(
 
     assert "volume_discounts" in data
     assert data["volume_discounts"] == []
+
+
+# /catalog/products/{product_slug}/related tests
+
+
+async def test_get_related_products_same_category_only(
+    async_client: AsyncClient,
+    setup_catalog: dict,
+):
+    """Related products must only include other items from the same category."""
+    acetone = setup_catalog["products"][1]  # reagents
+
+    response = await async_client.get(f"/catalog/products/{acetone.slug}/related")
+
+    assert response.status_code == 200
+    data = response.json()
+    slugs = {item["slug"] for item in data}
+
+    assert "benzene" in slugs  # reagents, active
+    assert "microscope" not in slugs  # equipment, different category
+
+
+async def test_get_related_products_excludes_self(
+    async_client: AsyncClient,
+    setup_catalog: dict,
+):
+    """The current product must never appear in its own related list."""
+    acetone = setup_catalog["products"][1]
+
+    response = await async_client.get(f"/catalog/products/{acetone.slug}/related")
+
+    assert response.status_code == 200
+    slugs = {item["slug"] for item in response.json()}
+    assert acetone.slug not in slugs
+
+
+async def test_get_related_products_excludes_inactive(
+    async_client: AsyncClient,
+    setup_catalog: dict,
+):
+    """Inactive products in the same category must not be returned as related."""
+    acetone = setup_catalog["products"][1]  # reagents
+
+    response = await async_client.get(f"/catalog/products/{acetone.slug}/related")
+
+    assert response.status_code == 200
+    slugs = {item["slug"] for item in response.json()}
+    assert "chloroform" not in slugs  # reagents, but inactive
+
+
+async def test_get_related_products_respects_limit(
+    async_client: AsyncClient,
+    setup_many_products: dict,
+):
+    """The `limit` query param caps the number of returned related products."""
+    products = setup_many_products["products"]
+
+    response = await async_client.get(
+        f"/catalog/products/{products[0].slug}/related?limit=3"
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 3
+
+
+async def test_get_related_products_not_found(async_client: AsyncClient):
+    """Requesting related products for a non-existent slug returns 404."""
+    response = await async_client.get("/catalog/products/non-existent-slug/related")
+    assert response.status_code == 404
+
+
+async def test_get_related_products_includes_company_pricing(
+    async_client: AsyncClient,
+    setup_catalog: dict,
+    user_factory,
+    company_factory,
+    auth_headers,
+):
+    """When authenticated as a company user, related product rows carry company pricing."""
+    company = await company_factory(discount_percentage=Decimal("20"))
+    user = await user_factory(
+        email="related-buyer@test.com", company_id=company.id, is_verified=True
+    )
+    acetone = setup_catalog["products"][1]
+
+    response = await async_client.get(
+        f"/catalog/products/{acetone.slug}/related",
+        headers=auth_headers(user),
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    benzene_item = next(item for item in data if item["slug"] == "benzene")
+    assert Decimal(benzene_item["company_discount_percentage"]) == Decimal("20")
+    assert benzene_item["company_unit_price"] is not None
+
+
+# /catalog/products/batch tests
+
+
+async def test_get_products_batch_happy_path(
+    async_client: AsyncClient,
+    setup_catalog: dict,
+):
+    """Batch endpoint returns snapshots for the requested IDs, including inactive ones."""
+    microscope = setup_catalog["products"][0]
+    chloroform = setup_catalog["products"][3]  # inactive
+
+    response = await async_client.get(
+        f"/catalog/products/batch?ids={microscope.id},{chloroform.id}"
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    slugs = {item["slug"] for item in data}
+    assert slugs == {"microscope", "chloroform"}
+    chloroform_item = next(item for item in data if item["slug"] == "chloroform")
+    assert chloroform_item["is_active"] is False

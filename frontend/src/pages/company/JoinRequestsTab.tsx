@@ -36,7 +36,7 @@ export default function JoinRequestsTab() {
         {requests.map((req) => (
           <li
             key={req.id}
-            className="flex flex-col sm:flex-row gap-4 sm:justify-between sm:items-center p-5 bg-bg-surface border border-border-base/30 rounded-xl shadow-sm transition-shadow hover:shadow-md"
+            className="flex flex-col sm:flex-row gap-4 sm:justify-between sm:items-center p-5 bg-bg-surface border border-border-base/40 rounded-xl shadow-sm transition-shadow hover:shadow-md"
           >
             <div>
               <p className="font-semibold text-text-main text-lg">

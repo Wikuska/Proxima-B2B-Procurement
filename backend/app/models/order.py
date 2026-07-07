@@ -3,12 +3,19 @@ from datetime import datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING, List
 
-from sqlalchemy import Boolean, CheckConstraint, DateTime, ForeignKey, Index, Integer, Numeric, String, UniqueConstraint, func
+from sqlalchemy import Boolean, CheckConstraint, DateTime, ForeignKey, Index, Integer, Numeric, String, Text, UniqueConstraint, func
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base
-from .enums import AddressType, DocumentType, OrderStatus, PurchaseType
+from .enums import (
+    AddressType,
+    DeliveryMethod,
+    DocumentType,
+    OrderStatus,
+    PaymentMethod,
+    PurchaseType,
+)
 
 if TYPE_CHECKING:
     from .company import Company
@@ -89,20 +96,22 @@ class Order(Base):
     status: Mapped[OrderStatus] = mapped_column(
         SQLEnum(OrderStatus), default=OrderStatus.PENDING_PAYMENT, nullable=False
     )
+    payment_method: Mapped[PaymentMethod] = mapped_column(
+        SQLEnum(PaymentMethod), nullable=False
+    )
     total_amount: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
+    note: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
-
-    shipping_street: Mapped[str] = mapped_column(String(255), nullable=False)
-    shipping_city: Mapped[str] = mapped_column(String(100), nullable=False)
-    shipping_postal_code: Mapped[str] = mapped_column(String(20), nullable=False)
-    shipping_country: Mapped[str] = mapped_column(String(100), nullable=False)
 
     # Relations
     user: Mapped["User"] = relationship(back_populates="orders")
     items: Mapped[List["OrderItem"]] = relationship(back_populates="order")
     billing_document: Mapped["BillingDocument"] = relationship(
+        back_populates="order", cascade="all, delete-orphan", uselist=False
+    )
+    shipment: Mapped["Shipment"] = relationship(
         back_populates="order", cascade="all, delete-orphan", uselist=False
     )
 
@@ -175,3 +184,35 @@ class BillingDocument(Base):
 
     # Relations
     order: Mapped["Order"] = relationship(back_populates="billing_document")
+
+
+class Shipment(Base):
+    __tablename__ = "shipments"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    order_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("orders.id", ondelete="CASCADE"), unique=True, nullable=False
+    )
+
+    delivery_method: Mapped[DeliveryMethod] = mapped_column(
+        SQLEnum(DeliveryMethod), nullable=False
+    )
+    shipping_cost: Mapped[Decimal] = mapped_column(
+        Numeric(10, 2), nullable=False, default=Decimal("0.00")
+    )
+
+    recipient_name: Mapped[str] = mapped_column(String(200), nullable=False)
+    recipient_phone: Mapped[str] = mapped_column(String(30), nullable=False)
+    recipient_email: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
+    shipping_street: Mapped[str] = mapped_column(String(255), nullable=False)
+    shipping_city: Mapped[str] = mapped_column(String(100), nullable=False)
+    shipping_postal_code: Mapped[str] = mapped_column(String(20), nullable=False)
+    shipping_country: Mapped[str] = mapped_column(String(100), nullable=False)
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    # Relations
+    order: Mapped["Order"] = relationship(back_populates="shipment")

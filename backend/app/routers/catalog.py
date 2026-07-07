@@ -5,7 +5,7 @@ from app.crud import product as product_crud
 from app.database import get_db
 from app.models import User
 from app.schemas import CategoryOut, PaginatedProductListOut, ProductDetailsOut
-from app.schemas.product import ProductSnapshotOut
+from app.schemas.product import ProductListOut, ProductSnapshotOut
 from app.services import catalog as catalog_service
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -69,3 +69,18 @@ async def get_product_details(
 ):
     """Returns detailed information about a single product by its slug."""
     return await catalog_service.fetch_product_details(db, product_slug)
+
+
+@router.get(
+    "/products/{product_slug}/related", response_model=list[ProductListOut]
+)
+async def get_related_products(
+    product_slug: str,
+    limit: int = Query(8, ge=1, le=24, description="Max number of related products"),
+    db: AsyncSession = Depends(get_db),
+    user: User | None = Depends(get_optional_current_user),
+):
+    """Returns other active products from the same category as the given product."""
+    return await catalog_service.fetch_related_products(
+        db, product_slug, user=user, limit=limit
+    )

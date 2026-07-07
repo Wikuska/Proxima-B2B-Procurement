@@ -3,12 +3,14 @@ import { Link, NavLink, useLocation } from "react-router-dom";
 import { ShoppingCart } from "lucide-react";
 import { useCategories } from "../../hooks/catalog/categories";
 import { useCartView } from "../../hooks/cart/useCartView";
+import { useDelayedUnmount } from "../../hooks/common/useDelayedUnmount";
 import CartDropdown from "../cart/CartDropdown";
-import RoleGuard from "../common/RoleGuard";
 import NavAuthButtons from "./NavAuthButtons";
 import NavCategoryMenu from "./NavCategoryMenu";
 import NavRegionMenu from "./NavRegionMenu";
 import PurchaseModeToggle from "./PurchaseModeToggle";
+
+const DROPDOWN_EXIT_DURATION_MS = 100;
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   `py-2 border-b-2 transition-colors ${
@@ -27,6 +29,10 @@ export default function NavBar() {
   const { lines } = useCartView();
   const location = useLocation();
   const isCatalogActive = location.pathname.startsWith("/catalog");
+  const shouldRenderCategoryMenu = useDelayedUnmount(
+    isDropdownOpen,
+    DROPDOWN_EXIT_DURATION_MS,
+  );
 
   const cartItemCount = lines.length;
 
@@ -105,9 +111,10 @@ export default function NavBar() {
               </button>
             )}
 
-            {isDropdownOpen && categories && (
+            {shouldRenderCategoryMenu && categories && (
               <NavCategoryMenu
                 categories={categories}
+                isOpen={isDropdownOpen}
                 onClose={() => setIsDropdownOpen(false)}
               />
             )}
@@ -116,12 +123,6 @@ export default function NavBar() {
           <NavLink to="/contact" className={navLinkClass}>
             Contact
           </NavLink>
-
-          <RoleGuard allow={["COMPANY_ADMIN", "ADMIN"]}>
-            <NavLink to="/company" className={navLinkClass}>
-              Company
-            </NavLink>
-          </RoleGuard>
         </nav>
 
         <div className="flex items-center gap-6 h-full">

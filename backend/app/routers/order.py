@@ -5,7 +5,7 @@ from app.core.dependencies import get_current_user
 from app.database import get_db
 from app.models.enums import PurchaseType
 from app.models.user import User
-from app.schemas.order import OrderCreate, OrderOut, OrderSummaryOut
+from app.schemas.order import CheckoutOptionsOut, OrderCreate, OrderOut, OrderSummaryOut
 from app.services import order as order_service
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,6 +20,13 @@ async def create_order(
     db: AsyncSession = Depends(get_db),
 ):
     return await order_service.create_order(db, user, payload)
+
+
+@router.get("/checkout-options", response_model=CheckoutOptionsOut)
+async def get_checkout_options(
+    user: User = Depends(get_current_user),
+):
+    return await order_service.get_checkout_options()
 
 
 @router.get("", response_model=list[OrderSummaryOut])

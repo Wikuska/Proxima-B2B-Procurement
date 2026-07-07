@@ -17,7 +17,7 @@ const STATUS_STYLES: Record<string, string> = {
 function OrderList({ orders }: { orders: OrderSummaryOut[] }) {
   if (!orders.length) {
     return (
-      <div className="flex flex-col items-center justify-center p-12 bg-bg-surface border border-dashed border-border-base/40 rounded-xl text-text-muted">
+      <div className="flex flex-col items-center justify-center p-12 bg-bg-base border border-dashed border-border-base/40 rounded-lg text-text-muted">
         <p className="text-sm">No orders yet.</p>
         <Link to="/catalog" className="mt-3 text-sm text-primary hover:underline">
           Start shopping
@@ -32,7 +32,7 @@ function OrderList({ orders }: { orders: OrderSummaryOut[] }) {
         <Link
           key={order.id}
           to={`/profile/orders/${order.id}`}
-          className="flex items-center justify-between p-4 bg-bg-surface border border-border-base/20 rounded-xl shadow-sm hover:border-accent transition-colors"
+          className="flex items-center justify-between p-4 bg-bg-base border border-border-base/40 rounded-lg shadow-sm hover:border-accent transition-colors"
         >
           <div>
             <p className="text-sm font-semibold text-text-main">
@@ -82,7 +82,7 @@ export default function OrdersTab() {
     <div className="space-y-5">
       {/* Segmented control — only shown for company members */}
       {hasCompany && (
-        <div className="inline-flex rounded-lg border border-border-base/30 bg-bg-surface overflow-hidden text-sm">
+        <div className="inline-flex rounded-md border border-border-base/30 bg-bg-surface overflow-hidden text-sm">
           {(["B2C", "B2B"] as PurchaseType[]).map((type) => (
             <button
               key={type}

@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import { useProduct } from "../hooks/catalog/products";
+import { useProduct, useRelatedProducts } from "../hooks/catalog/products";
 import { useProductPricing } from "../hooks/pricing/useProductPricing";
 import { usePurchaseMode } from "../store/purchaseModeStore";
 import { useAuth } from "../hooks/user/useAuth";
@@ -7,6 +7,7 @@ import AddToCart from "../components/product/AddToCart";
 import VolumeDiscounts from "../components/product/VolumeDiscounts";
 import ErrorState from "../components/common/ErrorState";
 import ProductImage from "../components/product/ProductImage";
+import ProductRail from "../components/catalog/ProductRail";
 
 export default function ProductDetailsPage() {
   const { productSlug } = useParams<{ productSlug: string }>();
@@ -15,6 +16,7 @@ export default function ProductDetailsPage() {
 
   const { data: product, isLoading, isError } = useProduct(productSlug || "");
   const { data: pricing } = useProductPricing(productSlug || "");
+  const { data: related } = useRelatedProducts(productSlug || "");
 
   if (isLoading) {
     return <ErrorState type="loading" message="Loading product details..." />;
@@ -164,21 +166,7 @@ export default function ProductDetailsPage() {
         </div>
       </section>
 
-      <section className="border-t border-border-base/10 pt-8 mt-4">
-        <h2 className="text-xl font-bold mb-6 text-text-primary">
-          Similar products
-        </h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
-          {[1, 2, 3, 4].map((placeholderId) => (
-            <div
-              key={placeholderId}
-              className="border border-border-base/10 rounded-xl p-4 bg-bg-surface text-center text-xs text-text-muted"
-            >
-              Recommendation carousel placeholder
-            </div>
-          ))}
-        </div>
-      </section>
+      <ProductRail title="Similar products" products={related ?? []} />
     </div>
   );
 }

@@ -3,6 +3,7 @@ import {
   fetchProducts,
   type FetchProductsPayload,
   fetchProductBySlug,
+  fetchRelatedProducts,
 } from "../../api/catalog";
 
 export const useProducts = (payload: FetchProductsPayload) => {
@@ -24,6 +25,14 @@ export const useProduct = (slug: string) => {
 
     queryFn: () => fetchProductBySlug(slug),
 
+    enabled: !!slug,
+  });
+};
+
+export const useRelatedProducts = (slug: string) => {
+  return useQuery({
+    queryKey: ["products", "related", slug],
+    queryFn: () => fetchRelatedProducts(slug),
     enabled: !!slug,
   });
 };

@@ -1,5 +1,6 @@
 import types
 import uuid
+from decimal import Decimal
 
 from app.core.exceptions import (
     B2BRestrictedException,
@@ -7,6 +8,7 @@ from app.core.exceptions import (
     EmptyOrderException,
     InsufficientStockException,
     InvalidBillingDataException,
+    InvalidPaymentMethodException,
     InvalidShippingAddressException,
     OrderNotFoundException,
     ProductUnavailableException,
@@ -15,12 +17,23 @@ from app.crud import address as address_crud
 from app.crud import cart as cart_crud
 from app.crud import order as order_crud
 from app.crud import product as product_crud
-from app.models.enums import DocumentType, OrderStatus, PurchaseType
-from app.models.order import BillingDocument, Order, OrderItem
+from app.models.enums import DeliveryMethod, DocumentType, OrderStatus, PaymentMethod, PurchaseType
+from app.models.order import BillingDocument, Order, OrderItem, Shipment
 from app.models.user import User
-from app.schemas.order import BillingDocumentIn, OrderCreate
+from app.schemas.order import BillingDocumentIn, CheckoutOptionsOut, DeliveryOptionOut, OrderCreate, PaymentOptionOut
 from app.services import pricing
 from sqlalchemy.ext.asyncio import AsyncSession
+
+SHIPPING_COSTS: dict[DeliveryMethod, Decimal] = {
+    DeliveryMethod.COURIER: Decimal("15.00"),
+    DeliveryMethod.COURIER_EXPRESS: Decimal("25.00"),
+    DeliveryMethod.INPOST_LOCKER: Decimal("12.00"),
+    DeliveryMethod.PICKUP: Decimal("0.00"),
+}
+
+
+def _resolve_shipping_cost(delivery_method: DeliveryMethod) -> Decimal:
+    return SHIPPING_COSTS[delivery_method]
 
 
 async def create_order(db: AsyncSession, user: User, payload: OrderCreate) -> Order:
@@ -31,6 +44,10 @@ async def create_order(db: AsyncSession, user: User, payload: OrderCreate) -> Or
         from app.core.exceptions import NotInCompanyException
         raise NotInCompanyException()
 
+    # DEFERRED payment is only available for B2B orders
+    if payload.payment_method == PaymentMethod.DEFERRED and payload.purchase_type != PurchaseType.B2B:
+        raise InvalidPaymentMethodException()
+
     # 3. Intersect requested product_ids with the user's actual cart items
     cart_items = await cart_crud.get_cart_items(db, user.id)
     requested = set(payload.product_ids)
@@ -38,8 +55,8 @@ async def create_order(db: AsyncSession, user: User, payload: OrderCreate) -> Or
     if not items_to_order:
         raise EmptyOrderException()
 
-    # 2. Resolve shipping address → snapshot fields
-    shipping = await _resolve_shipping(db, user, payload)
+    # 2. Resolve shipping address + recipient → Shipment snapshot
+    shipment = await _resolve_shipping(db, user, payload)
 
     # 4. Compute authoritative prices
     pricing_req = types.SimpleNamespace(mode=mode, items=items_to_order)
@@ -84,17 +101,18 @@ async def create_order(db: AsyncSession, user: User, payload: OrderCreate) -> Or
         user_id=user.id,
         purchase_type=payload.purchase_type,
         status=OrderStatus.PENDING_PAYMENT,
-        total_amount=quote["grand_total"],
-        **shipping,
+        payment_method=payload.payment_method,
+        total_amount=quote["grand_total"] + shipment.shipping_cost,
+        note=payload.note,
     )
 
-    # 7. Persist order + items + billing document, clear ordered cart items
-    created = await order_crud.create_order(db, order, order_items, billing_document)
+    # 7. Persist order + items + billing document + shipment, clear ordered cart items
+    created = await order_crud.create_order(db, order, order_items, billing_document, shipment)
     for ci in items_to_order:
         await db.delete(ci)
 
     await db.commit()
-    await db.refresh(created, ["items", "billing_document"])
+    await db.refresh(created, ["items", "billing_document", "shipment"])
     return created
 
 
@@ -184,8 +202,8 @@ def _validate_private_billing(doc: BillingDocumentIn) -> None:
         raise InvalidBillingDataException()
 
 
-async def _resolve_shipping(db: AsyncSession, user: User, payload: OrderCreate) -> dict:
-    """Returns a dict of shipping_* fields ready to unpack into Order()."""
+async def _resolve_shipping(db: AsyncSession, user: User, payload: OrderCreate) -> Shipment:
+    """Resolves the shipping address and builds the Shipment snapshot (unsaved)."""
     if payload.purchase_type == PurchaseType.B2B:
         if payload.address_id is None:
             raise InvalidShippingAddressException()
@@ -224,9 +242,31 @@ async def _resolve_shipping(db: AsyncSession, user: User, payload: OrderCreate) 
         else:
             raise InvalidShippingAddressException()
 
-    return {
-        "shipping_street": address.street,
-        "shipping_city": address.city,
-        "shipping_postal_code": address.postal_code,
-        "shipping_country": address.country,
-    }
+    shipping_cost = _resolve_shipping_cost(payload.delivery_method)
+    return Shipment(
+        delivery_method=payload.delivery_method,
+        shipping_cost=shipping_cost,
+        recipient_name=payload.recipient_name,
+        recipient_phone=payload.recipient_phone,
+        recipient_email=payload.recipient_email,
+        shipping_street=address.street,
+        shipping_city=address.city,
+        shipping_postal_code=address.postal_code,
+        shipping_country=address.country,
+    )
+
+
+async def get_checkout_options() -> CheckoutOptionsOut:
+    return CheckoutOptionsOut(
+        delivery_methods=[
+            DeliveryOptionOut(delivery_method=method, cost=cost)
+            for method, cost in SHIPPING_COSTS.items()
+        ],
+        payment_methods=[
+            PaymentOptionOut(
+                payment_method=method,
+                b2b_only=method == PaymentMethod.DEFERRED,
+            )
+            for method in PaymentMethod
+        ],
+    )

@@ -16,4 +16,29 @@
   /* Obramowania */
   --color-border-base: #94A3B8; /* Slate 400 - Nieaktywne inputy*/
   --color-border-focus: #60B2E5; /* Fresh Sky - Aktywne inputy*/
+
+  --animate-fade-in: fade-in 0.2s ease-out forwards;
+  --animate-scale-in: scale-in 0.2s ease-out forwards;
+  --animate-pop-down: pop-down 0.15s ease-out forwards;
+  --animate-pop-up: pop-up 0.1s ease-in forwards;
+
+  @keyframes fade-in {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+
+  @keyframes scale-in {
+    0% { opacity: 0; transform: scale(0.95); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  @keyframes pop-down {
+    0% { opacity: 0; transform: scale(0.95) translateY(-5px); }
+    100% { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  @keyframes pop-up {
+    0% { opacity: 1; transform: scale(1) translateY(0); }
+    100% { opacity: 0; transform: scale(0.95) translateY(-5px); }
+  }
 }
