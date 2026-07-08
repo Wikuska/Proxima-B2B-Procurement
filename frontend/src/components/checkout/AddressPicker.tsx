@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { AddressIn, AddressOut } from "../../api/address";
-import AddressForm from "./AddressForm";
+import AddressForm from "../forms/AddressForm";
 
 interface AddressPickerProps {
   variant: "personal" | "company";

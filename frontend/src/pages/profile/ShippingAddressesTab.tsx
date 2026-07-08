@@ -1,6 +1,6 @@
 import { Trash2 } from "lucide-react";
 import { useState } from "react";
-import AddressForm from "../../components/checkout/AddressForm";
+import AddressForm from "../../components/forms/AddressForm";
 import {
   useCreatePersonalAddress,
   useDeletePersonalAddress,

@@ -75,13 +75,15 @@ export default function CreateAccountForm({
         <p className="text-sm text-red-500">{errors.root.message}</p>
       )}
 
-      <form className="space-y-3" onSubmit={handleSubmit(onSubmit)}>
+      <form className="flex flex-col" onSubmit={handleSubmit(onSubmit)}>
         <FormInput
           {...register("first_name")}
           id="firstName"
           label="First name"
           type="text"
           placeholder="Anna"
+          isAuth={true}
+          hideLabel={false}
           error={errors.first_name?.message}
           required
         />
@@ -91,6 +93,8 @@ export default function CreateAccountForm({
           label="Last name"
           type="text"
           placeholder="Kowalska"
+          isAuth={true}
+          hideLabel={false}
           error={errors.last_name?.message}
           required
         />
@@ -101,6 +105,8 @@ export default function CreateAccountForm({
           label="Email"
           type="email"
           placeholder="anna@yourcompany.com"
+          isAuth={true}
+          hideLabel={false}
           error={errors.email?.message}
           required
         />
@@ -111,6 +117,8 @@ export default function CreateAccountForm({
           label="Password"
           type="password"
           placeholder="Min. 8 characters, 1 uppercase, 1 digit"
+          isAuth={true}
+          hideLabel={false}
           error={errors.password?.message}
           required
         />
@@ -121,6 +129,8 @@ export default function CreateAccountForm({
           label="Confirm password"
           type="password"
           placeholder="••••••••"
+          isAuth={true}
+          hideLabel={false}
           error={errors.confirm_password?.message}
           required
         />

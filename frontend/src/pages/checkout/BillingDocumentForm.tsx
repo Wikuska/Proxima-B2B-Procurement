@@ -1,8 +1,7 @@
+import { useFormContext } from "react-hook-form";
+import FormInput from "../../components/forms/FormInput";
 import type { DocumentType } from "../../api/order";
-import type { BillingFormState } from "./checkoutTypes";
-
-const inputClass =
-  "w-full px-3 py-2 text-sm border border-border-base rounded-lg focus:outline-none focus:border-primary bg-bg-surface text-text-main";
+import type { DetailsFormData } from "../../schemas/checkoutSchema";
 
 interface AddressOut {
   street: string;
@@ -45,23 +44,31 @@ export function CompanyInvoiceReadOnly({
   );
 }
 
-export function PrivateBillingForm({
-  billing,
-  onChange,
-}: {
-  billing: BillingFormState;
-  onChange: (b: BillingFormState) => void;
-}) {
-  function set<K extends keyof BillingFormState>(
-    key: K,
-    value: BillingFormState[K],
-  ) {
-    onChange({ ...billing, [key]: value });
-  }
+export function PrivateBillingForm() {
+  const {
+    register,
+    watch,
+    formState: { errors },
+  } = useFormContext<DetailsFormData>();
 
+  const documentType = watch("billing.documentType");
   const needsBillingAddr =
-    billing.documentType === "PERSONAL_INVOICE" ||
-    billing.documentType === "COMPANY_INVOICE";
+    documentType === "PERSONAL_INVOICE" || documentType === "COMPANY_INVOICE";
+  const billingErrors = errors.billing as
+    | Partial<
+        Record<
+          | "firstName"
+          | "lastName"
+          | "companyName"
+          | "companyNip"
+          | "billingStreet"
+          | "billingCity"
+          | "billingPostalCode"
+          | "billingCountry",
+          { message?: string }
+        >
+      >
+    | undefined;
 
   return (
     <section className="bg-bg-surface border border-border-base/20 rounded-2xl p-6 shadow-sm space-y-5">
@@ -79,9 +86,8 @@ export function PrivateBillingForm({
           <label key={val} className="flex items-center gap-3 cursor-pointer">
             <input
               type="radio"
-              name="doc-type"
-              checked={billing.documentType === val}
-              onChange={() => set("documentType", val)}
+              value={val}
+              {...register("billing.documentType")}
               className="accent-primary"
             />
             <span className="text-sm text-text-main">{label}</span>
@@ -89,82 +95,92 @@ export function PrivateBillingForm({
         ))}
       </div>
 
-      {/* PERSONAL_INVOICE fields */}
-      {billing.documentType === "PERSONAL_INVOICE" && (
-        <div className="space-y-3 pt-2">
+      {/* Wspólny kontener na wszystkie inputy wymuszający równe odstępy */}
+      <div className="flex flex-col gap-1">
+        {/* PERSONAL_INVOICE fields */}
+        {documentType === "PERSONAL_INVOICE" && (
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <input
-                value={billing.firstName}
-                onChange={(e) => set("firstName", e.target.value)}
-                placeholder="First name"
-                className={inputClass}
-              />
-            </div>
-            <div>
-              <input
-                value={billing.lastName}
-                onChange={(e) => set("lastName", e.target.value)}
-                placeholder="Last name"
-                className={inputClass}
-              />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* COMPANY_INVOICE fields */}
-      {billing.documentType === "COMPANY_INVOICE" && (
-        <div className="space-y-3 pt-2">
-          <input
-            value={billing.companyName}
-            onChange={(e) => set("companyName", e.target.value)}
-            placeholder="Company name"
-            className={inputClass}
-          />
-          <input
-            value={billing.companyNip}
-            onChange={(e) => set("companyNip", e.target.value)}
-            placeholder="Tax ID (NIP)"
-            className={inputClass}
-          />
-        </div>
-      )}
-
-      {/* Billing address (shared for invoices) */}
-      {needsBillingAddr && (
-        <div className="space-y-3 pt-1">
-          <p className="text-xs font-semibold text-text-muted uppercase tracking-wide">
-            Billing address
-          </p>
-          <input
-            value={billing.billingStreet}
-            onChange={(e) => set("billingStreet", e.target.value)}
-            placeholder="Street address"
-            className={inputClass}
-          />
-          <div className="grid grid-cols-2 gap-3">
-            <input
-              value={billing.billingCity}
-              onChange={(e) => set("billingCity", e.target.value)}
-              placeholder="City"
-              className={inputClass}
+            <FormInput
+              {...register("billing.firstName")}
+              id="billingFirstName"
+              label="First name"
+              placeholder="First name"
+              hideLabel
+              error={billingErrors?.firstName?.message}
             />
-            <input
-              value={billing.billingPostalCode}
-              onChange={(e) => set("billingPostalCode", e.target.value)}
-              placeholder="Postal code"
-              className={inputClass}
+            <FormInput
+              {...register("billing.lastName")}
+              id="billingLastName"
+              label="Last name"
+              placeholder="Last name"
+              hideLabel
+              error={billingErrors?.lastName?.message}
             />
           </div>
-          <input
-            value={billing.billingCountry}
-            onChange={(e) => set("billingCountry", e.target.value)}
-            placeholder="Country"
-            className={inputClass}
-          />
-        </div>
-      )}
+        )}
+
+        {/* COMPANY_INVOICE fields */}
+        {documentType === "COMPANY_INVOICE" && (
+          <>
+            <FormInput
+              {...register("billing.companyName")}
+              id="billingCompanyName"
+              label="Company name"
+              placeholder="Company name"
+              hideLabel
+              error={billingErrors?.companyName?.message}
+            />
+            <FormInput
+              {...register("billing.companyNip")}
+              id="billingCompanyNip"
+              label="Tax ID (NIP)"
+              placeholder="Tax ID (NIP)"
+              hideLabel
+              error={billingErrors?.companyNip?.message}
+            />
+          </>
+        )}
+
+        {/* Billing address (shared for invoices) */}
+        {needsBillingAddr && (
+          <>
+            <FormInput
+              {...register("billing.billingStreet")}
+              id="billingStreet"
+              label="Street address"
+              placeholder="Street address"
+              hideLabel
+              error={billingErrors?.billingStreet?.message}
+            />
+            <div className="grid grid-cols-2 gap-3">
+              <FormInput
+                {...register("billing.billingCity")}
+                id="billingCity"
+                label="City"
+                placeholder="City"
+                hideLabel
+                error={billingErrors?.billingCity?.message}
+              />
+              <FormInput
+                {...register("billing.billingPostalCode")}
+                id="billingPostalCode"
+                label="Postal code"
+                placeholder="Postal code"
+                hideLabel
+                error={billingErrors?.billingPostalCode?.message}
+              />
+            </div>
+            <FormInput
+              {...register("billing.billingCountry")}
+              id="billingCountry"
+              label="Country"
+              placeholder="Country"
+              hideLabel
+              error={billingErrors?.billingCountry?.message}
+            />
+          </>
+        )}
+      </div>
     </section>
   );
 }

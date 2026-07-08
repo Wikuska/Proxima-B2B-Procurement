@@ -173,6 +173,8 @@ export default function CompanyAffiliationTab() {
               id="requested_nip"
               label="Company NIP"
               placeholder="e.g. 123-456-78-90"
+              isAuth
+              hideLabel={false}
               error={errors.requested_nip?.message}
               {...register("requested_nip")}
             />

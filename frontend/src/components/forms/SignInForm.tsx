@@ -77,12 +77,14 @@ export default function SignInForm({
         </p>
       </div>
 
-      <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
+      <form onSubmit={handleSubmit(onSubmit)}>
         <FormInput
           id="signin-email"
           label="Work email"
           type="email"
           placeholder="anna@yourcompany.com"
+          isAuth={true}
+          hideLabel={false}
           required
           error={errors.email?.message}
           {...register("email")}
@@ -94,12 +96,14 @@ export default function SignInForm({
             label="Password"
             type="password"
             placeholder="••••••••"
+            isAuth={true}
+            hideLabel={false}
             required
             error={errors.password?.message}
             {...register("password")}
           />
 
-          <div className="flex items-center justify-between text-sm mt-2">
+          <div className="flex items-center justify-between text-sm mt-4 mb-3">
             {errors.root ? (
               <p className="text-sm text-red-500">{errors.root.message}</p>
             ) : (
