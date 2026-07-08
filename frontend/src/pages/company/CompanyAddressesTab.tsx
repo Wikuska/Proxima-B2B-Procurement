@@ -7,7 +7,7 @@ import {
   useDeleteCompanyAddress,
   useUpdateCompanyAddress,
 } from "../../hooks/address/useAddresses";
-import AddressForm from "../../components/checkout/AddressForm";
+import AddressForm from "../../components/forms/AddressForm";
 import { useAuth } from "../../hooks/user/useAuth";
 import type { AddressOut } from "../../api/address";
 

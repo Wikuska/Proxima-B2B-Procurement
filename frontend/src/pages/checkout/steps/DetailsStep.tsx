@@ -1,15 +1,15 @@
 import { useState } from "react";
+import { useFormContext } from "react-hook-form";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import AddressPicker from "../../../components/checkout/AddressPicker";
 import OrderSummarySidebar from "../../../components/checkout/OrderSummarySidebar";
+import FormInput from "../../../components/forms/FormInput";
+import type { DetailsFormData } from "../../../schemas/checkoutSchema";
 import {
   CompanyInvoiceReadOnly,
   PrivateBillingForm,
 } from "../BillingDocumentForm";
 import type { CheckoutContext } from "../checkoutTypes";
-
-const inputClass =
-  "w-full px-3 py-2 text-sm border border-border-base rounded-lg focus:outline-none focus:border-primary bg-bg-surface text-text-main";
 
 export default function DetailsStep() {
   const navigate = useNavigate();
@@ -25,39 +25,41 @@ export default function DetailsStep() {
     personalAddresses,
     addressId,
     setAddressId,
-    inlineAddress,
     setInlineAddress,
     setSaveAddress,
-    recipientName,
-    setRecipientName,
-    recipientPhone,
-    setRecipientPhone,
-    recipientEmail,
-    setRecipientEmail,
     companyBillingAddress,
-    billing,
-    setBilling,
     copyRecipientToBilling,
-    canProceedToDelivery,
+    hasShippingAddress,
     selectedLines,
     quote,
     shippingCost,
     deliveryConfirmed,
   } = useOutletContext<CheckoutContext>();
 
-  const [copyToBilling, setCopyToBilling] = useState(false);
+  const {
+    register,
+    watch,
+    trigger,
+    formState: { errors },
+  } = useFormContext<DetailsFormData>();
 
-  const hasShippingAddress = isCompanyMode
-    ? !!addressId
-    : !!addressId || !!inlineAddress;
+  const [copyToBilling, setCopyToBilling] = useState(false);
+  const [triedNext, setTriedNext] = useState(false);
+
+  const documentType = watch("billing.documentType");
   const needsBillingAddr =
     !isCompanyMode &&
-    (billing.documentType === "PERSONAL_INVOICE" ||
-      billing.documentType === "COMPANY_INVOICE");
+    (documentType === "PERSONAL_INVOICE" || documentType === "COMPANY_INVOICE");
 
   function toggleCopyToBilling(checked: boolean) {
     setCopyToBilling(checked);
     if (checked) copyRecipientToBilling();
+  }
+
+  async function handleContinue() {
+    setTriedNext(true);
+    const ok = await trigger();
+    if (ok && hasShippingAddress) navigate("/checkout/delivery");
   }
 
   return (
@@ -135,9 +137,16 @@ export default function DetailsStep() {
         </section>
 
         <section className="bg-bg-surface border border-border-base/20 rounded-2xl p-6 shadow-sm">
-          <h2 className="text-xl font-bold text-text-main mb-4">
-            Shipping address
-          </h2>
+          <div className="flex items-start justify-between gap-4 mb-4">
+            <h2 className="text-xl font-bold text-text-main">
+              Shipping address
+            </h2>
+            {triedNext && !hasShippingAddress && (
+              <p className="max-w-[50%] shrink-0 text-right text-[11px] font-semibold text-red-500 leading-tight">
+                Please select or add a shipping address to continue.
+              </p>
+            )}
+          </div>
           {isCompanyMode ? (
             <AddressPicker
               variant="company"
@@ -164,33 +173,44 @@ export default function DetailsStep() {
           )}
         </section>
 
-        <section className="bg-bg-surface border border-border-base/20 rounded-2xl p-6 shadow-sm space-y-3">
+        <section className="bg-bg-surface border border-border-base/20 rounded-2xl p-6 shadow-sm">
           <h2 className="text-xl font-bold text-text-main mb-1">Recipient</h2>
-          <p className="text-xs text-text-muted -mt-1 mb-4">
+          <p className="mb-4 text-xs text-text-muted">
             Who should receive this order? Defaults to your account details but
             can be edited.
           </p>
-          <div className="grid grid-cols-2 gap-3">
-            <input
-              value={recipientName}
-              onChange={(e) => setRecipientName(e.target.value)}
-              placeholder="Full name"
-              className={inputClass}
-            />
-            <input
-              value={recipientPhone}
-              onChange={(e) => setRecipientPhone(e.target.value)}
-              placeholder="Phone number"
-              className={inputClass}
+
+          {/* Wrapper for consistent spacing between form rows */}
+          <div className="flex flex-col gap-1">
+            <div className="grid grid-cols-2 gap-3">
+              <FormInput
+                {...register("recipient.recipient_name")}
+                id="recipientName"
+                label="Full name"
+                placeholder="Full name"
+                hideLabel
+                error={errors.recipient?.recipient_name?.message}
+              />
+              <FormInput
+                {...register("recipient.recipient_phone")}
+                id="recipientPhone"
+                label="Phone number"
+                placeholder="Phone number"
+                hideLabel
+                error={errors.recipient?.recipient_phone?.message}
+              />
+            </div>
+
+            <FormInput
+              {...register("recipient.recipient_email")}
+              id="recipientEmail"
+              label="Email (optional)"
+              type="email"
+              placeholder="Email (optional)"
+              hideLabel
+              error={errors.recipient?.recipient_email?.message}
             />
           </div>
-          <input
-            type="email"
-            value={recipientEmail}
-            onChange={(e) => setRecipientEmail(e.target.value)}
-            placeholder="Email (optional)"
-            className={inputClass}
-          />
         </section>
 
         {isCompanyMode ? (
@@ -199,7 +219,7 @@ export default function DetailsStep() {
           />
         ) : (
           <>
-            <PrivateBillingForm billing={billing} onChange={setBilling} />
+            <PrivateBillingForm />
             {needsBillingAddr && hasShippingAddress && (
               <label className="flex items-center gap-3 cursor-pointer -mt-4 px-1">
                 <input
@@ -222,8 +242,7 @@ export default function DetailsStep() {
         quote={quote}
         shippingCost={deliveryConfirmed ? shippingCost : null}
         nextLabel="Proceed to Delivery & Payment"
-        onNext={() => navigate("/checkout/delivery")}
-        nextDisabled={!canProceedToDelivery}
+        onNext={handleContinue}
       />
     </div>
   );

@@ -1,5 +1,7 @@
+import { useFormContext } from "react-hook-form";
 import { Navigate, useNavigate, useOutletContext } from "react-router-dom";
 import { DELIVERY_LABELS, PAYMENT_LABELS } from "../../../api/order";
+import type { DetailsFormData } from "../../../schemas/checkoutSchema";
 import type { CheckoutContext } from "../checkoutTypes";
 
 function SummaryField({
@@ -30,12 +32,8 @@ export default function SummaryStep() {
     shippingCost,
     orderTotal,
     isCompanyMode,
-    billing,
     selectedAddress,
     inlineAddress,
-    recipientName,
-    recipientPhone,
-    recipientEmail,
     deliveryMethod,
     paymentMethod,
     note,
@@ -43,6 +41,10 @@ export default function SummaryStep() {
     handlePlaceOrder,
     isPlacingOrder,
   } = useOutletContext<CheckoutContext>();
+
+  const { watch } = useFormContext<DetailsFormData>();
+  const recipient = watch("recipient");
+  const billing = watch("billing");
 
   if (!canProceedToDelivery) {
     return <Navigate to="/checkout/details" replace />;
@@ -129,8 +131,8 @@ export default function SummaryStep() {
         )}
 
         <SummaryField label="Recipient">
-          {recipientName} · {recipientPhone}
-          {recipientEmail && <> · {recipientEmail}</>}
+          {recipient.recipient_name} · {recipient.recipient_phone}
+          {recipient.recipient_email && <> · {recipient.recipient_email}</>}
         </SummaryField>
 
         <SummaryField label="Delivery method">

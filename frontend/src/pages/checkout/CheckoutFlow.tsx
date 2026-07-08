@@ -1,4 +1,6 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
+import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { Navigate, Outlet } from "react-router-dom";
 import type { AddressIn } from "../../api/address";
 import type { DeliveryMethod, OrderCreate, PaymentMethod, PurchaseType } from "../../api/order";
@@ -15,19 +17,22 @@ import { useAuth } from "../../hooks/user/useAuth";
 import { usePurchaseMode } from "../../store/purchaseModeStore";
 import {
   buildBillingDocumentIn,
-  emptyBilling,
-  isBillingComplete,
-  type BillingFormState,
-  type CheckoutContext,
-} from "./checkoutTypes";
+  detailsSchema,
+  emptyBillingValues,
+  type DetailsFormData,
+} from "../../schemas/checkoutSchema";
+import type { CheckoutContext } from "./checkoutTypes";
 
 /**
  * Route element for `/checkout/*`. Not a visual shell like `MainLayout` —
- * it owns the wizard state (purchase type, address, recipient, delivery,
- * payment, billing document, note) and data hooks for the whole checkout
- * flow, exposing them to the step routes (`DetailsStep`, `DeliveryPaymentStep`,
- * `SummaryStep`) via `useOutletContext`. It only *also* renders the shared
- * `CheckoutStepper` + `<Outlet />`.
+ * it owns the wizard state (purchase type, address, delivery, payment, note)
+ * and data hooks for the whole checkout flow, exposing them to the step
+ * routes (`DetailsStep`, `DeliveryPaymentStep`, `SummaryStep`) via
+ * `useOutletContext`. Recipient + billing document fields live on a single
+ * shared `useForm<DetailsFormData>` instance, exposed to the steps via
+ * `<FormProvider>` / `useFormContext` so validation state survives step
+ * route changes. It only *also* renders the shared `CheckoutStepper` +
+ * `<Outlet />`.
  */
 export default function CheckoutFlow() {
   const { user } = useAuth();
@@ -46,16 +51,24 @@ export default function CheckoutFlow() {
   const [addressId, setAddressId] = useState<string | null>(null);
   const [inlineAddress, setInlineAddress] = useState<AddressIn | null>(null);
   const [saveAddress, setSaveAddress] = useState(false);
-  const [billing, setBilling] = useState<BillingFormState>(emptyBilling);
 
-  // Recipient name/email default to the ordering user's details until
-  // explicitly overridden — avoids an effect just to "sync" default values.
-  const [recipientNameOverride, setRecipientNameOverride] = useState<string | null>(null);
-  const [recipientPhone, setRecipientPhone] = useState("");
-  const [recipientEmailOverride, setRecipientEmailOverride] = useState<string | null>(null);
-  const recipientName =
-    recipientNameOverride ?? (user ? `${user.first_name} ${user.last_name}`.trim() : "");
-  const recipientEmail = recipientEmailOverride ?? (user?.email ?? "");
+  const methods = useForm<DetailsFormData>({
+    resolver: zodResolver(detailsSchema),
+    reValidateMode: "onBlur",
+    defaultValues: {
+      recipient: {
+        recipient_name: user ? `${user.first_name} ${user.last_name}`.trim() : "",
+        recipient_email: user?.email ?? "",
+        recipient_phone: "",
+      },
+      billing: emptyBillingValues,
+    },
+  });
+  const { getValues, setValue, handleSubmit, control } = methods;
+  // Subscribing here re-renders CheckoutFlow on every field change so the
+  // derived guards below (and the outlet context they feed) stay fresh —
+  // the fields themselves are registered deeper in the tree via useFormContext.
+  const watchedValues = useWatch({ control });
 
   const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>("COURIER");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("BANK_TRANSFER");
@@ -98,28 +111,29 @@ export default function CheckoutFlow() {
     : personalAddresses.find((a) => a.id === addressId);
 
   function copyRecipientToBilling() {
-    const [firstName, ...rest] = recipientName.trim().split(/\s+/);
+    const recipient = getValues("recipient");
+    const [firstName, ...rest] = recipient.recipient_name.trim().split(/\s+/);
     const addr = selectedAddress ?? inlineAddress;
-    setBilling({
-      ...billing,
-      firstName: firstName ?? "",
-      lastName: rest.join(" "),
-      billingStreet: addr?.street ?? billing.billingStreet,
-      billingCity: addr?.city ?? billing.billingCity,
-      billingPostalCode: addr?.postal_code ?? billing.billingPostalCode,
-      billingCountry: addr?.country ?? billing.billingCountry,
-    });
+    setValue("billing.firstName", firstName ?? "", { shouldValidate: true });
+    setValue("billing.lastName", rest.join(" "), { shouldValidate: true });
+    if (addr) {
+      setValue("billing.billingStreet", addr.street, { shouldValidate: true });
+      setValue("billing.billingCity", addr.city, { shouldValidate: true });
+      setValue("billing.billingPostalCode", addr.postal_code, { shouldValidate: true });
+      setValue("billing.billingCountry", addr.country, { shouldValidate: true });
+    }
   }
 
   // B2B-only products without a company account → hard block on the details step.
   const b2bBlockedNoCompany = hasB2bSelected && !hasCompany;
 
+  const hasShippingAddress = isCompanyMode
+    ? !!addressId
+    : !!addressId || !!inlineAddress;
+  const isDetailsValid = detailsSchema.safeParse(watchedValues).success;
+
   const canProceedToDelivery =
-    !b2bBlockedNoCompany &&
-    (isCompanyMode ? !!addressId : !!addressId || !!inlineAddress) &&
-    !!recipientName.trim() &&
-    !!recipientPhone.trim() &&
-    isBillingComplete(billing, isCompanyMode);
+    !b2bBlockedNoCompany && isDetailsValid && hasShippingAddress;
 
   const canProceedToSummary =
     canProceedToDelivery &&
@@ -127,24 +141,28 @@ export default function CheckoutFlow() {
     !!paymentMethod &&
     !(paymentMethod === "DEFERRED" && !isCompanyMode);
 
-  function handlePlaceOrder() {
+  function submitOrder(data: DetailsFormData) {
     const payload: OrderCreate = {
       product_ids: selectedLines.map((l) => l.product_id),
       purchase_type: effectivePurchaseType,
-      document: buildBillingDocumentIn(billing, isCompanyMode),
+      document: buildBillingDocumentIn(data.billing, isCompanyMode),
       ...(addressId ? { address_id: addressId } : {}),
       ...(inlineAddress
         ? { shipping_address: inlineAddress, save_address: saveAddress }
         : {}),
       delivery_method: deliveryMethod,
       payment_method: paymentMethod,
-      recipient_name: recipientName.trim(),
-      recipient_phone: recipientPhone.trim(),
-      ...(recipientEmail.trim() ? { recipient_email: recipientEmail.trim() } : {}),
+      recipient_name: data.recipient.recipient_name.trim(),
+      recipient_phone: data.recipient.recipient_phone.trim(),
+      ...(data.recipient.recipient_email.trim()
+        ? { recipient_email: data.recipient.recipient_email.trim() }
+        : {}),
       ...(note.trim() ? { note: note.trim() } : {}),
     };
     createOrder.mutate(payload);
   }
+
+  const handlePlaceOrder = handleSubmit(submitOrder);
 
   if (selectedLines.length === 0) {
     return <Navigate to="/cart" replace />;
@@ -179,13 +197,6 @@ export default function CheckoutFlow() {
     setSaveAddress,
     selectedAddress,
 
-    recipientName,
-    setRecipientName: setRecipientNameOverride,
-    recipientPhone,
-    setRecipientPhone,
-    recipientEmail,
-    setRecipientEmail: setRecipientEmailOverride,
-
     deliveryMethod,
     setDeliveryMethod,
     paymentMethod,
@@ -193,16 +204,15 @@ export default function CheckoutFlow() {
     deliveryConfirmed,
     setDeliveryConfirmed,
 
-    billing,
-    setBilling,
     copyRecipientToBilling,
 
     note,
     setNote,
 
+    isDetailsValid,
+    hasShippingAddress,
     canProceedToDelivery,
     canProceedToSummary,
-    isBillingComplete: isBillingComplete(billing, isCompanyMode),
 
     handlePlaceOrder,
     isPlacingOrder: createOrder.isPending,
@@ -211,7 +221,9 @@ export default function CheckoutFlow() {
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
       <CheckoutStepper />
-      <Outlet context={checkoutCtx} />
+      <FormProvider {...methods}>
+        <Outlet context={checkoutCtx} />
+      </FormProvider>
     </div>
   );
 }

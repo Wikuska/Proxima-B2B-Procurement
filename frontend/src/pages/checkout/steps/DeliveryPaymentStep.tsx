@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Navigate, useNavigate, useOutletContext } from "react-router-dom";
 import OrderSummarySidebar from "../../../components/checkout/OrderSummarySidebar";
 import { DELIVERY_LABELS, PAYMENT_LABELS } from "../../../api/order";
@@ -21,6 +21,8 @@ export default function DeliveryPaymentStep() {
     setDeliveryConfirmed,
   } = useOutletContext<CheckoutContext>();
 
+  const [triedNext, setTriedNext] = useState(false);
+
   // Reaching this step at least once means the shipping cost stays visible
   // in the order summary on step 1 even after the user navigates back.
   useEffect(() => {
@@ -29,6 +31,11 @@ export default function DeliveryPaymentStep() {
 
   if (!canProceedToDelivery) {
     return <Navigate to="/checkout/details" replace />;
+  }
+
+  function handleContinue() {
+    setTriedNext(true);
+    if (canProceedToSummary) navigate("/checkout/summary");
   }
 
   return (
@@ -106,6 +113,12 @@ export default function DeliveryPaymentStep() {
             })}
           </div>
         </section>
+
+        {triedNext && !canProceedToSummary && (
+          <p className="text-xs font-semibold text-red-500 -mt-4">
+            Please select a delivery and payment method to continue.
+          </p>
+        )}
       </div>
 
       <OrderSummarySidebar
@@ -113,8 +126,7 @@ export default function DeliveryPaymentStep() {
         quote={quote}
         shippingCost={shippingCost}
         nextLabel="Proceed to Summary"
-        onNext={() => navigate("/checkout/summary")}
-        nextDisabled={!canProceedToSummary}
+        onNext={handleContinue}
         onBack={() => navigate("/checkout/details")}
       />
     </div>
