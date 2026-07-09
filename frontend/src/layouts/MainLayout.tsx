@@ -8,7 +8,7 @@ export default function MainLayout() {
     <div className="min-h-screen bg-bg-base text-text-main flex flex-col font-sans">
       <NavBar />
 
-      <main className="flex-grow">
+      <main className="flex flex-grow flex-col">
         <Outlet />
       </main>
 

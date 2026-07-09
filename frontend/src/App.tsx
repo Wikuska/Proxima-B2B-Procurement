@@ -19,6 +19,7 @@ import {
   DetailsStep,
   HomePage,
   JoinRequestsTab,
+  NotFoundPage,
   OrderDetailPage,
   OrdersTab,
   ProductDetailsPage,
@@ -68,6 +69,7 @@ export default function App() {
             <Route path="details" element={<DetailsStep />} />
             <Route path="delivery" element={<DeliveryPaymentStep />} />
             <Route path="summary" element={<SummaryStep />} />
+            <Route path="*" element={<Navigate to="details" replace />} />
           </Route>
           <Route
             path="/checkout/confirmation/:orderId"
@@ -98,7 +100,10 @@ export default function App() {
             <Route path="orders" element={<OrdersTab />} />
             <Route path="orders/:orderId" element={<OrderDetailPage />} />
             <Route path="addresses" element={<ShippingAddressesTab />} />
+            <Route path="*" element={<NotFoundPage />} />
           </Route>
+
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
 
         {/* Company dashboard — standalone app shell, no site NavBar/footer */}
@@ -117,7 +122,10 @@ export default function App() {
           <Route path="addresses" element={<CompanyAddressesTab />} />
           <Route path="requests" element={<JoinRequestsTab />} />
           <Route path="settings" element={<CompanySettingsTab />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
+
+        <Route path="*" element={<NotFoundPage standalone />} />
       </Routes>
 
       {location.pathname === "/auth" && (

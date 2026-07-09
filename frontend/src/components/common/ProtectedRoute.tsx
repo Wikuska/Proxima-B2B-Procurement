@@ -2,11 +2,13 @@ import type { ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../hooks/user/useAuth";
 import type { UserRole } from "../../store/authStore";
+import ForbiddenPage from "../../pages/ForbiddenPage";
 import { DEFAULT_AUTH_BACKGROUND } from "../../utils/openAuth";
+import RouteLoadingFallback from "./RouteLoadingFallback";
 
 interface ProtectedRouteProps {
   children: ReactNode;
-  /** If set, only these roles may enter; others are sent home. */
+  /** If set, only these roles may enter; others see a 403 page. */
   allow?: UserRole[];
 }
 
@@ -34,11 +36,12 @@ export default function ProtectedRoute({
     );
   }
 
-  // Token present but profile still loading — wait before deciding on role.
-  if (isLoading) return null;
+  if (isLoading) {
+    return <RouteLoadingFallback />;
+  }
 
   if (allow && (!role || !allow.includes(role))) {
-    return <Navigate to="/" replace />;
+    return <ForbiddenPage />;
   }
 
   return <>{children}</>;
