@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { verifyEmail } from "../api/auth";
+import { DEFAULT_AUTH_BACKGROUND, openAuth } from "../utils/openAuth";
 
 interface VerifyLayoutProps {
   icon: "success" | "error" | "loading";
@@ -43,7 +44,10 @@ export default function VerifyEmailPage() {
 
   useEffect(() => {
     if (!data) return;
-    const timer = setTimeout(() => navigate("/auth"), 5000);
+    const timer = setTimeout(
+      () => openAuth(navigate, DEFAULT_AUTH_BACKGROUND),
+      5000,
+    );
     return () => clearTimeout(timer);
   }, [data, navigate]);
 
@@ -85,7 +89,9 @@ export default function VerifyEmailPage() {
       title="Email verified!"
       message="Your account is ready. Redirecting to login in 5 seconds..."
     >
-      <button onClick={() => navigate("/auth")}>Go to login now</button>
+      <button onClick={() => openAuth(navigate, DEFAULT_AUTH_BACKGROUND)}>
+        Go to login now
+      </button>
     </VerifyLayout>
   );
 }

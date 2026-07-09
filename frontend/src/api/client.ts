@@ -76,7 +76,10 @@ export default async function apiFetch<T>(
 
       if (!isAuthRoute) {
         useAuthStore.getState().clearAuth();
-        window.location.href = "/auth";
+        const from = encodeURIComponent(
+          `${window.location.pathname}${window.location.search}`,
+        );
+        window.location.href = `/auth?from=${from}`;
         return Promise.reject(new ApiError(401, "Session expired"));
       }
 

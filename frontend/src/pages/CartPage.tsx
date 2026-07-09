@@ -5,6 +5,7 @@ import { useCartActions } from "../hooks/cart/useCartActions";
 import { useCartView } from "../hooks/cart/useCartView";
 import { useCartQuote } from "../hooks/pricing/useCartQuote";
 import { useAuth } from "../hooks/user/useAuth";
+import { openAuth } from "../utils/openAuth";
 
 export default function CartPage() {
   const { isAuthenticated } = useAuth();
@@ -185,12 +186,7 @@ export default function CartPage() {
                 disabled={selectedCount === 0}
                 onClick={() => {
                   if (!isAuthenticated) {
-                    navigate("/auth", {
-                      state: {
-                        from: "/checkout",
-                        backgroundLocation: location,
-                      },
-                    });
+                    openAuth(navigate, location, { from: "/checkout" });
                   } else {
                     navigate("/checkout");
                   }

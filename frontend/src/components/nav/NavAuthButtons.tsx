@@ -6,6 +6,7 @@ import { useAuthStore } from "../../store/authStore";
 import { useAuth } from "../../hooks/user/useAuth";
 import { useDelayedUnmount } from "../../hooks/common/useDelayedUnmount";
 import { profileTabs } from "../../config/profileTabs";
+import { openAuth } from "../../utils/openAuth";
 
 const DROPDOWN_EXIT_DURATION_MS = 100;
 
@@ -98,22 +99,18 @@ export default function NavAuthButtons() {
   return (
     <>
       <button
-        onClick={() =>
-          navigate("/auth", {
-            state: { from: location.pathname, backgroundLocation: location },
-          })
-        }
+        onClick={() => openAuth(navigate, location)}
         className="text-sm font-medium hover:text-accent transition-colors self-center"
       >
         Log in
       </button>
-      <Link
-        to="/auth?mode=register"
-        state={{ backgroundLocation: location }}
+      <button
+        type="button"
+        onClick={() => openAuth(navigate, location, { mode: "register" })}
         className="bg-primary hover:bg-primary/90 text-white text-xs font-semibold px-4 py-2 rounded-md transition-all shadow-sm"
       >
         Register
-      </Link>
+      </button>
     </>
   );
 }

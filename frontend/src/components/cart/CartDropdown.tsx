@@ -5,6 +5,7 @@ import { useCartActions } from "../../hooks/cart/useCartActions";
 import { useCartView } from "../../hooks/cart/useCartView";
 import { useCartQuote } from "../../hooks/pricing/useCartQuote";
 import CartLineItem from "./CartLineItem";
+import { openAuth } from "../../utils/openAuth";
 
 interface CartDropdownProps {
   onClose: () => void;
@@ -109,12 +110,7 @@ export default function CartDropdown({ onClose }: CartDropdownProps) {
               onClick={() => {
                 onClose();
                 if (!isAuthenticated) {
-                  navigate("/auth", {
-                    state: {
-                      from: "/checkout",
-                      backgroundLocation: location,
-                    },
-                  });
+                  openAuth(navigate, location, { from: "/checkout" });
                 } else {
                   navigate("/checkout");
                 }

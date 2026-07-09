@@ -4,31 +4,31 @@ import AuthModal from "./components/auth/AuthModal";
 import ProtectedRoute from "./components/common/ProtectedRoute";
 import MainLayout from "./layouts/MainLayout";
 import {
-  AuthPage,
   CartPage,
   CheckoutConfirmationPage,
   CheckoutFlow,
+  CompanyAddressesTab,
+  CompanyAffiliationTab,
+  CompanyMembersTab,
+  CompanyOrdersTab,
+  CompanyOverviewTab,
   CompanyPage,
+  CompanySettingsTab,
   ContactPage,
   DeliveryPaymentStep,
   DetailsStep,
   HomePage,
+  JoinRequestsTab,
+  OrderDetailPage,
+  OrdersTab,
   ProductDetailsPage,
   ProductsPage,
   ProfilePage,
+  ShippingAddressesTab,
   SummaryStep,
   VerifyEmailPage,
 } from "./pages";
-import CompanyAddressesTab from "./pages/company/CompanyAddressesTab";
-import CompanyMembersTab from "./pages/company/CompanyMembersTab";
-import CompanyOrdersTab from "./pages/company/CompanyOrdersTab";
-import CompanyOverviewTab from "./pages/company/CompanyOverviewTab";
-import CompanySettingsTab from "./pages/company/CompanySettingsTab";
-import JoinRequestsTab from "./pages/company/JoinRequestsTab";
-import OrderDetailPage from "./pages/profile/OrderDetailPage";
-import OrdersTab from "./pages/profile/OrdersTab";
-import CompanyAffiliationTab from "./pages/profile/CompanyAffiliationTab";
-import ShippingAddressesTab from "./pages/profile/ShippingAddressesTab";
+import { DEFAULT_AUTH_BACKGROUND } from "./utils/openAuth";
 
 export default function App() {
   const location = useLocation();
@@ -36,10 +36,13 @@ export default function App() {
     location.state as { backgroundLocation?: Location } | null
   )?.backgroundLocation;
 
+  const effectiveBackground =
+    backgroundLocation ??
+    (location.pathname === "/auth" ? DEFAULT_AUTH_BACKGROUND : undefined);
+
   return (
     <>
-      <Routes location={backgroundLocation || location}>
-        <Route path="/auth" element={<AuthPage />} />
+      <Routes location={effectiveBackground ?? location}>
         <Route path="/verify-email" element={<VerifyEmailPage />} />
         <Route element={<MainLayout />}>
           <Route path="/" element={<HomePage />} />
@@ -117,10 +120,7 @@ export default function App() {
         </Route>
       </Routes>
 
-      {/* Rendered as an overlay on top of the background location above,
-          giving /auth its own addressable URL without leaving the page
-          behind it (see AuthModal). */}
-      {backgroundLocation && (
+      {location.pathname === "/auth" && (
         <Routes>
           <Route path="/auth" element={<AuthModal />} />
         </Routes>

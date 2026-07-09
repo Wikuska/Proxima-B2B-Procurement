@@ -15,10 +15,9 @@ interface AuthPanelProps {
 }
 
 /**
- * Sign-in/create-account form area, shared between the full-page `AuthPage`
- * and the route-addressable `AuthModal`. Mode switching happens via the
- * link at the bottom of each form (no separate tab switcher — it would just
- * duplicate that link).
+ * Sign-in/create-account form area used by the route-addressable `AuthModal`.
+ * Mode switching happens via the link at the bottom of each form (no separate
+ * tab switcher — it would just duplicate that link).
  */
 export default function AuthPanel({ onSignInSuccess }: AuthPanelProps) {
   const [searchParams] = useSearchParams();

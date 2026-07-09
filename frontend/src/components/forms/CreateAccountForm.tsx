@@ -8,6 +8,7 @@ import {
   type RegisterFormData,
 } from "../../schemas/authSchema";
 import { useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { registerUser } from "../../api/auth";
 import { ApiError } from "../../api/client";
 
@@ -31,8 +32,8 @@ export default function CreateAccountForm({
   const { mutate, isPending } = useMutation({
     mutationFn: registerUser,
     onSuccess: () => {
-      console.log(
-        "Account created successfully! Please check your email to verify your account.",
+      toast.success(
+        "Account created! Please check your email to verify your account.",
       );
       onSwitchToSignIn();
     },
