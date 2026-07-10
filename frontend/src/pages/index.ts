@@ -1,6 +1,5 @@
 export { default as ForbiddenPage } from "./ForbiddenPage";
 export { default as NotFoundPage } from "./NotFoundPage";
-export { default as VerifyEmailPage } from "./VerifyEmailPage";
 export { default as HomePage } from "./HomePage";
 export { default as ProductsPage } from "./ProductsPage";
 export { default as ProductDetailsPage } from "./ProductDetailsPage";

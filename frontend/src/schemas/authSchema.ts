@@ -33,3 +33,12 @@ export const signInSchema = z.object({
 });
 
 export type SignInFormData = z.infer<typeof signInSchema>;
+
+export const verifyCodeSchema = z.object({
+  code: z
+    .string()
+    .length(6, "Code must be 6 digits")
+    .regex(/^\d{6}$/, "Code must contain only digits"),
+});
+
+export type VerifyCodeFormData = z.infer<typeof verifyCodeSchema>;

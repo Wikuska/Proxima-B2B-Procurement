@@ -11,14 +11,18 @@ import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { registerUser } from "../../api/auth";
 import { ApiError } from "../../api/client";
+import { usePublicConfig } from "../../hooks/usePublicConfig";
 
 interface CreateAccountFormProps {
   onSwitchToSignIn: () => void;
+  onRegistered: (email: string) => void;
 }
 
 export default function CreateAccountForm({
   onSwitchToSignIn,
+  onRegistered,
 }: CreateAccountFormProps) {
+  const { data: publicConfig } = usePublicConfig();
   const {
     register,
     handleSubmit,
@@ -31,11 +35,17 @@ export default function CreateAccountForm({
 
   const { mutate, isPending } = useMutation({
     mutationFn: registerUser,
-    onSuccess: () => {
-      toast.success(
-        "Account created! Please check your email to verify your account.",
-      );
-      onSwitchToSignIn();
+    onSuccess: (_data, variables) => {
+      if (publicConfig?.portfolio_mode) {
+        toast.success(
+          `Account created! Portfolio mode on — type ${publicConfig.portfolio_verification_code ?? "000000"} to verify.`,
+        );
+      } else {
+        toast.success(
+          "Account created! Enter the 6-digit code sent to your email.",
+        );
+      }
+      onRegistered(variables.email);
     },
     onError: (error) => {
       if (error instanceof ApiError) {

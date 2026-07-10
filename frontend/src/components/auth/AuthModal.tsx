@@ -43,7 +43,7 @@ export default function AuthModal() {
   };
 
   return (
-    <Modal onClose={() => closeToBackground()} panelClassName="max-w-2xl">
+    <Modal onClose={() => closeToBackground()} panelClassName="max-w-xl">
       <button
         type="button"
         onClick={() => closeToBackground()}

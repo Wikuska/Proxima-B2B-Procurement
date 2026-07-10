@@ -27,7 +27,6 @@ import {
   ProfilePage,
   ShippingAddressesTab,
   SummaryStep,
-  VerifyEmailPage,
 } from "./pages";
 import { DEFAULT_AUTH_BACKGROUND } from "./utils/openAuth";
 
@@ -44,7 +43,6 @@ export default function App() {
   return (
     <>
       <Routes location={effectiveBackground ?? location}>
-        <Route path="/verify-email" element={<VerifyEmailPage />} />
         <Route element={<MainLayout />}>
           <Route path="/" element={<HomePage />} />
           <Route path="/catalog" element={<ProductsPage />} />

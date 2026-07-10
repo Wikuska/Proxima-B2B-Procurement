@@ -18,11 +18,13 @@ interface SignInFormProps {
    * the default `navigate(from || "/")`.
    */
   onSuccess?: (from: string) => void;
+  onEmailNotVerified?: (email: string) => void;
 }
 
 export default function SignInForm({
   onSwitchToSignUp,
   onSuccess,
+  onEmailNotVerified,
 }: SignInFormProps) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -56,8 +58,15 @@ export default function SignInForm({
         navigate(from || "/", { replace: true });
       }
     },
-    onError: (error) => {
+    onError: (error, variables) => {
       if (error instanceof ApiError) {
+        if (
+          error.status === 403 &&
+          error.message.toLowerCase().includes("not verified")
+        ) {
+          onEmailNotVerified?.(variables.email);
+          return;
+        }
         if (error.status < 500) {
           setError("root", { message: error.message });
           return;

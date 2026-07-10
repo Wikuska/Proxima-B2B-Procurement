@@ -1,3 +1,4 @@
+import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
@@ -22,6 +23,11 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return password_hash.verify(plain_password, hashed_password)
 
 
+def generate_verification_code() -> str:
+    """Cryptographically secure 6-digit OTP for email verification."""
+    return f"{secrets.randbelow(1_000_000):06d}"
+
+
 def create_access_token(
     subject: str | Any, expires_delta: timedelta | None = None
 ) -> str:
@@ -43,25 +49,19 @@ def create_access_token(
         "type": "access",
     }
     encoded_jwt = jwt.encode(
-        to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM
+        to_encode, settings.SECRET_KEY.get_secret_value(), algorithm=settings.ALGORITHM
     )
 
     return encoded_jwt
-
-
-def create_verification_token(email: str) -> str:
-    """Generates a token for email verification (Double Opt-In). Valid for 24 hours."""
-    expire = datetime.now(timezone.utc) + timedelta(hours=24)
-    to_encode = {"exp": expire, "sub": email, "type": "email_verification"}
-
-    return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
 
 def decode_access_token(token: str) -> dict:
     """Decodes the access token. Returns the payload or raises an exception if the token is invalid."""
     try:
         payload = jwt.decode(
-            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+            token,
+            settings.SECRET_KEY.get_secret_value(),
+            algorithms=[settings.ALGORITHM],
         )
 
     except ExpiredSignatureError:
@@ -73,21 +73,3 @@ def decode_access_token(token: str) -> dict:
         raise InvalidTokenTypeException()
 
     return payload
-
-
-def decode_verification_token(token: str) -> str:
-    """Decodes the email verification token. Returns the email address (sub) or raises an exception."""
-    try:
-        payload = jwt.decode(
-            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
-        )
-
-    except ExpiredSignatureError:
-        raise ExpiredTokenException()
-    except InvalidTokenError:
-        raise InvalidTokenException()
-
-    if payload.get("type") != "email_verification":
-        raise InvalidTokenTypeException()
-
-    return payload.get("sub")

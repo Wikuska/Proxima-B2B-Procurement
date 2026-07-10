@@ -1,20 +1,26 @@
 import uuid
 from decimal import Decimal
 
+import fakeredis.aioredis
 import pytest
 import pytest_asyncio
+from app.core.redis import get_redis
 from app.core.security import create_access_token
 from app.core.settings import settings
+from app.core.verification_deps import get_verification_code_store
 from app.database import get_db
 from app.main import app
 from app.models import Base, Company, User
 from app.models.product import Category, Product, ProductVolumeDiscount
+from app.services.verification_code_store import VerificationCodeStore
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.pool import NullPool
 
 # Engine with NullPool to avoid connection pool issues in tests
-engine = create_async_engine(settings.TEST_DATABASE_URL, poolclass=NullPool)
+engine = create_async_engine(
+    settings.TEST_DATABASE_URL.get_secret_value(), poolclass=NullPool
+)
 
 
 @pytest_asyncio.fixture(scope="session", autouse=True)
@@ -51,17 +57,44 @@ async def db_session():
     await connection.close()
 
 
+@pytest_asyncio.fixture
+async def fake_redis():
+    client = fakeredis.aioredis.FakeRedis(decode_responses=True)
+    yield client
+    await client.flushall()
+    await client.aclose()
+
+
 @pytest_asyncio.fixture(scope="function")
-async def async_client(db_session):
+async def async_client(db_session, fake_redis):
     async def override_get_db():
         yield db_session
 
+    async def override_get_redis():
+        yield fake_redis
+
+    store = VerificationCodeStore(fake_redis)
+
+    async def override_get_store():
+        yield store
+
     app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_redis] = override_get_redis
+    app.dependency_overrides[get_verification_code_store] = override_get_store
 
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as ac:
         yield ac
+
+    app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def fixed_otp(monkeypatch):
+    monkeypatch.setattr(
+        "app.services.auth.generate_verification_code", lambda: "123456"
+    )
 
 
 @pytest_asyncio.fixture

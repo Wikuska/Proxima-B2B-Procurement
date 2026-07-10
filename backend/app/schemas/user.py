@@ -47,6 +47,25 @@ class UserCreate(UserBase):
     password: StrongPassword
 
 
+class EmailVerificationIn(BaseModel):
+    email: EmailStr
+    code: Annotated[str, Field(pattern=r"^\d{6}$")]
+
+
+class ResendVerificationIn(BaseModel):
+    email: EmailStr
+
+
+class VerificationSessionIn(BaseModel):
+    email: EmailStr
+
+
+class VerificationSessionOut(BaseModel):
+    resend_cooldown_seconds: int
+    code_sent: bool
+    is_verified: bool = False
+
+
 # User profile returned in API responses
 class UserOut(UserBase):
     id: uuid.UUID

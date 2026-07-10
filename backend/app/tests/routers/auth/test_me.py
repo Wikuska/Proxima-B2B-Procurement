@@ -1,12 +1,14 @@
 from datetime import timedelta
 
+import jwt
 import pytest
 from app.core.dependencies import (
     get_optional_current_user,
     require_role,
 )
 from app.core.exceptions import InsufficientPermissionsException
-from app.core.security import create_access_token, create_verification_token
+from app.core.security import create_access_token
+from app.core.settings import settings
 from app.models.enums import UserRole
 from httpx import AsyncClient
 
@@ -70,8 +72,18 @@ async def test_me_with_tampered_token_returns_401(async_client: AsyncClient):
 
 
 async def test_me_with_wrong_token_type_returns_401(async_client: AsyncClient):
-    """An email-verification token cannot be used to authenticate."""
-    verification_token = create_verification_token(email="test@example.com")
+    """A token with a non-access type cannot be used to authenticate."""
+    from datetime import datetime, timezone
+
+    verification_token = jwt.encode(
+        {
+            "exp": datetime.now(timezone.utc) + timedelta(hours=1),
+            "sub": "test@example.com",
+            "type": "email_verification",
+        },
+        settings.SECRET_KEY,
+        algorithm=settings.ALGORITHM,
+    )
 
     response = await async_client.get(
         "/auth/me", headers=_auth_header(verification_token)

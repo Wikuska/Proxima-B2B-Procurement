@@ -3,7 +3,17 @@ from .common import MessageOut
 from .company import CompanyMemberOut, CompanyRequestAdminOut, CompanyRequestCreate, CompanyRequestOut, RequesterMini
 from .product import PaginatedProductListOut, ProductDetailsOut, ProductListOut
 from .token import Token, TokenData
-from .user import UserBase, UserCreate, UserLogin, UserOut, UserUpdate
+from .user import (
+    UserBase,
+    UserCreate,
+    UserLogin,
+    UserOut,
+    UserUpdate,
+    EmailVerificationIn,
+    ResendVerificationIn,
+    VerificationSessionIn,
+    VerificationSessionOut,
+)
 
 __all__ = [
     "Token",
@@ -13,6 +23,10 @@ __all__ = [
     "UserLogin",
     "UserOut",
     "UserUpdate",
+    "EmailVerificationIn",
+    "ResendVerificationIn",
+    "VerificationSessionIn",
+    "VerificationSessionOut",
     "MessageOut",
     "ProductListOut",
     "PaginatedProductListOut",

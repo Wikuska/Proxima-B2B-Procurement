@@ -9,9 +9,8 @@ from app.core.exceptions import (
 )
 from app.core.security import (
     create_access_token,
-    create_verification_token,
     decode_access_token,
-    decode_verification_token,
+    generate_verification_code,
     get_password_hash,
     verify_password,
 )
@@ -106,55 +105,26 @@ def test_decode_access_token_raises_invalid_token_exception():
 
 def test_decode_access_token_raises_invalid_token_type_exception():
     """Ensure a token with the wrong 'type' claim is rejected by the access token decoder."""
-    # Create an email verification token (type="email_verification")
-    verification_token = create_verification_token(email="test@example.com")
+    expire = datetime.now(timezone.utc) + timedelta(hours=1)
+    verification_token = jwt.encode(
+        {"exp": expire, "sub": "test@example.com", "type": "email_verification"},
+        settings.SECRET_KEY,
+        algorithm=settings.ALGORITHM,
+    )
 
     with pytest.raises(InvalidTokenTypeException):
         decode_access_token(verification_token)
 
 
-# JWT EMAIL VERIFICATION TOKEN TESTS
+# EMAIL VERIFICATION OTP TESTS
 
 
-def test_decode_verification_token_returns_correct_email():
-    """Ensure the verification decoder extracts the email successfully."""
-    email = "b2b.client@siemens.com"
-    token = create_verification_token(email=email)
-
-    decoded_email = decode_verification_token(token)
-
-    assert decoded_email == email
+def test_generate_verification_code_is_six_digits():
+    code = generate_verification_code()
+    assert len(code) == 6
+    assert code.isdigit()
 
 
-def test_decode_verification_token_raises_expired_token_exception():
-    """Ensure an expired verification token raises the appropriate exception."""
-    # Manually create an expired verification token since the function hardcodes +24h
-    expire = datetime.now(timezone.utc) - timedelta(hours=1)
-    to_encode = {
-        "exp": expire,
-        "sub": "b2b.client@siemens.com",
-        "type": "email_verification",
-    }
-    expired_token = jwt.encode(
-        to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM
-    )
-
-    with pytest.raises(ExpiredTokenException):
-        decode_verification_token(expired_token)
-
-
-def test_decode_verification_token_raises_invalid_token_exception():
-    """Ensure a tampered or malformed token raises the appropriate exception."""
-
-    tampered_token = "this.is.not.a.valid.jwt"
-
-    with pytest.raises(InvalidTokenException):
-        decode_verification_token(tampered_token)
-
-
-def test_decode_verification_token_raises_invalid_token_type_exception():
-    """Ensure an access token is rejected by the verification token decoder."""
-    access_token = create_access_token(subject="user_12345")
-
-    with pytest.raises(InvalidTokenTypeException):
-        decode_verification_token(access_token)
+def test_generate_verification_code_is_unique_enough():
+    codes = {generate_verification_code() for _ in range(20)}
+    assert len(codes) > 1
