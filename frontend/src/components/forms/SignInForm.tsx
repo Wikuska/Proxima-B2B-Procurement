@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "../../api/client";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
 interface SignInFormProps {
   onSwitchToSignUp: () => void;
@@ -18,14 +18,17 @@ interface SignInFormProps {
    * the default `navigate(from || "/")`.
    */
   onSuccess?: (from: string) => void;
+  onEmailNotVerified?: (email: string) => void;
 }
 
 export default function SignInForm({
   onSwitchToSignUp,
   onSuccess,
+  onEmailNotVerified,
 }: SignInFormProps) {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const setToken = useAuthStore((state) => state.setToken);
   const queryClient = useQueryClient();
 
@@ -45,15 +48,25 @@ export default function SignInForm({
       setToken(data.access_token);
       // Discard any cached profile so the next render fetches the new user.
       queryClient.removeQueries({ queryKey: ["me"] });
-      const from = (location.state as { from?: string })?.from ?? "";
+      const from =
+        (location.state as { from?: string })?.from ??
+        searchParams.get("from") ??
+        "";
       if (onSuccess) {
         onSuccess(from);
       } else {
         navigate(from || "/", { replace: true });
       }
     },
-    onError: (error) => {
+    onError: (error, variables) => {
       if (error instanceof ApiError) {
+        if (
+          error.status === 403 &&
+          error.message.toLowerCase().includes("not verified")
+        ) {
+          onEmailNotVerified?.(variables.email);
+          return;
+        }
         if (error.status < 500) {
           setError("root", { message: error.message });
           return;

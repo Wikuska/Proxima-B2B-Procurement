@@ -3,6 +3,7 @@ from app.routers.address import router as address_router
 from app.routers.auth import router as auth_router
 from app.routers.cart import router as cart_router
 from app.routers.catalog import router as catalog_router
+from app.routers.config import router as config_router
 from app.routers.company import router as company_router
 from app.routers.order import router as order_router
 from app.routers.pricing import router as pricing_router
@@ -19,6 +20,7 @@ app.include_router(catalog_router)
 app.include_router(company_router)
 app.include_router(order_router)
 app.include_router(pricing_router)
+app.include_router(config_router)
 
 app.add_middleware(
     CORSMiddleware,

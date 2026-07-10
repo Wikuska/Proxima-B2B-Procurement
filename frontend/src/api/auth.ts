@@ -5,6 +5,12 @@ interface MessageResponse {
   message: string;
 }
 
+export interface VerificationSessionResponse {
+  resend_cooldown_seconds: number;
+  code_sent: boolean;
+  is_verified: boolean;
+}
+
 // Mirrors the backend UserOut schema (snake_case field names).
 export interface CurrentUser {
   id: string;
@@ -41,8 +47,25 @@ export const registerUser = (payload: RegisterPayload) => {
   });
 };
 
-export const verifyEmail = (token: string) => {
-  return apiFetch<{ message: string }>(`/auth/verify?token=${token}`);
+export const verifyEmailCode = (payload: { email: string; code: string }) => {
+  return apiFetch<MessageResponse>("/auth/verify", {
+    method: "POST",
+    body: payload,
+  });
+};
+
+export const resendVerificationCode = (email: string) => {
+  return apiFetch<MessageResponse>("/auth/resend-verification", {
+    method: "POST",
+    body: { email },
+  });
+};
+
+export const prepareVerificationSession = (email: string) => {
+  return apiFetch<VerificationSessionResponse>("/auth/verification-session", {
+    method: "POST",
+    body: { email },
+  });
 };
 
 export const signInUser = (payload: SignInPayload) => {

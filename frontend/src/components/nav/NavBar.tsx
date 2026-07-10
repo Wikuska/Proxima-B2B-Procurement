@@ -44,10 +44,7 @@ export default function NavBar() {
       ) {
         setIsDropdownOpen(false);
       }
-      if (
-        cartRef.current &&
-        !cartRef.current.contains(event.target as Node)
-      ) {
+      if (cartRef.current && !cartRef.current.contains(event.target as Node)) {
         setIsCartOpen(false);
       }
     }
@@ -72,7 +69,7 @@ export default function NavBar() {
           to="/"
           className="text-2xl font-bold text-primary tracking-wide flex items-center"
         >
-          proxima<span className="text-accent">.</span>
+          pro<span className="text-accent">xima</span>.
         </Link>
 
         <nav className="hidden md:flex items-center gap-8 text-sm font-medium h-full">

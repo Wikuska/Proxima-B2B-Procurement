@@ -172,3 +172,41 @@ class CannotDeleteBillingAddressException(AppException):
 class InvalidPaymentMethodException(AppException):
     status_code = 400
     detail = "This payment method is not available for the selected purchase type"
+
+
+class InvalidVerificationCodeException(AppException):
+    status_code = 400
+    detail = "Invalid verification code"
+
+    def __init__(self, attempts_left: int | None = None):
+        if attempts_left is not None:
+            super().__init__(
+                detail=f"Invalid verification code. {attempts_left} attempt(s) remaining."
+            )
+        else:
+            super().__init__()
+
+
+class ExpiredVerificationCodeException(AppException):
+    status_code = 401
+    detail = "Verification code has expired. Please check your email for a new code."
+
+
+class TooManyVerificationAttemptsException(AppException):
+    status_code = 429
+    detail = "Too many failed attempts. Please request a new verification code."
+
+
+class ResendCooldownException(AppException):
+    status_code = 429
+    detail = "Please wait before requesting another code."
+
+    def __init__(self, retry_after_seconds: int):
+        super().__init__(
+            detail=f"Please wait {retry_after_seconds} second(s) before requesting another code."
+        )
+
+
+class VerificationInProgressException(AppException):
+    status_code = 409
+    detail = "Verification already in progress. Please wait a moment."

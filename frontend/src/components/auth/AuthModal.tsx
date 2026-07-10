@@ -1,7 +1,8 @@
 import { X } from "lucide-react";
 import type { Location } from "react-router-dom";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import Modal from "../common/Modal";
+import { DEFAULT_AUTH_BACKGROUND } from "../../utils/openAuth";
 import AuthPanel from "./AuthPanel";
 
 interface AuthLocationState {
@@ -13,23 +14,36 @@ function toPath(location: Location) {
   return `${location.pathname}${location.search}${location.hash}`;
 }
 
+function resolveRedirectTarget(
+  fallbackFrom: string | undefined,
+  background: Location | undefined,
+  fromQuery: string,
+) {
+  if (fallbackFrom) return fallbackFrom;
+  if (fromQuery) return fromQuery;
+  if (background) return toPath(background);
+  return "/";
+}
+
 /**
- * Route-addressable `/auth` modal, rendered over a blurred `backgroundLocation`
+ * Route-addressable `/auth` modal, rendered over `backgroundLocation`
  * (react-router "background location" pattern). See `App.tsx`.
  */
 export default function AuthModal() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const state = location.state as AuthLocationState | null;
-  const background = state?.backgroundLocation;
+  const background = state?.backgroundLocation ?? DEFAULT_AUTH_BACKGROUND;
+  const fromQuery = searchParams.get("from") ?? "";
 
   const closeToBackground = (fallbackFrom?: string) => {
-    const target = fallbackFrom || (background ? toPath(background) : "/");
+    const target = resolveRedirectTarget(fallbackFrom, background, fromQuery);
     navigate(target, { replace: true });
   };
 
   return (
-    <Modal onClose={() => closeToBackground()} panelClassName="max-w-2xl">
+    <Modal onClose={() => closeToBackground()} panelClassName="max-w-xl">
       <button
         type="button"
         onClick={() => closeToBackground()}

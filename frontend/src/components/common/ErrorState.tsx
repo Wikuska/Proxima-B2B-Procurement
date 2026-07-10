@@ -30,7 +30,7 @@ export default function ErrorState({ type, message }: ErrorStateProps) {
         </h2>
         <p className="mb-6 max-w-md">{message}</p>
         <Link
-          to="/products"
+          to="/catalog"
           className="px-6 py-2 bg-accent text-white rounded-md font-medium hover:opacity-90 transition-opacity"
         >
           Browse all products
