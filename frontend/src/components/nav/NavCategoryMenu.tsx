@@ -15,7 +15,7 @@ export default function NavCategoryMenu({
 }: NavCategoryMenuProps) {
   return (
     <div
-      className={`absolute top-full left-1/2 -translate-x-1/2 mt-2 w-[800px] bg-bg-surface border border-border-base/30 rounded-xl shadow-xl p-5 z-50 origin-top ${
+      className={`absolute top-full left-1/2 -translate-x-1/2 mt-4.5 w-[800px] bg-bg-surface border border-border-base/30 rounded-xl shadow-xl p-5 z-50 origin-top ${
         isOpen ? "animate-pop-down" : "animate-pop-up"
       }`}
     >

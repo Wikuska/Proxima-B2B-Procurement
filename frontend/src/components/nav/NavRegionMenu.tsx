@@ -40,7 +40,7 @@ export default function NavRegionMenu({
   }, []);
 
   return (
-    <div className="relative flex items-center h-full" ref={dropdownRef}>
+    <div className="relative flex items-center" ref={dropdownRef}>
       <button
         onClick={() => !isDisabled && setIsOpen(!isOpen)}
         disabled={isDisabled}

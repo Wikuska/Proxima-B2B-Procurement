@@ -17,8 +17,9 @@ export default function HomePage() {
           className="absolute inset-0 w-full h-full object-cover object-center opacity-60 mix-blend-luminosity"
         />
 
-        <div className="absolute inset-0 max-w-7xl mx-auto px-4 flex items-center justify-start">
-          <div className="bg-white/80 backdrop-blur-md p-8 md:p-12 rounded-xl max-w-2xl border border-white/40 shadow-xl mt-10 w-full">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full max-w-7xl mx-auto px-2 sm:px-3">
+            <div className="bg-white/80 backdrop-blur-md p-8 md:p-12 rounded-xl max-w-2xl w-full border border-white/40 shadow-xl">
             <h1 className="text-3xl md:text-4xl font-extrabold text-text-main mb-4 leading-tight">
               Highest Quality Accessories & Equipment for Laboratories
             </h1>
@@ -31,6 +32,7 @@ export default function HomePage() {
               showSuggestions
               onSearch={handleSearch}
             />
+            </div>
           </div>
         </div>
       </section>
