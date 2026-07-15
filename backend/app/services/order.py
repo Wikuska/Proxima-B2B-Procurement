@@ -17,11 +17,11 @@ from app.crud import address as address_crud
 from app.crud import cart as cart_crud
 from app.crud import order as order_crud
 from app.crud import product as product_crud
-from app.models.enums import DeliveryMethod, DocumentType, OrderStatus, PaymentMethod, PurchaseType
+from app.models.enums import DeliveryMethod, DocumentType, PaymentMethod, PurchaseType
 from app.models.order import BillingDocument, Order, OrderItem, Shipment
 from app.models.user import User
 from app.schemas.order import BillingDocumentIn, CheckoutOptionsOut, DeliveryOptionOut, OrderCreate, PaymentOptionOut
-from app.services import pricing
+from app.services import payment, pricing
 from sqlalchemy.ext.asyncio import AsyncSession
 
 SHIPPING_COSTS: dict[DeliveryMethod, Decimal] = {
@@ -100,7 +100,7 @@ async def create_order(db: AsyncSession, user: User, payload: OrderCreate) -> Or
     order = Order(
         user_id=user.id,
         purchase_type=payload.purchase_type,
-        status=OrderStatus.PENDING_PAYMENT,
+        status=payment.resolve_initial_status(payload.payment_method),
         payment_method=payload.payment_method,
         total_amount=quote["grand_total"] + shipment.shipping_cost,
         note=payload.note,
@@ -254,6 +254,10 @@ async def _resolve_shipping(db: AsyncSession, user: User, payload: OrderCreate) 
         shipping_postal_code=address.postal_code,
         shipping_country=address.country,
     )
+
+
+async def advance_order_status(db: AsyncSession, order_id: uuid.UUID) -> Order:
+    return await payment.advance_order_status(db, order_id)
 
 
 async def get_checkout_options() -> CheckoutOptionsOut:

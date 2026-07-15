@@ -6,6 +6,7 @@ export { default as ProductDetailsPage } from "./ProductDetailsPage";
 export { default as CartPage } from "./CartPage";
 export { default as CheckoutFlow } from "./checkout/CheckoutFlow";
 export { default as CheckoutConfirmationPage } from "./checkout/CheckoutConfirmationPage";
+export { default as CheckoutPaymentMockPage } from "./checkout/CheckoutPaymentMockPage";
 export { default as DetailsStep } from "./checkout/steps/DetailsStep";
 export { default as DeliveryPaymentStep } from "./checkout/steps/DeliveryPaymentStep";
 export { default as SummaryStep } from "./checkout/steps/SummaryStep";

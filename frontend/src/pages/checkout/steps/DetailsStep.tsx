@@ -63,7 +63,7 @@ export default function DetailsStep() {
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8 items-start">
+    <div className="w-full grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8 items-start">
       <div className="space-y-8">
         {/* B2B-only blocker — no company account */}
         {b2bBlockedNoCompany && (

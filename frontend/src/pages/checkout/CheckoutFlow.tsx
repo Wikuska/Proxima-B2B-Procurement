@@ -3,14 +3,22 @@ import { useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { Navigate, Outlet } from "react-router-dom";
 import type { AddressIn } from "../../api/address";
-import type { DeliveryMethod, OrderCreate, PaymentMethod, PurchaseType } from "../../api/order";
+import type {
+  DeliveryMethod,
+  OrderCreate,
+  PaymentMethod,
+  PurchaseType,
+} from "../../api/order";
 import CheckoutStepper from "../../components/checkout/CheckoutStepper";
 import {
   useCompanyBillingAddress,
   useCompanyShippingAddresses,
   usePersonalAddresses,
 } from "../../hooks/address/useAddresses";
-import { useCheckoutOptions, useCreateOrder } from "../../hooks/order/useOrders";
+import {
+  useCheckoutOptions,
+  useCreateOrder,
+} from "../../hooks/order/useOrders";
 import { useCartQuote } from "../../hooks/pricing/useCartQuote";
 import { useCartView } from "../../hooks/cart/useCartView";
 import { useAuth } from "../../hooks/user/useAuth";
@@ -57,7 +65,9 @@ export default function CheckoutFlow() {
     reValidateMode: "onBlur",
     defaultValues: {
       recipient: {
-        recipient_name: user ? `${user.first_name} ${user.last_name}`.trim() : "",
+        recipient_name: user
+          ? `${user.first_name} ${user.last_name}`.trim()
+          : "",
         recipient_email: user?.email ?? "",
         recipient_phone: "",
       },
@@ -70,8 +80,10 @@ export default function CheckoutFlow() {
   // the fields themselves are registered deeper in the tree via useFormContext.
   const watchedValues = useWatch({ control });
 
-  const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>("COURIER");
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("BANK_TRANSFER");
+  const [deliveryMethod, setDeliveryMethod] =
+    useState<DeliveryMethod>("COURIER");
+  const [paymentMethod, setPaymentMethod] =
+    useState<PaymentMethod>("BANK_TRANSFER");
   const [deliveryConfirmed, setDeliveryConfirmed] = useState(false);
   const [note, setNote] = useState("");
 
@@ -119,8 +131,12 @@ export default function CheckoutFlow() {
     if (addr) {
       setValue("billing.billingStreet", addr.street, { shouldValidate: true });
       setValue("billing.billingCity", addr.city, { shouldValidate: true });
-      setValue("billing.billingPostalCode", addr.postal_code, { shouldValidate: true });
-      setValue("billing.billingCountry", addr.country, { shouldValidate: true });
+      setValue("billing.billingPostalCode", addr.postal_code, {
+        shouldValidate: true,
+      });
+      setValue("billing.billingCountry", addr.country, {
+        shouldValidate: true,
+      });
     }
   }
 
@@ -219,7 +235,7 @@ export default function CheckoutFlow() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-10">
+    <div className="w-full max-w-5xl mx-auto px-4 py-10">
       <CheckoutStepper />
       <FormProvider {...methods}>
         <Outlet context={checkoutCtx} />

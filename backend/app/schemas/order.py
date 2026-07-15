@@ -142,3 +142,7 @@ class PaymentOptionOut(BaseModel):
 class CheckoutOptionsOut(BaseModel):
     delivery_methods: list[DeliveryOptionOut]
     payment_methods: list[PaymentOptionOut]
+
+
+class MockPaymentIn(BaseModel):
+    success: bool

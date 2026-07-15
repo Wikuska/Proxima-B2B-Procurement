@@ -174,6 +174,16 @@ class InvalidPaymentMethodException(AppException):
     detail = "This payment method is not available for the selected purchase type"
 
 
+class InvalidOrderStatusTransitionException(AppException):
+    status_code = 400
+    detail = "This order status transition is not allowed"
+
+
+class PaymentActionNotAllowedException(AppException):
+    status_code = 400
+    detail = "This payment action is not allowed for the current order"
+
+
 class InvalidVerificationCodeException(AppException):
     status_code = 400
     detail = "Invalid verification code"

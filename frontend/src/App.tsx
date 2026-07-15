@@ -7,6 +7,7 @@ import {
   CartPage,
   CheckoutConfirmationPage,
   CheckoutFlow,
+  CheckoutPaymentMockPage,
   CompanyAddressesTab,
   CompanyAffiliationTab,
   CompanyMembersTab,
@@ -74,6 +75,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <CheckoutConfirmationPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/checkout/payment/:orderId"
+            element={
+              <ProtectedRoute>
+                <CheckoutPaymentMockPage />
               </ProtectedRoute>
             }
           />

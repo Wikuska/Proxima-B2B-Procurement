@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+html {
+  scrollbar-gutter: stable;
+}
+
 @theme {
   /* Główne kolory marki */
   --color-primary: #26547C; /* Dusk Blue - Navbar, przyciski akcji*/

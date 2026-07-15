@@ -1,6 +1,6 @@
 import uuid
 
-from app.models.enums import PurchaseType
+from app.models.enums import OrderStatus, PurchaseType
 from app.models.order import BillingDocument, Order, OrderItem, Shipment
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -47,6 +47,32 @@ async def get_orders_for_user(
         stmt = stmt.where(Order.purchase_type == purchase_type)
     result = await db.scalars(stmt)
     return list(result.all())
+
+
+async def update_order_status(
+    db: AsyncSession, order_id: uuid.UUID, status: OrderStatus
+) -> Order:
+    stmt = select(Order).where(Order.id == order_id)
+    result = await db.execute(stmt)
+    order = result.scalar_one()
+    order.status = status
+    await db.flush()
+    await db.refresh(order, ["items", "billing_document", "shipment"])
+    return order
+
+
+async def get_order_by_id(db: AsyncSession, order_id: uuid.UUID) -> Order | None:
+    stmt = (
+        select(Order)
+        .where(Order.id == order_id)
+        .options(
+            selectinload(Order.items),
+            selectinload(Order.billing_document),
+            selectinload(Order.shipment),
+        )
+    )
+    result = await db.execute(stmt)
+    return result.scalar_one_or_none()
 
 
 async def get_order(db: AsyncSession, order_id: uuid.UUID, user_id: uuid.UUID) -> Order | None:
