@@ -7,6 +7,7 @@ from app.core.exceptions import CategoryNotFoundException, ProductNotFoundExcept
 from app.core.settings import settings
 from app.crud import category as category_crud
 from app.crud import product as product_crud
+from app.models.enums import ProductSortBy
 from app.services.pricing import compute_unit, resolve_company_pct
 
 
@@ -50,6 +51,7 @@ async def fetch_products_for_catalog(
     search_query: str | None = None,
     page: int = 1,
     size: int = 24,
+    sort_by: ProductSortBy | None = None,
     user=None,
 ):
     if category_slug:
@@ -59,7 +61,7 @@ async def fetch_products_for_catalog(
 
     skip = (page - 1) * size
     items, total = await product_crud.get_active_products(
-        db, category_slug, search_query, skip, size
+        db, category_slug, search_query, skip, size, sort_by
     )
 
     company_pct = await resolve_company_pct(db, user, "COMPANY")

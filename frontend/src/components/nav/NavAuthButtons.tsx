@@ -54,7 +54,7 @@ export default function NavAuthButtons() {
 
           {shouldRenderDropdown && (
             <div
-              className={`absolute left-1/2 -translate-x-1/2 mt-7 w-48 bg-bg-surface border border-border-base/20 rounded-xl shadow-lg py-1 z-50 origin-top ${
+              className={`absolute left-1/2 -translate-x-1/2 mt-6 w-48 bg-bg-surface border border-border-base/20 rounded-xl shadow-lg py-1 z-50 origin-top ${
                 isOpen ? "animate-pop-down" : "animate-pop-up"
               }`}
             >

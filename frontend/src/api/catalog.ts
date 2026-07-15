@@ -39,11 +39,15 @@ export interface ProductDetailsOut extends ProductListOut {
   volume_discounts: ProductVolumeDiscountOut[];
 }
 
+export type CatalogSort = "relevance" | "name_asc" | "price_asc" | "price_desc";
+
 export interface FetchProductsPayload {
   category_slug?: string;
   search_query?: string;
+  sort_by?: CatalogSort;
   page: number;
   size: number;
+  signal?: AbortSignal;
 }
 
 export const fetchCategories = () => {
@@ -55,24 +59,29 @@ export const fetchCategories = () => {
 export const fetchProducts = ({
   category_slug,
   search_query,
+  sort_by,
   page,
   size,
+  signal,
 }: FetchProductsPayload) => {
+  const sortQuery = sort_by ? `&sort_by=${encodeURIComponent(sort_by)}` : "";
+
   if (category_slug) {
     return apiFetch<PaginatedProductListOut>(
-      `/catalog/categories/${category_slug}/products?page=${page}&size=${size}`,
+      `/catalog/categories/${category_slug}/products?page=${page}&size=${size}${sortQuery}`,
       {
         method: "GET",
+        signal,
       },
     );
   }
-  let url = `/catalog/products?page=${page}&size=${size}`;
+  let url = `/catalog/products?page=${page}&size=${size}${sortQuery}`;
 
   if (search_query) {
     url += `&search_query=${encodeURIComponent(search_query)}`;
   }
 
-  return apiFetch<PaginatedProductListOut>(url, { method: "GET" });
+  return apiFetch<PaginatedProductListOut>(url, { method: "GET", signal });
 };
 
 export const fetchProductBySlug = (slug: string) => {

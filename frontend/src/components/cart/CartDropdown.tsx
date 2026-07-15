@@ -8,10 +8,11 @@ import CartLineItem from "./CartLineItem";
 import { openAuth } from "../../utils/openAuth";
 
 interface CartDropdownProps {
+  isOpen: boolean;
   onClose: () => void;
 }
 
-export default function CartDropdown({ onClose }: CartDropdownProps) {
+export default function CartDropdown({ isOpen, onClose }: CartDropdownProps) {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -31,7 +32,11 @@ export default function CartDropdown({ onClose }: CartDropdownProps) {
     : availableSubtotal;
 
   return (
-    <div className="absolute left-1/2 -translate-x-1/2 top-full mt-5 w-[480px] bg-bg-surface border border-border-base/30 rounded-2xl shadow-2xl z-50 flex flex-col overflow-hidden">
+    <div
+      className={`absolute left-1/2 -translate-x-1/2 top-full mt-5 w-[480px] bg-bg-surface border border-border-base/30 rounded-2xl shadow-2xl z-50 flex flex-col overflow-hidden origin-top ${
+        isOpen ? "animate-pop-down" : "animate-pop-up"
+      }`}
+    >
       <div className="px-5 py-4 border-b border-border-base/10 flex justify-between items-center bg-bg-surface">
         <h2 className="text-base font-bold text-text-main">Your cart</h2>
         {!isLoading && lines.length > 0 && (

@@ -178,13 +178,99 @@ async def test_get_products_search_by_query_happy_path(
     async_client: AsyncClient,
     setup_catalog: dict,
 ):
-    """Ensure text search filters products properly by name or SKU (case-insensitive)."""
-    response = await async_client.get("/catalog/products?search_query=scope")
+    """Ensure text search filters products by full word in name (FTS)."""
+    response = await async_client.get("/catalog/products?search_query=microscope")
 
     assert response.status_code == 200
     data = response.json()
     assert data["total"] == 1
     assert data["items"][0]["slug"] == "microscope"
+
+
+async def test_get_products_search_by_name_fts(
+    async_client: AsyncClient,
+    setup_catalog: dict,
+):
+    """FTS matches product names."""
+    response = await async_client.get("/catalog/products?search_query=acetone")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total"] == 1
+    assert data["items"][0]["slug"] == "acetone"
+
+
+async def test_get_products_search_by_sku_prefix(
+    async_client: AsyncClient,
+    setup_catalog: dict,
+):
+    """SKU prefix fallback matches partial product codes."""
+    response = await async_client.get("/catalog/products?search_query=MIC-PRO")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total"] == 1
+    assert data["items"][0]["slug"] == "microscope"
+
+
+async def test_get_products_search_suggest_size_limit(
+    async_client: AsyncClient,
+    setup_many_products: dict,
+):
+    """Suggest flow returns at most the requested page size."""
+    response = await async_client.get(
+        "/catalog/products?search_query=Product&size=8&page=1"
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data["items"]) == 8
+    assert data["size"] == 8
+
+
+async def test_get_products_sort_price_asc(
+    async_client: AsyncClient,
+    setup_catalog: dict,
+):
+    response = await async_client.get("/catalog/products?sort_by=price_asc")
+
+    assert response.status_code == 200
+    prices = [item["base_price"] for item in response.json()["items"]]
+    assert prices == sorted(prices)
+
+
+async def test_get_products_sort_price_desc(
+    async_client: AsyncClient,
+    setup_catalog: dict,
+):
+    response = await async_client.get("/catalog/products?sort_by=price_desc")
+
+    assert response.status_code == 200
+    prices = [item["base_price"] for item in response.json()["items"]]
+    assert prices == sorted(prices, reverse=True)
+
+
+async def test_get_products_sort_relevance_without_query_falls_back_to_name(
+    async_client: AsyncClient,
+    setup_catalog: dict,
+):
+    response = await async_client.get("/catalog/products?sort_by=relevance")
+
+    assert response.status_code == 200
+    names = [item["name"] for item in response.json()["items"]]
+    assert names == sorted(names)
+
+
+async def test_get_products_search_defaults_to_relevance_order(
+    async_client: AsyncClient,
+    setup_catalog: dict,
+):
+    response = await async_client.get("/catalog/products?search_query=acetone")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total"] == 1
+    assert data["items"][0]["slug"] == "acetone"
 
 
 async def test_get_products_search_no_results_returns_empty(
