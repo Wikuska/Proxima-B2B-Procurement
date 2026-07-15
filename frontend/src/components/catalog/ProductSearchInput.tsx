@@ -60,6 +60,12 @@ export default function ProductSearchInput({
     onSearch(trimmed);
   };
 
+  const handleClose = () => {
+    setValue("");
+    setIsOpen(false);
+    onClose?.();
+  };
+
   const inputClassName =
     size === "lg"
       ? "w-full rounded-lg border border-border-base/30 bg-bg-surface px-4 py-3 pr-12 text-base text-text-main placeholder:text-text-muted focus:outline-none focus:border-border-focus"
@@ -75,7 +81,9 @@ export default function ProductSearchInput({
       <div className="relative">
         <input
           id={inputId}
-          type="search"
+          type="text"
+          role="searchbox"
+          enterKeyHint="search"
           value={value}
           autoFocus={autoFocus}
           placeholder="Search by name or product code…"
@@ -88,7 +96,7 @@ export default function ProductSearchInput({
           onKeyDown={(event) => {
             if (event.key === "Escape") {
               if (onClose) {
-                onClose();
+                handleClose();
               } else {
                 setIsOpen(false);
               }
@@ -102,7 +110,7 @@ export default function ProductSearchInput({
         />
         <button
           type="button"
-          onClick={onClose ?? submitSearch}
+          onClick={onClose ? handleClose : submitSearch}
           aria-label={onClose ? "Close search" : "Search"}
           className={`absolute right-2 top-1/2 -translate-y-1/2 rounded-md text-text-muted hover:text-accent transition-colors ${
             size === "lg" ? "p-2" : size === "nav" ? "p-1" : "p-1.5"

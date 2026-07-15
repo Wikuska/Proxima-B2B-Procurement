@@ -5,6 +5,9 @@ import { useAuth } from "../../hooks/user/useAuth";
 import { usePurchaseMode } from "../../store/purchaseModeStore";
 import ProductImage from "../product/ProductImage";
 
+const SCROLL_AREA_CLASS =
+  "scrollbar-none overflow-y-auto overscroll-contain scroll-smooth max-h-[min(32rem,calc(100dvh-8rem))] px-4 divide-y divide-border-base/10 bg-bg-surface";
+
 interface ProductSearchDropdownProps {
   query: string;
   items: ProductListOut[];
@@ -24,7 +27,7 @@ export default function ProductSearchDropdown({
   const mode = usePurchaseMode();
 
   return (
-    <div className="absolute left-0 right-0 top-full mt-2 z-50 bg-bg-surface border border-border-base/30 rounded-xl shadow-xl overflow-hidden">
+    <div className="absolute left-0 right-0 top-full mt-4 z-50 bg-bg-surface border border-border-base/30 rounded-xl shadow-xl overflow-hidden animate-pop-down origin-top">
       {isLoading ? (
         <div className="flex items-center justify-center gap-2 py-8 text-sm text-text-muted">
           <Loader2 size={16} className="animate-spin" />
@@ -35,8 +38,9 @@ export default function ProductSearchDropdown({
           No products found
         </div>
       ) : (
-        <ul className="max-h-80 overflow-y-auto divide-y divide-border-base/10">
-          {items.map((product) => {
+        <div className="relative">
+          <div className={SCROLL_AREA_CLASS}>
+            {items.map((product) => {
             const showCompanyPrice =
               mode === "COMPANY" &&
               !!user?.company_id &&
@@ -44,35 +48,34 @@ export default function ProductSearchDropdown({
               Number(product.company_discount_percentage) > 0;
 
             return (
-              <li key={product.id}>
-                <Link
-                  to={`/product/${product.slug}`}
-                  onClick={onSelectProduct}
-                  className="flex items-center gap-3 px-4 py-3 hover:bg-bg-base transition-colors"
-                >
-                  <div className="w-12 h-12 shrink-0">
-                    <ProductImage
-                      src={product.main_image_url}
-                      alt={product.name}
-                      compact
-                      className="rounded-md"
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-text-main truncate">
+              <Link
+                key={product.id}
+                to={`/product/${product.slug}`}
+                onClick={onSelectProduct}
+                className="group flex items-center gap-3 py-3 transition-colors hover:bg-bg-base/60"
+              >
+                <ProductImage
+                  src={product.main_image_url}
+                  alt={product.name}
+                  compact
+                  className="w-12 shrink-0"
+                />
+                <div className="flex flex-1 min-w-0 items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-text-main group-hover:text-accent truncate transition-colors">
                       {product.name}
                     </p>
-                    <p className="text-xs text-text-muted font-mono">
+                    <p className="text-xs text-text-muted font-mono mt-0.5">
                       {product.sku}
                     </p>
                   </div>
                   <div className="text-right shrink-0">
                     {showCompanyPrice ? (
-                      <span className="text-sm font-bold text-accent">
+                      <span className="text-sm font-semibold text-accent font-mono">
                         ${Number(product.company_unit_price).toFixed(2)}
                       </span>
                     ) : (
-                      <span className="text-sm font-bold text-text-main">
+                      <span className="text-sm font-semibold text-text-main font-mono">
                         ${Number(product.base_price).toFixed(2)}
                       </span>
                     )}
@@ -82,20 +85,38 @@ export default function ProductSearchDropdown({
                       </span>
                     )}
                   </div>
-                </Link>
-              </li>
+                </div>
+              </Link>
             );
           })}
-        </ul>
+          </div>
+
+          {items.length >= 5 && (
+            <div
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-bg-surface via-bg-surface/80 to-transparent"
+              aria-hidden
+            />
+          )}
+        </div>
       )}
 
-      <button
-        type="button"
-        onClick={onSeeAll}
-        className="w-full px-4 py-3 text-sm font-medium text-accent hover:bg-accent/5 border-t border-border-base/20 transition-colors text-left"
-      >
-        See all results for &ldquo;{query}&rdquo;
-      </button>
+      <div className="px-4 py-2 border-t border-border-base/20 bg-bg-surface">
+        <button
+          type="button"
+          onClick={onSeeAll}
+          className="group relative flex w-full items-center justify-between gap-2 px-3 py-2 rounded-lg bg-accent/5 border border-accent/20 hover:border-accent/50 hover:bg-white hover:shadow-sm transition-all duration-300 overflow-hidden text-left"
+        >
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-accent scale-y-100 origin-top" />
+
+          <span className="min-w-0 flex-1 text-sm font-bold text-text-main group-hover:text-accent transition-colors truncate">
+            See all results for &ldquo;{query}&rdquo;
+          </span>
+
+          <span className="shrink-0 text-accent opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 font-bold text-base">
+            →
+          </span>
+        </button>
+      </div>
     </div>
   );
 }

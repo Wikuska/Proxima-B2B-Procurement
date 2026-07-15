@@ -53,7 +53,7 @@ export default function ProductsPage() {
   }
 
   return (
-    <div className="max-w-[1600px] mx-auto px-4 lg:px-8 py-8">
+    <div className="w-full max-w-[1600px] mx-auto px-4 lg:px-8 py-8">
       <div id="catalog-top" className="scroll-mt-24" aria-hidden="true" />
       <CatalogHeader
         category={currentCategory}
@@ -65,38 +65,38 @@ export default function ProductsPage() {
         onSortChange={setSort}
       />
 
-      <div className="flex flex-col md:flex-row gap-8">
-        {!q && <CatalogSidebar />}
+      <div className="grid grid-cols-1 md:grid-cols-[16rem_minmax(0,1fr)] gap-8 w-full">
+        <CatalogSidebar />
 
-        <div className="flex-1 flex flex-col">
-          {data.items.length === 0 ? (
-            <div className="flex-1 flex items-center justify-center bg-bg-surface border border-border-base/20 rounded-xl p-10">
-              <p className="text-text-muted">
-                {q
-                  ? `No products found for "${q}".`
-                  : "No products found in this category."}
-              </p>
-            </div>
-          ) : (
-            <>
-              <div
-                className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 transition-opacity duration-300 ${
-                  isPlaceholderData
-                    ? "opacity-50 pointer-events-none grayscale-[20%]"
-                    : "opacity-100"
-                }`}
-              >
-                {data.items.map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
+        <div className="min-w-0 w-full">
+          <div
+            className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 transition-opacity duration-300 ${
+              isPlaceholderData
+                ? "opacity-50 pointer-events-none grayscale-[20%]"
+                : "opacity-100"
+            }`}
+          >
+            {data.items.length === 0 ? (
+              <div className="col-span-full min-h-[500px] flex items-center justify-center bg-bg-surface border border-border-base/20 rounded-xl p-10">
+                <p className="text-text-muted">
+                  {q
+                    ? `No products found for "${q}".`
+                    : "No products found in this category."}
+                </p>
               </div>
+            ) : (
+              data.items.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))
+            )}
+          </div>
 
-              <PaginationControls
-                currentPage={page}
-                totalPages={data.pages}
-                onPageChange={handlePageChange}
-              />
-            </>
+          {data.items.length > 0 && (
+            <PaginationControls
+              currentPage={page}
+              totalPages={data.pages}
+              onPageChange={handlePageChange}
+            />
           )}
         </div>
       </div>

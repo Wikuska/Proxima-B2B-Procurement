@@ -27,6 +27,7 @@ export default function NavBar() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
+  const [searchInstanceKey, setSearchInstanceKey] = useState(0);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const cartRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
@@ -35,16 +36,13 @@ export default function NavBar() {
   const location = useLocation();
   const isCatalogActive = location.pathname.startsWith("/catalog");
 
-  const catalogQuery = isCatalogActive
-    ? new URLSearchParams(location.search).get("q")?.trim() ?? ""
-    : "";
-
   const locationKey = `${location.pathname}${location.search}`;
   const [prevLocationKey, setPrevLocationKey] = useState(locationKey);
 
   const closeSearch = () => {
     setIsSearchExpanded(false);
     setIsSearchOpen(false);
+    setSearchInstanceKey((key) => key + 1);
   };
 
   const openSearch = () => {
@@ -192,15 +190,17 @@ export default function NavBar() {
           <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
             <div className="flex items-center justify-end">
               <div
-                className={`overflow-hidden transition-[width] duration-200 ease-out ${
-                  isSearchExpanded ? NAV_SEARCH_WIDTH_CLASS : "w-0"
+                className={`transition-[width] duration-200 ease-out ${
+                  isSearchExpanded
+                    ? `${NAV_SEARCH_WIDTH_CLASS} overflow-visible`
+                    : "w-0 overflow-hidden"
                 }`}
               >
                 <div className={`${NAV_SEARCH_WIDTH_CLASS} pr-1 sm:pr-2`}>
                   {shouldRenderSearch && (
                     <ProductSearchInput
-                      key={`${locationKey}-${isSearchOpen}`}
-                      defaultValue={catalogQuery}
+                      key={`nav-search-${searchInstanceKey}`}
+                      defaultValue=""
                       size="nav"
                       autoFocus={isSearchOpen}
                       showSuggestions
