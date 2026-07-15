@@ -52,3 +52,10 @@ class PaymentMethod(str, enum.Enum):
     BLIK = "BLIK"
     CASH_ON_DELIVERY = "CASH_ON_DELIVERY"
     DEFERRED = "DEFERRED"
+
+
+class ProductSortBy(str, enum.Enum):
+    RELEVANCE = "relevance"
+    NAME_ASC = "name_asc"
+    PRICE_ASC = "price_asc"
+    PRICE_DESC = "price_desc"

@@ -11,10 +11,12 @@ export const useProducts = (payload: FetchProductsPayload) => {
     queryKey: [
       "products",
       payload.category_slug || "all",
+      payload.search_query || "",
+      payload.sort_by || "",
       payload.page,
       payload.size,
     ],
-    queryFn: () => fetchProducts(payload),
+    queryFn: ({ signal }) => fetchProducts({ ...payload, signal }),
     placeholderData: keepPreviousData,
   });
 };

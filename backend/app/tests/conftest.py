@@ -14,6 +14,7 @@ from app.models import Base, Company, User
 from app.models.product import Category, Product, ProductVolumeDiscount
 from app.services.verification_code_store import VerificationCodeStore
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.pool import NullPool
 
@@ -27,6 +28,23 @@ engine = create_async_engine(
 async def setup_db():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        await conn.execute(
+            text(
+                """
+                ALTER TABLE products ADD COLUMN IF NOT EXISTS search_vector tsvector
+                  GENERATED ALWAYS AS (
+                    to_tsvector('simple', coalesce(name, '')) ||
+                    to_tsvector('simple', coalesce(sku, ''))
+                  ) STORED
+                """
+            )
+        )
+        await conn.execute(
+            text(
+                "CREATE INDEX IF NOT EXISTS ix_products_search_vector "
+                "ON products USING GIN (search_vector)"
+            )
+        )
     yield
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)

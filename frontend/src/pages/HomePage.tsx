@@ -1,22 +1,36 @@
+import { useNavigate } from "react-router-dom";
+import ProductSearchInput from "../components/catalog/ProductSearchInput";
+
 export default function HomePage() {
+  const navigate = useNavigate();
+
+  const handleSearch = (term: string) => {
+    navigate(`/catalog?q=${encodeURIComponent(term)}`);
+  };
+
   return (
     <div className="w-full">
       <section className="relative w-full h-[450px] md:h-[550px] overflow-hidden bg-slate-900">
         <img
-          src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&q=80&w=1920"
+          src="https://images.unsplash.com/photo-1602052577122-f73b9710adba?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
           alt="Proxima Lab Equipment"
           className="absolute inset-0 w-full h-full object-cover object-center opacity-60 mix-blend-luminosity"
         />
 
         <div className="absolute inset-0 max-w-7xl mx-auto px-4 flex items-center justify-start">
-          <div className="bg-white/80 backdrop-blur-md p-8 md:p-12 rounded-xl max-w-2xl border border-white/40 shadow-xl mt-10">
+          <div className="bg-white/80 backdrop-blur-md p-8 md:p-12 rounded-xl max-w-2xl border border-white/40 shadow-xl mt-10 w-full">
             <h1 className="text-3xl md:text-4xl font-extrabold text-text-main mb-4 leading-tight">
               Highest Quality Accessories & Equipment for Laboratories
             </h1>
-            <p className="text-base md:text-lg text-text-main/80  font-medium">
+            <p className="text-base md:text-lg text-text-main/80 font-medium mb-6">
               We offer both essential hobbyist tools and advanced, certified
               professional equipment tailored to your needs.
             </p>
+            <ProductSearchInput
+              size="lg"
+              showSuggestions
+              onSearch={handleSearch}
+            />
           </div>
         </div>
       </section>
