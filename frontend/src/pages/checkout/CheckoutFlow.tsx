@@ -24,7 +24,7 @@ import { useAuth } from "../../hooks/user/useAuth";
 import { usePurchaseMode } from "../../store/purchaseModeStore";
 import {
   buildBillingDocumentIn,
-  detailsSchema,
+  createDetailsSchema,
   emptyBillingValues,
   type DetailsFormData,
 } from "../../schemas/checkoutSchema";
@@ -34,8 +34,9 @@ import type { CheckoutContext } from "./checkoutTypes";
 
 /**
  * Route element for `/checkout/*`. Owns wizard state and exposes it to step
- * routes via `useOutletContext`. Purchase mode is snapshotted at mount from
- * the cart — checkout does not react to live navbar/store changes.
+ * routes via `useOutletContext`. Shell chrome comes from MainLayout (slim
+ * NavBar on wizard paths). Purchase mode is snapshotted at mount from the
+ * cart — checkout does not react to live navbar/store changes.
  */
 export default function CheckoutFlow() {
   const { user } = useAuth();
@@ -85,8 +86,10 @@ export default function CheckoutFlow() {
   const [inlineAddress, setInlineAddress] = useState<AddressIn | null>(null);
   const [saveAddress, setSaveAddress] = useState(false);
 
+  const detailsFormSchema = createDetailsSchema(useProfileBilling);
+
   const methods = useForm<DetailsFormData>({
-    resolver: zodResolver(detailsSchema),
+    resolver: zodResolver(detailsFormSchema),
     reValidateMode: "onBlur",
     defaultValues: {
       recipient: {
@@ -153,7 +156,7 @@ export default function CheckoutFlow() {
   const hasShippingAddress = isB2bPurchase
     ? !!addressId
     : !!addressId || !!inlineAddress;
-  const isDetailsValid = detailsSchema.safeParse(watchedValues).success;
+  const isDetailsValid = detailsFormSchema.safeParse(watchedValues).success;
 
   const canProceedToDelivery = isDetailsValid && hasShippingAddress;
 
@@ -237,11 +240,13 @@ export default function CheckoutFlow() {
   };
 
   return (
-    <div className="w-full max-w-5xl mx-auto px-4 py-10">
+    <div className="max-w-[1600px] mx-auto px-4 lg:px-8 py-8">
       <CheckoutStepper />
-      <FormProvider {...methods}>
-        <Outlet context={checkoutCtx} />
-      </FormProvider>
+      <div className="mt-8">
+        <FormProvider {...methods}>
+          <Outlet context={checkoutCtx} />
+        </FormProvider>
+      </div>
     </div>
   );
 }

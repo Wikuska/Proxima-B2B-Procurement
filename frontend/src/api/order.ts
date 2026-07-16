@@ -143,8 +143,8 @@ export const PAYMENT_LABELS: Record<PaymentMethod, string> = {
 };
 
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
-  PENDING_PAYMENT: "Pending payment",
-  PAID: "Paid",
+  PENDING_PAYMENT: "Awaiting payment",
+  PAID: "Paid", // legacy status; new payments go straight to Processing
   PROCESSING: "Processing",
   SHIPPED: "Shipped",
   DELIVERED: "Delivered",

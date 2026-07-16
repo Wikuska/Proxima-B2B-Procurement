@@ -1112,7 +1112,7 @@ async def test_card_order_starts_pending_payment(
 
 
 @pytest.mark.asyncio
-async def test_mock_payment_success_sets_paid(
+async def test_mock_payment_success_sets_processing(
     async_client: AsyncClient,
     db_session: AsyncSession,
     b2c_user,
@@ -1128,7 +1128,7 @@ async def test_mock_payment_success_sets_paid(
         headers=auth_headers(b2c_user),
     )
     assert resp.status_code == 200
-    assert resp.json()["status"] == "PAID"
+    assert resp.json()["status"] == "PROCESSING"
 
 
 @pytest.mark.asyncio
@@ -1228,7 +1228,7 @@ async def test_confirm_bank_transfer_rejects_other_users_order(
 
 
 @pytest.mark.asyncio
-async def test_admin_advance_paid_to_delivered(
+async def test_admin_advance_processing_to_delivered(
     async_client: AsyncClient,
     db_session: AsyncSession,
     b2c_user,
@@ -1251,9 +1251,9 @@ async def test_admin_advance_paid_to_delivered(
         json={"success": True},
         headers=auth_headers(b2c_user),
     )
-    assert mock_resp.json()["status"] == "PAID"
+    assert mock_resp.json()["status"] == "PROCESSING"
 
-    for expected in ("PROCESSING", "SHIPPED", "DELIVERED"):
+    for expected in ("SHIPPED", "DELIVERED"):
         resp = await async_client.post(
             f"/orders/{order_id}/advance-status",
             headers=auth_headers(admin),

@@ -1,11 +1,11 @@
 import { ShoppingBag } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import CartLineItem from "../components/cart/CartLineItem";
+import PurchaseModeSelector from "../components/cart/PurchaseModeSelector";
 import { useCartActions } from "../hooks/cart/useCartActions";
 import { useCartView } from "../hooks/cart/useCartView";
 import { useCartQuote } from "../hooks/pricing/useCartQuote";
 import { useAuth } from "../hooks/user/useAuth";
-import PurchaseModeSelector from "../components/cart/PurchaseModeSelector";
 import { usePurchaseMode } from "../store/purchaseModeStore";
 import {
   canProceedToCheckout,
@@ -94,9 +94,7 @@ export default function CartPage() {
   }
 
   return (
-    // Zastosowanie max-w-[1600px] analogicznie jak w katalogu
     <div className="max-w-[1600px] mx-auto px-4 lg:px-8 py-8">
-      {/* Oddzielająca kreseczka pod nagłówkiem */}
       <div className="pb-6 mb-8 border-b border-border-base/20">
         <h1 className="text-3xl font-bold text-text-main">Shopping Cart</h1>
       </div>
@@ -125,7 +123,6 @@ export default function CartPage() {
       )}
 
       {!isLoading && lines.length > 0 && (
-        // Zwiększony gap-8 dla zachowania proporcji na szerokim ekranie
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-8 items-start">
           {/* ── Left: cart items ── */}
           <div className="bg-bg-surface border border-border-base/20 rounded-2xl overflow-hidden shadow-sm">

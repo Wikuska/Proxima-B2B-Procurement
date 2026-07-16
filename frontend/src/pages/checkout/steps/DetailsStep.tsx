@@ -3,6 +3,7 @@ import { useFormContext } from "react-hook-form";
 import { Link, useNavigate, useOutletContext } from "react-router-dom";
 import type { DocumentType } from "../../../api/order";
 import AddressPicker from "../../../components/checkout/AddressPicker";
+import CheckoutSection from "../../../components/checkout/CheckoutSection";
 import OrderSummarySidebar from "../../../components/checkout/OrderSummarySidebar";
 import FormInput from "../../../components/forms/FormInput";
 import type { DetailsFormData } from "../../../schemas/checkoutSchema";
@@ -45,8 +46,7 @@ export default function DetailsStep() {
   const documentType = watch("billing.documentType");
   const needsBillingAddr =
     !useProfileBilling &&
-    (documentType === "PERSONAL_INVOICE" ||
-      documentType === "COMPANY_INVOICE");
+    (documentType === "PERSONAL_INVOICE" || documentType === "COMPANY_INVOICE");
 
   const billingDocumentTypes: DocumentType[] = isB2bPurchase
     ? ["COMPANY_INVOICE"]
@@ -64,7 +64,7 @@ export default function DetailsStep() {
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8 items-start">
+    <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-8 items-start">
       <div className="space-y-8 min-w-0">
         <div className="flex items-center justify-between gap-4 px-1">
           <p className="text-sm text-text-muted">
@@ -81,18 +81,16 @@ export default function DetailsStep() {
           </Link>
         </div>
 
-        <section className="bg-bg-surface border border-border-base/20 rounded-2xl p-6 shadow-sm">
-          <div className="flex items-start justify-between gap-4 mb-4">
-            <h2 className="text-xl font-bold text-text-main">
-              Shipping address
-            </h2>
-            {triedNext && !hasShippingAddress && (
+        <CheckoutSection
+          title="Shipping address"
+          headerAside={
+            triedNext && !hasShippingAddress ? (
               <p className="max-w-[50%] shrink-0 text-right text-[11px] font-semibold text-red-500 leading-tight">
                 Please select or add a shipping address to continue.
               </p>
-            )}
-          </div>
-
+            ) : undefined
+          }
+        >
           {isB2bPurchase ? (
             <AddressPicker
               variant="company"
@@ -117,15 +115,12 @@ export default function DetailsStep() {
               }}
             />
           )}
-        </section>
+        </CheckoutSection>
 
-        <section className="bg-bg-surface border border-border-base/20 rounded-2xl p-6 shadow-sm">
-          <h2 className="text-xl font-bold text-text-main mb-1">Recipient</h2>
-          <p className="mb-4 text-xs text-text-muted">
-            Who should receive this order? Defaults to your account details but
-            can be edited.
-          </p>
-
+        <CheckoutSection
+          title="Recipient"
+          description="Who should receive this order? Defaults to your account details but can be edited."
+        >
           <div className="flex flex-col gap-1">
             <div className="grid grid-cols-2 gap-3">
               <FormInput
@@ -156,7 +151,7 @@ export default function DetailsStep() {
               error={errors.recipient?.recipient_email?.message}
             />
           </div>
-        </section>
+        </CheckoutSection>
 
         {useProfileBilling ? (
           <CompanyInvoiceReadOnly

@@ -1,5 +1,6 @@
 import { useFormContext } from "react-hook-form";
 import { Navigate, useNavigate, useOutletContext } from "react-router-dom";
+import CheckoutSection from "../../../components/checkout/CheckoutSection";
 import { DELIVERY_LABELS, PAYMENT_LABELS } from "../../../api/order";
 import type { DetailsFormData } from "../../../schemas/checkoutSchema";
 import type { CheckoutContext } from "../checkoutTypes";
@@ -57,10 +58,9 @@ export default function SummaryStep() {
   const shipToAddress = selectedAddress ?? inlineAddress;
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-8 items-start">
       <div className="space-y-6 min-w-0">
-        <section className="bg-bg-surface border border-border-base/20 rounded-2xl p-6 shadow-sm">
-          <h2 className="text-xl font-bold text-text-main mb-4">Items</h2>
+        <CheckoutSection title="Items">
           <div className="divide-y divide-border-base/10">
             {selectedLines.map((l) => {
               const priceLine = quote?.lines.find(
@@ -109,12 +109,13 @@ export default function SummaryStep() {
               </div>
             </div>
           )}
-        </section>
+        </CheckoutSection>
 
-        <section className="bg-bg-surface border border-border-base/20 rounded-2xl p-6 shadow-sm space-y-4">
-          <h2 className="text-xl font-bold text-text-main">
-            Delivery & Payment
-          </h2>
+        <CheckoutSection
+          title="Delivery & Payment"
+          stacked
+          className="space-y-4"
+        >
           <SummaryField label="Purchase type">
             {purchaseType === "B2B" ? "Company (B2B)" : "Private (B2C)"}
           </SummaryField>
@@ -147,13 +148,18 @@ export default function SummaryStep() {
           <SummaryField label="Payment method">
             {PAYMENT_LABELS[paymentMethod]}
           </SummaryField>
-        </section>
+        </CheckoutSection>
 
-        <section className="bg-bg-surface border border-border-base/20 rounded-2xl p-6 shadow-sm space-y-3">
-          <h2 className="text-xl font-bold text-text-main">
-            Order note{" "}
-            <span className="font-normal text-text-muted">(optional)</span>
-          </h2>
+        <CheckoutSection
+          title={
+            <>
+              Order note{" "}
+              <span className="font-normal text-text-muted">(optional)</span>
+            </>
+          }
+          stacked
+          className="space-y-3"
+        >
           <textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
@@ -161,7 +167,7 @@ export default function SummaryStep() {
             rows={3}
             className="w-full px-3 py-2 text-sm border border-border-base rounded-lg focus:outline-none focus:border-primary bg-bg-surface text-text-main resize-none"
           />
-        </section>
+        </CheckoutSection>
       </div>
 
       <aside className="bg-bg-surface border border-border-base/20 rounded-2xl p-7 space-y-4 lg:sticky lg:top-24 shadow-sm">

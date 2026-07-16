@@ -12,14 +12,16 @@ from app.models.user import User
 from sqlalchemy.ext.asyncio import AsyncSession
 
 ALLOWED_TRANSITIONS: dict[OrderStatus, set[OrderStatus]] = {
-    OrderStatus.PENDING_PAYMENT: {OrderStatus.PAID, OrderStatus.PROCESSING},
+    # Successful payment (card/BLIK/transfer) always enters fulfillment.
+    OrderStatus.PENDING_PAYMENT: {OrderStatus.PROCESSING},
+    # Legacy PAID rows can still be advanced into the fulfillment pipeline.
     OrderStatus.PAID: {OrderStatus.PROCESSING},
     OrderStatus.PROCESSING: {OrderStatus.SHIPPED},
     OrderStatus.SHIPPED: {OrderStatus.DELIVERED},
 }
 
 FULFILLMENT_TRANSITIONS: dict[OrderStatus, OrderStatus] = {
-    OrderStatus.PAID: OrderStatus.PROCESSING,
+    OrderStatus.PAID: OrderStatus.PROCESSING,  # legacy
     OrderStatus.PROCESSING: OrderStatus.SHIPPED,
     OrderStatus.SHIPPED: OrderStatus.DELIVERED,
 }
@@ -69,7 +71,7 @@ async def mock_payment_result(
     if not success:
         return order
 
-    return await _transition_order(db, order, OrderStatus.PAID)
+    return await _transition_order(db, order, OrderStatus.PROCESSING)
 
 
 async def confirm_bank_transfer(

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Navigate, useNavigate, useOutletContext } from "react-router-dom";
+import CheckoutSection from "../../../components/checkout/CheckoutSection";
 import OrderSummarySidebar from "../../../components/checkout/OrderSummarySidebar";
 import { DELIVERY_LABELS, PAYMENT_LABELS } from "../../../api/order";
 import type { CheckoutContext } from "../checkoutTypes";
@@ -23,8 +24,6 @@ export default function DeliveryPaymentStep() {
 
   const [triedNext, setTriedNext] = useState(false);
 
-  // Reaching this step at least once means the shipping cost stays visible
-  // in the order summary on step 1 even after the user navigates back.
   useEffect(() => {
     setDeliveryConfirmed(true);
   }, [setDeliveryConfirmed]);
@@ -39,12 +38,9 @@ export default function DeliveryPaymentStep() {
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8 items-start">
+    <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-8 items-start">
       <div className="space-y-8">
-        <section className="bg-bg-surface border border-border-base/20 rounded-2xl p-6 shadow-sm">
-          <h2 className="text-xl font-bold text-text-main mb-4">
-            Delivery method
-          </h2>
+        <CheckoutSection title="Delivery method">
           <div className="space-y-2">
             {checkoutOptions?.delivery_methods.map((opt) => {
               const cost = Number(opt.cost);
@@ -72,12 +68,9 @@ export default function DeliveryPaymentStep() {
               );
             })}
           </div>
-        </section>
+        </CheckoutSection>
 
-        <section className="bg-bg-surface border border-border-base/20 rounded-2xl p-6 shadow-sm">
-          <h2 className="text-xl font-bold text-text-main mb-4">
-            Payment method
-          </h2>
+        <CheckoutSection title="Payment method">
           <div className="space-y-2">
             {checkoutOptions?.payment_methods.map((opt) => {
               const disabled = opt.b2b_only && !isB2bPurchase;
@@ -112,7 +105,7 @@ export default function DeliveryPaymentStep() {
               );
             })}
           </div>
-        </section>
+        </CheckoutSection>
 
         {triedNext && !canProceedToSummary && (
           <p className="text-xs font-semibold text-red-500 -mt-4">

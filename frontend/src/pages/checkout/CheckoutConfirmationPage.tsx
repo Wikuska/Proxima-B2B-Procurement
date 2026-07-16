@@ -11,25 +11,24 @@ function ConfirmationHero({
   status: string;
   paymentMethod: string;
 }) {
-  if (status === "PENDING_PAYMENT" && paymentMethod === "BANK_TRANSFER") {
+  if (status === "PENDING_PAYMENT") {
+    if (paymentMethod === "BANK_TRANSFER") {
+      return (
+        <>
+          <Clock className="mx-auto mb-5 text-yellow-500" size={56} strokeWidth={1.5} />
+          <h1 className="text-2xl font-bold text-text-main mb-2">Awaiting payment</h1>
+          <p className="text-sm text-text-muted mb-6">
+            Your order has been placed. Complete the bank transfer to start processing.
+          </p>
+        </>
+      );
+    }
     return (
       <>
         <Clock className="mx-auto mb-5 text-yellow-500" size={56} strokeWidth={1.5} />
         <h1 className="text-2xl font-bold text-text-main mb-2">Awaiting payment</h1>
         <p className="text-sm text-text-muted mb-6">
-          Your order has been placed. Complete the bank transfer to start processing.
-        </p>
-      </>
-    );
-  }
-
-  if (status === "PAID") {
-    return (
-      <>
-        <CheckCircle className="mx-auto mb-5 text-green-500" size={56} strokeWidth={1.5} />
-        <h1 className="text-2xl font-bold text-text-main mb-2">Payment confirmed</h1>
-        <p className="text-sm text-text-muted mb-6">
-          Your payment was received. We will start preparing your order shortly.
+          Your order has been placed. Complete payment to start processing.
         </p>
       </>
     );

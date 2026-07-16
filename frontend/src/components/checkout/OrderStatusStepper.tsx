@@ -1,8 +1,9 @@
 import { ORDER_STATUS_LABELS, type OrderStatus } from "../../api/order";
 
+/** Happy-path fulfillment steps. Unpaid orders sit on Awaiting payment; after any
+ * successful payment (or COD/deferred) they move straight to Processing. */
 const LIFECYCLE_STEPS: OrderStatus[] = [
   "PENDING_PAYMENT",
-  "PAID",
   "PROCESSING",
   "SHIPPED",
   "DELIVERED",
@@ -12,8 +13,14 @@ interface OrderStatusStepperProps {
   status: OrderStatus;
 }
 
+/** Map statuses onto the displayed lifecycle (legacy PAID ≈ past Payment). */
+function lifecycleIndex(status: OrderStatus): number {
+  if (status === "PAID") return LIFECYCLE_STEPS.indexOf("PROCESSING");
+  return LIFECYCLE_STEPS.indexOf(status);
+}
+
 export default function OrderStatusStepper({ status }: OrderStatusStepperProps) {
-  const currentIndex = LIFECYCLE_STEPS.indexOf(status);
+  const currentIndex = lifecycleIndex(status);
   const isTerminal = status === "CANCELLED" || status === "RETURNED";
 
   if (isTerminal) {

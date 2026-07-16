@@ -1,4 +1,5 @@
 import { useFormContext } from "react-hook-form";
+import CheckoutSection from "../../components/checkout/CheckoutSection";
 import FormInput from "../../components/forms/FormInput";
 import type { DocumentType } from "../../api/order";
 import type { DetailsFormData } from "../../schemas/checkoutSchema";
@@ -17,8 +18,7 @@ export function CompanyInvoiceReadOnly({
   billingAddress: AddressOut | null;
 }) {
   return (
-    <section className="bg-bg-surface border border-border-base/20 rounded-2xl p-6 shadow-sm space-y-4">
-      <h2 className="text-xl font-bold text-text-main">Billing document</h2>
+    <CheckoutSection title="Billing document" stacked className="space-y-4">
       <div className="p-4 bg-bg-base border border-primary/20 rounded-xl space-y-1">
         <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-2">
           Company Invoice
@@ -40,7 +40,7 @@ export function CompanyInvoiceReadOnly({
           </p>
         )}
       </div>
-    </section>
+    </CheckoutSection>
   );
 }
 
@@ -83,9 +83,7 @@ export function PrivateBillingForm({
     | undefined;
 
   return (
-    <section className="bg-bg-surface border border-border-base/20 rounded-2xl p-6 shadow-sm space-y-5">
-      <h2 className="text-xl font-bold text-text-main">Billing document</h2>
-
+    <CheckoutSection title="Billing document" stacked className="space-y-5">
       {showDocumentTypeRadios ? (
         <div className="space-y-2">
           {documentTypeOptions
@@ -115,9 +113,7 @@ export function PrivateBillingForm({
         </p>
       )}
 
-      {/* Wspólny kontener na wszystkie inputy wymuszający równe odstępy */}
       <div className="flex flex-col gap-1">
-        {/* PERSONAL_INVOICE fields */}
         {documentType === "PERSONAL_INVOICE" && (
           <div className="grid grid-cols-2 gap-3">
             <FormInput
@@ -139,7 +135,6 @@ export function PrivateBillingForm({
           </div>
         )}
 
-        {/* COMPANY_INVOICE fields */}
         {documentType === "COMPANY_INVOICE" && (
           <>
             <FormInput
@@ -161,7 +156,6 @@ export function PrivateBillingForm({
           </>
         )}
 
-        {/* Billing address (shared for invoices) */}
         {needsBillingAddr && (
           <>
             <FormInput
@@ -201,6 +195,6 @@ export function PrivateBillingForm({
           </>
         )}
       </div>
-    </section>
+    </CheckoutSection>
   );
 }
