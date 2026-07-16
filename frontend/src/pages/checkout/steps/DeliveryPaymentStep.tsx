@@ -14,7 +14,7 @@ export default function DeliveryPaymentStep() {
     setDeliveryMethod,
     paymentMethod,
     setPaymentMethod,
-    isCompanyMode,
+    isB2bPurchase,
     selectedLines,
     quote,
     shippingCost,
@@ -80,7 +80,7 @@ export default function DeliveryPaymentStep() {
           </h2>
           <div className="space-y-2">
             {checkoutOptions?.payment_methods.map((opt) => {
-              const disabled = opt.b2b_only && !isCompanyMode;
+              const disabled = opt.b2b_only && !isB2bPurchase;
               return (
                 <label
                   key={opt.payment_method}

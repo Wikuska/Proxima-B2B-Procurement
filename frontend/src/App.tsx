@@ -3,6 +3,7 @@ import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import AuthModal from "./components/auth/AuthModal";
 import ProtectedRoute from "./components/common/ProtectedRoute";
 import MainLayout from "./layouts/MainLayout";
+import CheckoutLayout from "./layouts/CheckoutLayout";
 import {
   CartPage,
   CheckoutConfirmationPage,
@@ -55,21 +56,6 @@ export default function App() {
           <Route path="/cart" element={<CartPage />} />
           <Route path="/contact" element={<ContactPage />} />
 
-          {/* Checkout */}
-          <Route
-            path="/checkout"
-            element={
-              <ProtectedRoute>
-                <CheckoutFlow />
-              </ProtectedRoute>
-            }
-          >
-            <Route index element={<Navigate to="details" replace />} />
-            <Route path="details" element={<DetailsStep />} />
-            <Route path="delivery" element={<DeliveryPaymentStep />} />
-            <Route path="summary" element={<SummaryStep />} />
-            <Route path="*" element={<Navigate to="details" replace />} />
-          </Route>
           <Route
             path="/checkout/confirmation/:orderId"
             element={
@@ -111,6 +97,23 @@ export default function App() {
           </Route>
 
           <Route path="*" element={<NotFoundPage />} />
+        </Route>
+
+        {/* Checkout wizard — minimal header, no site NavBar */}
+        <Route
+          element={
+            <ProtectedRoute>
+              <CheckoutLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route path="/checkout" element={<CheckoutFlow />}>
+            <Route index element={<Navigate to="details" replace />} />
+            <Route path="details" element={<DetailsStep />} />
+            <Route path="delivery" element={<DeliveryPaymentStep />} />
+            <Route path="summary" element={<SummaryStep />} />
+            <Route path="*" element={<Navigate to="details" replace />} />
+          </Route>
         </Route>
 
         {/* Company dashboard — standalone app shell, no site NavBar/footer */}

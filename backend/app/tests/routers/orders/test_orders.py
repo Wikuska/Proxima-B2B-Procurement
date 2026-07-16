@@ -314,7 +314,7 @@ async def test_company_mode_order_forces_company_invoice(
     payload = {
         "product_ids": [str(product_b2c.id)],
         "purchase_type": "B2B",
-        "document": {"document_type": "RECEIPT"},  # ignored — forced to COMPANY_INVOICE
+        "document": {"document_type": "COMPANY_INVOICE"},
         "address_id": str(company_shipping_address.id),
         **_SHIPPING_DEFAULTS,
     }
@@ -330,6 +330,76 @@ async def test_company_mode_order_forces_company_invoice(
     assert doc["billing_street"] == "HQ Ave 10"
     # Company 10% discount applied (270.00) + shipping (15.00)
     assert Decimal(data["total_amount"]) == Decimal("285.00")
+
+
+@pytest.mark.asyncio
+async def test_b2b_manual_company_invoice_uses_form_data(
+    async_client: AsyncClient,
+    db_session: AsyncSession,
+    company_and_buyer,
+    product_b2c,
+    company_shipping_address,
+    company_billing_address,
+    auth_headers,
+):
+    company, buyer, _ = company_and_buyer
+    await _add_to_cart(db_session, buyer.id, product_b2c.id, 3)
+
+    payload = {
+        "product_ids": [str(product_b2c.id)],
+        "purchase_type": "B2B",
+        "document": {
+            "document_type": "COMPANY_INVOICE",
+            "company_name": "Manual Corp",
+            "company_nip": "5555555555",
+            **_INLINE_BILLING_ADDR,
+        },
+        "address_id": str(company_shipping_address.id),
+        **_SHIPPING_DEFAULTS,
+    }
+    resp = await async_client.post("/orders", json=payload, headers=auth_headers(buyer))
+
+    assert resp.status_code == 201
+    data = resp.json()
+    assert data["purchase_type"] == "B2B"
+    doc = data["billing_document"]
+    assert doc["document_type"] == "COMPANY_INVOICE"
+    assert doc["company_name"] == "Manual Corp"
+    assert doc["company_nip"] == "5555555555"
+    assert doc["billing_street"] == "Billing Rd 3"
+    assert doc["company_name"] != company.name
+    assert doc["company_nip"] != company.nip
+    # Company 10% discount still applied (270.00) + shipping (15.00)
+    assert Decimal(data["total_amount"]) == Decimal("285.00")
+
+
+@pytest.mark.asyncio
+async def test_b2b_manual_company_invoice_missing_fields_returns_400(
+    async_client: AsyncClient,
+    db_session: AsyncSession,
+    company_and_buyer,
+    product_b2c,
+    company_shipping_address,
+    company_billing_address,
+    auth_headers,
+):
+    _, buyer, _ = company_and_buyer
+    await _add_to_cart(db_session, buyer.id, product_b2c.id, 1)
+
+    payload = {
+        "product_ids": [str(product_b2c.id)],
+        "purchase_type": "B2B",
+        "document": {
+            "document_type": "COMPANY_INVOICE",
+            "company_name": "Manual Corp",
+            "company_nip": "5555555555",
+            # missing billing address
+        },
+        "address_id": str(company_shipping_address.id),
+        **_SHIPPING_DEFAULTS,
+    }
+    resp = await async_client.post("/orders", json=payload, headers=auth_headers(buyer))
+    assert resp.status_code == 400
 
 
 # ---------------------------------------------------------------------------

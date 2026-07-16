@@ -44,7 +44,11 @@ export function CompanyInvoiceReadOnly({
   );
 }
 
-export function PrivateBillingForm() {
+export function PrivateBillingForm({
+  allowedDocumentTypes,
+}: {
+  allowedDocumentTypes: DocumentType[];
+}) {
   const {
     register,
     watch,
@@ -54,6 +58,14 @@ export function PrivateBillingForm() {
   const documentType = watch("billing.documentType");
   const needsBillingAddr =
     documentType === "PERSONAL_INVOICE" || documentType === "COMPANY_INVOICE";
+  const showDocumentTypeRadios = allowedDocumentTypes.length > 1;
+
+  const documentTypeOptions: [DocumentType, string][] = [
+    ["RECEIPT", "Receipt — no invoice"],
+    ["PERSONAL_INVOICE", "Personal invoice"],
+    ["COMPANY_INVOICE", "Company invoice (manual)"],
+  ];
+
   const billingErrors = errors.billing as
     | Partial<
         Record<
@@ -74,26 +86,34 @@ export function PrivateBillingForm() {
     <section className="bg-bg-surface border border-border-base/20 rounded-2xl p-6 shadow-sm space-y-5">
       <h2 className="text-xl font-bold text-text-main">Billing document</h2>
 
-      {/* Document type radio */}
-      <div className="space-y-2">
-        {(
-          [
-            ["RECEIPT", "Receipt — no invoice"],
-            ["PERSONAL_INVOICE", "Personal invoice"],
-            ["COMPANY_INVOICE", "Company invoice (manual)"],
-          ] as [DocumentType, string][]
-        ).map(([val, label]) => (
-          <label key={val} className="flex items-center gap-3 cursor-pointer">
-            <input
-              type="radio"
-              value={val}
-              {...register("billing.documentType")}
-              className="accent-primary"
-            />
-            <span className="text-sm text-text-main">{label}</span>
-          </label>
-        ))}
-      </div>
+      {showDocumentTypeRadios ? (
+        <div className="space-y-2">
+          {documentTypeOptions
+            .filter(([val]) => allowedDocumentTypes.includes(val))
+            .map(([val, label]) => (
+              <label key={val} className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="radio"
+                  value={val}
+                  {...register("billing.documentType")}
+                  className="accent-primary"
+                />
+                <span className="text-sm text-text-main">{label}</span>
+              </label>
+            ))}
+        </div>
+      ) : (
+        <p className="text-xs font-semibold text-primary uppercase tracking-wide">
+          Company invoice
+        </p>
+      )}
+
+      {documentType === "COMPANY_INVOICE" && showDocumentTypeRadios && (
+        <p className="text-xs text-text-muted -mt-2">
+          Enter company details manually. Company pricing and B2B-only products
+          do not apply in private purchase mode.
+        </p>
+      )}
 
       {/* Wspólny kontener na wszystkie inputy wymuszający równe odstępy */}
       <div className="flex flex-col gap-1">

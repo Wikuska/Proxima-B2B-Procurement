@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useFormContext } from "react-hook-form";
-import { useNavigate, useOutletContext } from "react-router-dom";
+import { Link, useNavigate, useOutletContext } from "react-router-dom";
+import type { DocumentType } from "../../../api/order";
 import AddressPicker from "../../../components/checkout/AddressPicker";
 import OrderSummarySidebar from "../../../components/checkout/OrderSummarySidebar";
 import FormInput from "../../../components/forms/FormInput";
@@ -14,13 +15,8 @@ import type { CheckoutContext } from "../checkoutTypes";
 export default function DetailsStep() {
   const navigate = useNavigate();
   const {
-    hasB2bSelected,
-    hasCompany,
-    b2bBlockedNoCompany,
-    effectivePurchaseType,
-    isCompanyMode,
-    hasB2B,
-    changePurchaseType,
+    isB2bPurchase,
+    useProfileBilling,
     companyAddresses,
     personalAddresses,
     addressId,
@@ -48,8 +44,13 @@ export default function DetailsStep() {
 
   const documentType = watch("billing.documentType");
   const needsBillingAddr =
-    !isCompanyMode &&
-    (documentType === "PERSONAL_INVOICE" || documentType === "COMPANY_INVOICE");
+    !useProfileBilling &&
+    (documentType === "PERSONAL_INVOICE" ||
+      documentType === "COMPANY_INVOICE");
+
+  const billingDocumentTypes: DocumentType[] = isB2bPurchase
+    ? ["COMPANY_INVOICE"]
+    : ["RECEIPT", "PERSONAL_INVOICE", "COMPANY_INVOICE"];
 
   function toggleCopyToBilling(checked: boolean) {
     setCopyToBilling(checked);
@@ -63,78 +64,22 @@ export default function DetailsStep() {
   }
 
   return (
-    <div className="w-full grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8 items-start">
-      <div className="space-y-8">
-        {/* B2B-only blocker — no company account */}
-        {b2bBlockedNoCompany && (
-          <div className="p-4 bg-red-50 border border-red-200 rounded-2xl text-sm text-red-700 space-y-2">
-            <p className="font-semibold">Company account required</p>
-            <p>
-              Your cart contains products available to company accounts only.
-              Remove them from the cart or{" "}
-              <a
-                href="/profile/company-affiliation"
-                className="underline font-medium"
-              >
-                join a company
-              </a>{" "}
-              to continue.
-            </p>
-          </div>
-        )}
-
-        <section className="bg-bg-surface border border-border-base/20 rounded-2xl p-6 shadow-sm">
-          <h2 className="text-xl font-bold text-text-main mb-4">
-            Purchase type
-          </h2>
-
-          {/* Forced B2B — cart has b2b-only + user has company */}
-          {hasB2bSelected && hasCompany ? (
-            <div className="flex items-center gap-3 p-3 bg-primary/5 border border-primary/20 rounded-xl">
-              <span className="text-sm font-semibold text-primary">
-                Company (B2B)
-              </span>
-              <span className="text-xs text-text-muted">
-                your cart contains company-only products
-              </span>
-            </div>
-          ) : (
-            <>
-              <div className="flex gap-6">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="purchase-type"
-                    value="B2C"
-                    checked={effectivePurchaseType === "B2C"}
-                    onChange={() => changePurchaseType("B2C")}
-                    className="accent-primary"
-                  />
-                  <span className="text-sm text-text-main">Private (B2C)</span>
-                </label>
-                <label
-                  className={`flex items-center gap-2 ${hasB2B ? "cursor-pointer" : "opacity-40 cursor-not-allowed"}`}
-                >
-                  <input
-                    type="radio"
-                    name="purchase-type"
-                    value="B2B"
-                    checked={effectivePurchaseType === "B2B"}
-                    onChange={() => changePurchaseType("B2B")}
-                    disabled={!hasB2B}
-                    className="accent-primary"
-                  />
-                  <span className="text-sm text-text-main">Company (B2B)</span>
-                </label>
-              </div>
-              {!hasB2B && (
-                <p className="text-xs text-text-muted mt-2">
-                  Company mode requires a company account.
-                </p>
-              )}
-            </>
-          )}
-        </section>
+    <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8 items-start">
+      <div className="space-y-8 min-w-0">
+        <div className="flex items-center justify-between gap-4 px-1">
+          <p className="text-sm text-text-muted">
+            Purchasing as{" "}
+            <span className="font-semibold text-text-main">
+              {isB2bPurchase ? "Company" : "Private"}
+            </span>
+          </p>
+          <Link
+            to="/cart"
+            className="text-sm text-accent hover:underline shrink-0"
+          >
+            Change in cart
+          </Link>
+        </div>
 
         <section className="bg-bg-surface border border-border-base/20 rounded-2xl p-6 shadow-sm">
           <div className="flex items-start justify-between gap-4 mb-4">
@@ -147,7 +92,8 @@ export default function DetailsStep() {
               </p>
             )}
           </div>
-          {isCompanyMode ? (
+
+          {isB2bPurchase ? (
             <AddressPicker
               variant="company"
               addresses={companyAddresses}
@@ -180,7 +126,6 @@ export default function DetailsStep() {
             can be edited.
           </p>
 
-          {/* Wrapper for consistent spacing between form rows */}
           <div className="flex flex-col gap-1">
             <div className="grid grid-cols-2 gap-3">
               <FormInput
@@ -213,13 +158,13 @@ export default function DetailsStep() {
           </div>
         </section>
 
-        {isCompanyMode ? (
+        {useProfileBilling ? (
           <CompanyInvoiceReadOnly
             billingAddress={companyBillingAddress ?? null}
           />
         ) : (
           <>
-            <PrivateBillingForm />
+            <PrivateBillingForm allowedDocumentTypes={billingDocumentTypes} />
             {needsBillingAddr && hasShippingAddress && (
               <label className="flex items-center gap-3 cursor-pointer -mt-4 px-1">
                 <input

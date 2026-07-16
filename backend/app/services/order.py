@@ -134,14 +134,26 @@ async def get_order(db: AsyncSession, user: User, order_id: uuid.UUID) -> Order:
 # ---------------------------------------------------------------------------
 
 
+def _uses_profile_billing(payload: OrderCreate) -> bool:
+    """Snapshot from company profile only when B2B + empty COMPANY_INVOICE document."""
+    if payload.purchase_type != PurchaseType.B2B:
+        return False
+    doc = payload.document
+    return (
+        doc.document_type == DocumentType.COMPANY_INVOICE
+        and not doc.company_name
+        and not doc.company_nip
+    )
+
+
 async def _build_billing_document(
     db: AsyncSession, user: User, payload: OrderCreate, mode: str
 ) -> BillingDocument:
     """
-    COMPANY mode → force COMPANY_INVOICE, snapshot from DB (company + billing address).
-    PRIVATE mode → validate required fields per document_type, use input data.
+    Profile billing → force COMPANY_INVOICE, snapshot from DB (company + billing address).
+    Manual billing → validate required fields per document_type, use input data.
     """
-    if mode == "COMPANY":
+    if _uses_profile_billing(payload):
         from app.crud import company as company_crud
 
         company = await company_crud.get_company_by_id(db, user.company_id)

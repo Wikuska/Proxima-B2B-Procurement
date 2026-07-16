@@ -68,6 +68,11 @@ volume-based discounts, email double opt-in, and company verification via NIP.
   price) across the whole app (catalog, product page, cart). Only meaningful for users with a
   `company_id`; the backend ignores mode when no company exists. React Query cannot satisfy
   this because the preference is local and must outlive component mounts.
+- **Purchase mode → order type**: `PurchaseMode` (`COMPANY` / `PRIVATE`) maps to
+  `purchase_type` (`B2B` / `B2C`) when placing an order: `COMPANY` + `company_id` → B2B,
+  otherwise B2C. Users choose mode on the cart page (or navbar toggle); checkout
+  snapshots that mode at entry and does not offer a separate purchase-type selector.
+  `purchase_type` on `Order` remains the immutable backend snapshot.
 ## Workflow
 - Build features as **vertical slices**, one section at a time, in this order: **API →
   tests → frontend**. Finish and verify a slice end-to-end before starting the next section.

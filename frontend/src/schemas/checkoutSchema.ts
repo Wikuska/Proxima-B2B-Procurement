@@ -74,9 +74,9 @@ export const emptyBillingValues = {
 
 export function buildBillingDocumentIn(
   billing: DetailsFormData["billing"],
-  isCompanyMode: boolean,
+  useProfileBilling: boolean,
 ): BillingDocumentIn {
-  if (isCompanyMode) return { document_type: "COMPANY_INVOICE" };
+  if (useProfileBilling) return { document_type: "COMPANY_INVOICE" };
   if (billing.documentType === "RECEIPT") return { document_type: "RECEIPT" };
 
   const base = {

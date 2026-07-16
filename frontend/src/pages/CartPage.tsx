@@ -5,10 +5,17 @@ import { useCartActions } from "../hooks/cart/useCartActions";
 import { useCartView } from "../hooks/cart/useCartView";
 import { useCartQuote } from "../hooks/pricing/useCartQuote";
 import { useAuth } from "../hooks/user/useAuth";
+import PurchaseModeSelector from "../components/cart/PurchaseModeSelector";
+import { usePurchaseMode } from "../store/purchaseModeStore";
+import {
+  canProceedToCheckout,
+  CHECKOUT_GATE_MESSAGE,
+} from "../utils/canProceedToCheckout";
 import { openAuth } from "../utils/openAuth";
 
 export default function CartPage() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  const purchaseMode = usePurchaseMode();
   const navigate = useNavigate();
   const location = useLocation();
   const { lines, quoteItems, isLoading, isError } = useCartView();
@@ -62,6 +69,29 @@ export default function CartPage() {
   }, 0);
 
   const hasQuote = !!quote && selectedCount > 0;
+
+  const checkoutGate = canProceedToCheckout(
+    selectedLines,
+    purchaseMode,
+    user?.company_id,
+  );
+  const checkoutBlockedMessage = !checkoutGate.ok
+    ? CHECKOUT_GATE_MESSAGE[checkoutGate.reason]
+    : null;
+
+  function handleProceedToCheckout() {
+    if (!isAuthenticated) {
+      openAuth(navigate, location, { from: "/checkout" });
+      return;
+    }
+    const gate = canProceedToCheckout(
+      selectedLines,
+      purchaseMode,
+      user?.company_id,
+    );
+    if (!gate.ok) return;
+    navigate("/checkout");
+  }
 
   return (
     // Zastosowanie max-w-[1600px] analogicznie jak w katalogu
@@ -118,6 +148,12 @@ export default function CartPage() {
           {/* ── Right: summary panel ── */}
           <div className="bg-bg-surface border border-border-base/20 rounded-2xl p-7 space-y-5 lg:sticky lg:top-24 shadow-sm">
             <h2 className="text-lg font-bold text-text-main">Summary</h2>
+
+            {user?.company_id && (
+              <div className="pb-4 border-b border-border-base/10">
+                <PurchaseModeSelector variant="card" />
+              </div>
+            )}
 
             <div className="space-y-3 text-sm">
               <div className="flex justify-between">
@@ -183,21 +219,15 @@ export default function CartPage() {
 
             <div className="pt-2">
               <button
-                disabled={selectedCount === 0}
-                onClick={() => {
-                  if (!isAuthenticated) {
-                    openAuth(navigate, location, { from: "/checkout" });
-                  } else {
-                    navigate("/checkout");
-                  }
-                }}
+                disabled={!checkoutGate.ok}
+                onClick={handleProceedToCheckout}
                 className="w-full py-3.5 bg-primary text-white rounded-lg font-semibold text-base transition-opacity shadow-sm hover:bg-accent disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Proceed to Checkout
               </button>
-              {selectedCount === 0 && (
+              {checkoutBlockedMessage && (
                 <p className="text-xs text-text-muted text-center mt-3">
-                  Select at least one available item
+                  {checkoutBlockedMessage}
                 </p>
               )}
             </div>

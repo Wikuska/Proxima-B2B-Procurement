@@ -35,6 +35,7 @@ export default function NavBar() {
   const navigate = useNavigate();
   const location = useLocation();
   const isCatalogActive = location.pathname.startsWith("/catalog");
+  const hidePurchaseModeToggle = location.pathname === "/cart";
 
   const locationKey = `${location.pathname}${location.search}`;
   const [prevLocationKey, setPrevLocationKey] = useState(locationKey);
@@ -247,7 +248,7 @@ export default function NavBar() {
               )}
             </div>
 
-            <PurchaseModeToggle />
+            {!hidePurchaseModeToggle && <PurchaseModeToggle />}
 
             <NavRegionMenu isDisabled />
 

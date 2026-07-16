@@ -31,7 +31,8 @@ export default function SummaryStep() {
     grandTotal,
     shippingCost,
     orderTotal,
-    isCompanyMode,
+    useProfileBilling,
+    purchaseType,
     selectedAddress,
     inlineAddress,
     deliveryMethod,
@@ -114,14 +115,17 @@ export default function SummaryStep() {
           <h2 className="text-xl font-bold text-text-main">
             Delivery & Payment
           </h2>
+          <SummaryField label="Purchase type">
+            {purchaseType === "B2B" ? "Company (B2B)" : "Private (B2C)"}
+          </SummaryField>
           <SummaryField label="Document">
-            {isCompanyMode
-              ? "Company Invoice (B2B)"
+            {useProfileBilling
+              ? "Company Invoice (from company profile)"
               : billing.documentType === "RECEIPT"
                 ? "Receipt"
-                : billing.documentType === "PERSONAL_INVOICE"
-                  ? "Personal Invoice"
-                  : "Company Invoice (manual)"}
+                : billing.documentType === "COMPANY_INVOICE"
+                  ? "Company Invoice (manual)"
+                  : "Personal Invoice"}
           </SummaryField>
 
           {shipToAddress && (
