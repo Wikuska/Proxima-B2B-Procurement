@@ -20,7 +20,7 @@ export default function CheckoutStepper() {
   const progress = (trackWidth * (currentStep - 1)) / (n - 1);
 
   return (
-    <div className="relative w-full max-w-md mx-auto">
+    <div className="relative w-full max-w-md mx-auto mb-6">
       <div
         className="absolute top-3.5 h-px bg-border-base/40"
         style={{ left: `${edgeInset}%`, right: `${edgeInset}%` }}

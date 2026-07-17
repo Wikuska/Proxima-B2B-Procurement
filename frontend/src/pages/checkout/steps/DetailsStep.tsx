@@ -5,6 +5,7 @@ import type { DocumentType } from "../../../api/order";
 import AddressPicker from "../../../components/checkout/AddressPicker";
 import CheckoutSection from "../../../components/checkout/CheckoutSection";
 import OrderSummarySidebar from "../../../components/checkout/OrderSummarySidebar";
+import { TwoColumn } from "../../../layouts/CartCheckoutLayout";
 import FormInput from "../../../components/forms/FormInput";
 import type { DetailsFormData } from "../../../schemas/checkoutSchema";
 import {
@@ -64,126 +65,126 @@ export default function DetailsStep() {
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-8 items-start">
-      <div className="space-y-8 min-w-0">
-        <div className="flex items-center justify-between gap-4 px-1">
-          <p className="text-sm text-text-muted">
-            Purchasing as{" "}
-            <span className="font-semibold text-text-main">
-              {isB2bPurchase ? "Company" : "Private"}
-            </span>
-          </p>
-          <Link
-            to="/cart"
-            className="text-sm text-accent hover:underline shrink-0"
-          >
-            Change in cart
-          </Link>
-        </div>
-
-        <CheckoutSection
-          title="Shipping address"
-          headerAside={
-            triedNext && !hasShippingAddress ? (
-              <p className="max-w-[50%] shrink-0 text-right text-[11px] font-semibold text-red-500 leading-tight">
-                Please select or add a shipping address to continue.
-              </p>
-            ) : undefined
-          }
+    <TwoColumn
+      sidebar={
+        <OrderSummarySidebar
+          lines={selectedLines}
+          quote={quote}
+          shippingCost={deliveryConfirmed ? shippingCost : null}
+          nextLabel="Proceed to Delivery & Payment"
+          onNext={handleContinue}
+        />
+      }
+    >
+      <div className="flex items-center justify-between gap-4 px-1">
+        <p className="text-sm text-text-muted">
+          Purchasing as{" "}
+          <span className="font-semibold text-text-main">
+            {isB2bPurchase ? "Company" : "Private"}
+          </span>
+        </p>
+        <Link
+          to="/cart"
+          className="text-sm text-accent hover:underline shrink-0"
         >
-          {isB2bPurchase ? (
-            <AddressPicker
-              variant="company"
-              addresses={companyAddresses}
-              selectedId={addressId}
-              onSelectSaved={setAddressId}
-              onSelectInline={() => {}}
-            />
-          ) : (
-            <AddressPicker
-              variant="personal"
-              addresses={personalAddresses}
-              selectedId={addressId}
-              onSelectSaved={(id) => {
-                setAddressId(id || null);
-                setInlineAddress(null);
-              }}
-              onSelectInline={(data, save) => {
-                setAddressId(null);
-                setInlineAddress(data);
-                setSaveAddress(save);
-              }}
-            />
-          )}
-        </CheckoutSection>
-
-        <CheckoutSection
-          title="Recipient"
-          description="Who should receive this order? Defaults to your account details but can be edited."
-        >
-          <div className="flex flex-col gap-1">
-            <div className="grid grid-cols-2 gap-3">
-              <FormInput
-                {...register("recipient.recipient_name")}
-                id="recipientName"
-                label="Full name"
-                placeholder="Full name"
-                hideLabel
-                error={errors.recipient?.recipient_name?.message}
-              />
-              <FormInput
-                {...register("recipient.recipient_phone")}
-                id="recipientPhone"
-                label="Phone number"
-                placeholder="Phone number"
-                hideLabel
-                error={errors.recipient?.recipient_phone?.message}
-              />
-            </div>
-
-            <FormInput
-              {...register("recipient.recipient_email")}
-              id="recipientEmail"
-              label="Email (optional)"
-              type="email"
-              placeholder="Email (optional)"
-              hideLabel
-              error={errors.recipient?.recipient_email?.message}
-            />
-          </div>
-        </CheckoutSection>
-
-        {useProfileBilling ? (
-          <CompanyInvoiceReadOnly
-            billingAddress={companyBillingAddress ?? null}
-          />
-        ) : (
-          <>
-            <PrivateBillingForm allowedDocumentTypes={billingDocumentTypes} />
-            {needsBillingAddr && hasShippingAddress && (
-              <label className="flex items-center gap-3 cursor-pointer -mt-4 px-1">
-                <input
-                  type="checkbox"
-                  checked={copyToBilling}
-                  onChange={(e) => toggleCopyToBilling(e.target.checked)}
-                  className="accent-primary"
-                />
-                <span className="text-sm text-text-main">
-                  Use recipient data for the invoice
-                </span>
-              </label>
-            )}
-          </>
-        )}
+          Change in cart
+        </Link>
       </div>
 
-      <OrderSummarySidebar
-        lines={selectedLines}
-        quote={quote}
-        shippingCost={deliveryConfirmed ? shippingCost : null}
-        nextLabel="Proceed to Delivery & Payment"
-        onNext={handleContinue}
-      />
-    </div>
+      <CheckoutSection
+        title="Shipping address"
+        headerAside={
+          triedNext && !hasShippingAddress ? (
+            <p className="max-w-[50%] shrink-0 text-right text-[11px] font-semibold text-red-500 leading-tight">
+              Please select or add a shipping address to continue.
+            </p>
+          ) : undefined
+        }
+      >
+        {isB2bPurchase ? (
+          <AddressPicker
+            variant="company"
+            addresses={companyAddresses}
+            selectedId={addressId}
+            onSelectSaved={setAddressId}
+            onSelectInline={() => {}}
+          />
+        ) : (
+          <AddressPicker
+            variant="personal"
+            addresses={personalAddresses}
+            selectedId={addressId}
+            onSelectSaved={(id) => {
+              setAddressId(id || null);
+              setInlineAddress(null);
+            }}
+            onSelectInline={(data, save) => {
+              setAddressId(null);
+              setInlineAddress(data);
+              setSaveAddress(save);
+            }}
+          />
+        )}
+      </CheckoutSection>
+
+      <CheckoutSection
+        title="Recipient"
+        description="Who should receive this order? Defaults to your account details but can be edited."
+      >
+        <div className="flex flex-col gap-1">
+          <div className="grid grid-cols-2 gap-3">
+            <FormInput
+              {...register("recipient.recipient_name")}
+              id="recipientName"
+              label="Full name"
+              placeholder="Full name"
+              hideLabel
+              error={errors.recipient?.recipient_name?.message}
+            />
+            <FormInput
+              {...register("recipient.recipient_phone")}
+              id="recipientPhone"
+              label="Phone number"
+              placeholder="Phone number"
+              hideLabel
+              error={errors.recipient?.recipient_phone?.message}
+            />
+          </div>
+
+          <FormInput
+            {...register("recipient.recipient_email")}
+            id="recipientEmail"
+            label="Email (optional)"
+            type="email"
+            placeholder="Email (optional)"
+            hideLabel
+            error={errors.recipient?.recipient_email?.message}
+          />
+        </div>
+      </CheckoutSection>
+
+      {useProfileBilling ? (
+        <CompanyInvoiceReadOnly
+          billingAddress={companyBillingAddress ?? null}
+        />
+      ) : (
+        <>
+          <PrivateBillingForm allowedDocumentTypes={billingDocumentTypes} />
+          {needsBillingAddr && hasShippingAddress && (
+            <label className="flex items-center gap-3 cursor-pointer -mt-4 px-1">
+              <input
+                type="checkbox"
+                checked={copyToBilling}
+                onChange={(e) => toggleCopyToBilling(e.target.checked)}
+                className="accent-primary"
+              />
+              <span className="text-sm text-text-main">
+                Use recipient data for the invoice
+              </span>
+            </label>
+          )}
+        </>
+      )}
+    </TwoColumn>
   );
 }

@@ -9,6 +9,7 @@ import type {
   PaymentMethod,
 } from "../../api/order";
 import CheckoutStepper from "../../components/checkout/CheckoutStepper";
+import CartCheckoutLayout from "../../layouts/CartCheckoutLayout";
 import {
   useCompanyBillingAddress,
   useCompanyShippingAddresses,
@@ -240,13 +241,10 @@ export default function CheckoutFlow() {
   };
 
   return (
-    <div className="max-w-[1600px] mx-auto px-4 lg:px-8 py-8">
-      <CheckoutStepper />
-      <div className="mt-8">
-        <FormProvider {...methods}>
-          <Outlet context={checkoutCtx} />
-        </FormProvider>
-      </div>
-    </div>
+    <CartCheckoutLayout header={<CheckoutStepper />}>
+      <FormProvider {...methods}>
+        <Outlet context={checkoutCtx} />
+      </FormProvider>
+    </CartCheckoutLayout>
   );
 }

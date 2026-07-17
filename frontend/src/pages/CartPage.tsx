@@ -2,6 +2,7 @@ import { ShoppingBag } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import CartLineItem from "../components/cart/CartLineItem";
 import PurchaseModeSelector from "../components/cart/PurchaseModeSelector";
+import CartCheckoutLayout, { TwoColumn } from "../layouts/CartCheckoutLayout";
 import { useCartActions } from "../hooks/cart/useCartActions";
 import { useCartView } from "../hooks/cart/useCartView";
 import { useCartQuote } from "../hooks/pricing/useCartQuote";
@@ -94,11 +95,11 @@ export default function CartPage() {
   }
 
   return (
-    <div className="max-w-[1600px] mx-auto px-4 lg:px-8 py-8">
-      <div className="pb-6 mb-8 border-b border-border-base/20">
+    <CartCheckoutLayout
+      header={
         <h1 className="text-3xl font-bold text-text-main">Shopping Cart</h1>
-      </div>
-
+      }
+    >
       {isLoading && (
         <div className="text-center py-16 text-text-muted">Loading cart…</div>
       )}
@@ -123,7 +124,99 @@ export default function CartPage() {
       )}
 
       {!isLoading && lines.length > 0 && (
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-8 items-start">
+        <TwoColumn
+          sidebar={
+            /* ── Right: summary panel ── */
+            <div className="bg-bg-surface border border-border-base/20 rounded-2xl p-7 space-y-5 lg:sticky lg:top-24 shadow-sm">
+              <h2 className="text-lg font-bold text-text-main">Summary</h2>
+
+              {user?.company_id && (
+                <div className="pb-4 border-b border-border-base/10">
+                  <PurchaseModeSelector variant="card" />
+                </div>
+              )}
+
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-text-muted">
+                    Subtotal ({selectedCount}{" "}
+                    {selectedCount === 1 ? "item" : "items"})
+                  </span>
+                  <span className="font-mono text-text-main">
+                    ${subtotalBase.toFixed(2)}
+                  </span>
+                </div>
+
+                {hasQuote && companyDiscountAmt > 0 && (
+                  <div className="flex justify-between text-accent">
+                    <span>
+                      Company Discount
+                      {companyPctDisplay > 0 &&
+                        ` (${companyPctDisplay.toFixed(0)}%)`}
+                    </span>
+                    <span className="font-mono">
+                      −${companyDiscountAmt.toFixed(2)}
+                    </span>
+                  </div>
+                )}
+
+                {hasQuote && volumeDiscountAmt > 0 && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Volume Discount</span>
+                    <span className="font-mono">
+                      −${volumeDiscountAmt.toFixed(2)}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {hasQuote && totalSavings > 0 && (
+                <>
+                  <div className="border-t border-border-base/10 pt-4 flex justify-between text-sm font-medium text-text-muted">
+                    <span>Total Savings</span>
+                    <span className="font-mono">
+                      −${totalSavings.toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="border-t border-border-base/10 pt-4 flex justify-between items-baseline">
+                    <span className="text-lg font-bold text-text-main">
+                      Grand Total
+                    </span>
+                    <span className="text-2xl font-bold text-text-main font-mono">
+                      ${grandTotal.toFixed(2)}
+                    </span>
+                  </div>
+                </>
+              )}
+
+              {(!hasQuote || totalSavings === 0) && (
+                <div className="border-t border-border-base/10 pt-4 flex justify-between items-baseline">
+                  <span className="text-lg font-bold text-text-main">
+                    Grand Total
+                  </span>
+                  <span className="text-2xl font-bold text-text-main font-mono">
+                    ${(hasQuote ? grandTotal : subtotalBase).toFixed(2)}
+                  </span>
+                </div>
+              )}
+
+              <div className="pt-2">
+                <button
+                  disabled={!checkoutGate.ok}
+                  onClick={handleProceedToCheckout}
+                  className="w-full py-3.5 bg-primary text-white rounded-lg font-semibold text-base transition-opacity shadow-sm hover:bg-accent disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Proceed to Checkout
+                </button>
+                {checkoutBlockedMessage && (
+                  <p className="text-xs text-text-muted text-center mt-3">
+                    {checkoutBlockedMessage}
+                  </p>
+                )}
+              </div>
+            </div>
+          }
+        >
           {/* ── Left: cart items ── */}
           <div className="bg-bg-surface border border-border-base/20 rounded-2xl overflow-hidden shadow-sm">
             <div className="divide-y divide-border-base/10 px-8">
@@ -141,96 +234,8 @@ export default function CartPage() {
               ))}
             </div>
           </div>
-
-          {/* ── Right: summary panel ── */}
-          <div className="bg-bg-surface border border-border-base/20 rounded-2xl p-7 space-y-5 lg:sticky lg:top-24 shadow-sm">
-            <h2 className="text-lg font-bold text-text-main">Summary</h2>
-
-            {user?.company_id && (
-              <div className="pb-4 border-b border-border-base/10">
-                <PurchaseModeSelector variant="card" />
-              </div>
-            )}
-
-            <div className="space-y-3 text-sm">
-              <div className="flex justify-between">
-                <span className="text-text-muted">
-                  Subtotal ({selectedCount}{" "}
-                  {selectedCount === 1 ? "item" : "items"})
-                </span>
-                <span className="font-mono text-text-main">
-                  ${subtotalBase.toFixed(2)}
-                </span>
-              </div>
-
-              {hasQuote && companyDiscountAmt > 0 && (
-                <div className="flex justify-between text-accent">
-                  <span>
-                    Company Discount
-                    {companyPctDisplay > 0 &&
-                      ` (${companyPctDisplay.toFixed(0)}%)`}
-                  </span>
-                  <span className="font-mono">
-                    −${companyDiscountAmt.toFixed(2)}
-                  </span>
-                </div>
-              )}
-
-              {hasQuote && volumeDiscountAmt > 0 && (
-                <div className="flex justify-between text-green-600">
-                  <span>Volume Discount</span>
-                  <span className="font-mono">
-                    −${volumeDiscountAmt.toFixed(2)}
-                  </span>
-                </div>
-              )}
-            </div>
-
-            {hasQuote && totalSavings > 0 && (
-              <>
-                <div className="border-t border-border-base/10 pt-4 flex justify-between text-sm font-medium text-text-muted">
-                  <span>Total Savings</span>
-                  <span className="font-mono">−${totalSavings.toFixed(2)}</span>
-                </div>
-                <div className="border-t border-border-base/10 pt-4 flex justify-between items-baseline">
-                  <span className="text-lg font-bold text-text-main">
-                    Grand Total
-                  </span>
-                  <span className="text-2xl font-bold text-text-main font-mono">
-                    ${grandTotal.toFixed(2)}
-                  </span>
-                </div>
-              </>
-            )}
-
-            {(!hasQuote || totalSavings === 0) && (
-              <div className="border-t border-border-base/10 pt-4 flex justify-between items-baseline">
-                <span className="text-lg font-bold text-text-main">
-                  Grand Total
-                </span>
-                <span className="text-2xl font-bold text-text-main font-mono">
-                  ${(hasQuote ? grandTotal : subtotalBase).toFixed(2)}
-                </span>
-              </div>
-            )}
-
-            <div className="pt-2">
-              <button
-                disabled={!checkoutGate.ok}
-                onClick={handleProceedToCheckout}
-                className="w-full py-3.5 bg-primary text-white rounded-lg font-semibold text-base transition-opacity shadow-sm hover:bg-accent disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                Proceed to Checkout
-              </button>
-              {checkoutBlockedMessage && (
-                <p className="text-xs text-text-muted text-center mt-3">
-                  {checkoutBlockedMessage}
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
+        </TwoColumn>
       )}
-    </div>
+    </CartCheckoutLayout>
   );
 }
