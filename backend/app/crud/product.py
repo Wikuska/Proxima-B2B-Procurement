@@ -2,6 +2,7 @@ import uuid
 
 from app.models import Category, Product
 from app.models.enums import ProductSortBy
+from app.services.hybrid_search import reciprocal_rank_fusion
 from sqlalchemy import desc, func, or_, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -44,6 +45,15 @@ def _apply_sort(stmt, effective_sort: ProductSortBy, search_query: str | None):
     return stmt.order_by(Product.name.asc())
 
 
+async def has_any_product_embeddings(db: AsyncSession) -> bool:
+    stmt = (
+        select(Product.id)
+        .where(Product.is_active, Product.embedding.isnot(None))
+        .limit(1)
+    )
+    return (await db.scalar(stmt)) is not None
+
+
 async def get_active_products(
     db: AsyncSession,
     category_slug: str | None = None,
@@ -73,6 +83,50 @@ async def get_active_products(
     items = result.all()
 
     return items, total
+
+
+async def get_active_products_hybrid(
+    db: AsyncSession,
+    search_query: str,
+    query_embedding: list[float],
+    category_slug: str | None = None,
+    skip: int = 0,
+    limit: int = 24,
+    candidate_limit: int = 50,
+) -> tuple[list[Product], int]:
+    """FTS + vector candidates fused with RRF, then paginated."""
+    fts_stmt = select(Product.id).where(Product.is_active)
+    if category_slug:
+        fts_stmt = fts_stmt.join(Product.category).where(Category.slug == category_slug)
+    fts_stmt = _apply_search_filter(fts_stmt, search_query)
+    ts_query = func.websearch_to_tsquery("simple", search_query)
+    fts_rank = func.ts_rank(text("products.search_vector"), ts_query)
+    fts_stmt = fts_stmt.order_by(desc(fts_rank), Product.name.asc()).limit(
+        candidate_limit
+    )
+    fts_ids = list(await db.scalars(fts_stmt))
+
+    distance = Product.embedding.cosine_distance(query_embedding)
+    vector_stmt = select(Product.id).where(
+        Product.is_active, Product.embedding.isnot(None)
+    )
+    if category_slug:
+        vector_stmt = vector_stmt.join(Product.category).where(
+            Category.slug == category_slug
+        )
+    vector_stmt = vector_stmt.order_by(distance).limit(candidate_limit)
+    vector_ids = list(await db.scalars(vector_stmt))
+
+    fused_ids = reciprocal_rank_fusion([fts_ids, vector_ids])
+    total = len(fused_ids)
+    page_ids = fused_ids[skip : skip + limit]
+    if not page_ids:
+        return [], total
+
+    products = await get_products_by_ids(db, page_ids)
+    by_id = {product.id: product for product in products}
+    ordered = [by_id[pid] for pid in page_ids if pid in by_id]
+    return ordered, total
 
 
 async def get_product_by_id(db: AsyncSession, product_id: uuid.UUID) -> Product | None:

@@ -85,7 +85,14 @@ volume-based discounts, email double opt-in, and company verification via NIP.
 - Seed data: from `backend/`, `python seed.py` (test users password: `Password123`).
 - Tests: from `backend/`, `pytest`.
 - DB (local): `docker-compose up -d` (Postgres on :5433, pgAdmin on :5050).
+  Postgres image is `pgvector/pgvector:pg15` (needed for semantic search). If you
+  previously used plain `postgres:15-alpine` and `CREATE EXTENSION vector` fails,
+  recreate the DB volume (`docker compose down`, remove volume `b2b_db_data`, then
+  `docker compose up -d`) and re-run migrations + seed.
 - Frontend: from `frontend/`, `npm run dev` / `npm run build` / `npm run lint`.
+- Optional semantic search: from `backend/`, `pip install -r requirements-ai.txt`, set
+  `SEMANTIC_SEARCH_ENABLED=true`, then `python -m app.scripts.embed_products`.
+  Without that, catalog search stays on Postgres FTS.
 
 ## Frontend color palette (Tailwind CSS custom properties)
 These CSS variables are defined in `frontend/src/index.css` and map to Tailwind utility classes

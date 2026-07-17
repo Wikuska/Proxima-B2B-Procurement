@@ -8,6 +8,7 @@ from app.core.settings import settings
 from app.crud import category as category_crud
 from app.crud import product as product_crud
 from app.models.enums import ProductSortBy
+from app.services.embedding import embedding_service
 from app.services.pricing import compute_unit, resolve_company_pct
 
 
@@ -60,9 +61,37 @@ async def fetch_products_for_catalog(
             raise CategoryNotFoundException()
 
     skip = (page - 1) * size
-    items, total = await product_crud.get_active_products(
-        db, category_slug, search_query, skip, size, sort_by
+    normalized_query = search_query.strip() if search_query else None
+    if normalized_query == "":
+        normalized_query = None
+
+    effective_sort = product_crud.resolve_effective_sort(sort_by, normalized_query)
+    search_mode = "fts"
+
+    use_hybrid = (
+        normalized_query is not None
+        and effective_sort == ProductSortBy.RELEVANCE
+        and embedding_service.is_available()
+        and await product_crud.has_any_product_embeddings(db)
     )
+
+    if use_hybrid:
+        assert normalized_query is not None
+        query_embedding = embedding_service.embed_query(normalized_query)
+        items, total = await product_crud.get_active_products_hybrid(
+            db,
+            search_query=normalized_query,
+            query_embedding=query_embedding,
+            category_slug=category_slug,
+            skip=skip,
+            limit=size,
+            candidate_limit=settings.SEMANTIC_SEARCH_CANDIDATE_LIMIT,
+        )
+        search_mode = "hybrid"
+    else:
+        items, total = await product_crud.get_active_products(
+            db, category_slug, search_query, skip, size, sort_by
+        )
 
     company_pct = await resolve_company_pct(db, user, "COMPANY")
     cap = settings.MAX_TOTAL_DISCOUNT_PERCENT
@@ -74,6 +103,7 @@ async def fetch_products_for_catalog(
         "page": page,
         "size": size,
         "pages": math.ceil(total / size) if total > 0 else 0,
+        "search_mode": search_mode,
     }
 
 

@@ -25,6 +25,8 @@ class PaginatedProductListOut(BaseModel):
     page: int  # Current page
     size: int  # Number of products on one page
     pages: int  # Number of all existing pages
+    # "fts" (default / fallback) or "hybrid" when local embeddings are active
+    search_mode: str = "fts"
 
 
 class ProductVolumeDiscountOut(BaseModel):
