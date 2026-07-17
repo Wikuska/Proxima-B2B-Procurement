@@ -55,6 +55,33 @@ export const detailsSchema = z.object({
   billing: billingSchema,
 });
 
+/**
+ * B2B checkout: invoice is taken from the company profile.
+ * Same shape as `detailsSchema` so the form types stay aligned, but company
+ * invoice fields are not required (UI does not collect them).
+ */
+const profileBillingDetailsSchema = z.object({
+  recipient: recipientSchema,
+  billing: z.discriminatedUnion("documentType", [
+    receiptSchema,
+    personalInvoiceSchema,
+    z.object({
+      documentType: z.literal("COMPANY_INVOICE"),
+      companyName: z.string(),
+      companyNip: z.string(),
+      billingStreet: z.string(),
+      billingCity: z.string(),
+      billingPostalCode: z.string(),
+      billingCountry: z.string(),
+    }),
+  ]),
+});
+
+/** Schema used by the details form resolver and `isDetailsValid` checks. */
+export function createDetailsSchema(useProfileBilling: boolean) {
+  return useProfileBilling ? profileBillingDetailsSchema : detailsSchema;
+}
+
 export type DetailsFormData = z.infer<typeof detailsSchema>;
 export type BillingFormValues = z.infer<typeof billingSchema>;
 
@@ -74,9 +101,9 @@ export const emptyBillingValues = {
 
 export function buildBillingDocumentIn(
   billing: DetailsFormData["billing"],
-  isCompanyMode: boolean,
+  useProfileBilling: boolean,
 ): BillingDocumentIn {
-  if (isCompanyMode) return { document_type: "COMPANY_INVOICE" };
+  if (useProfileBilling) return { document_type: "COMPANY_INVOICE" };
   if (billing.documentType === "RECEIPT") return { document_type: "RECEIPT" };
 
   const base = {

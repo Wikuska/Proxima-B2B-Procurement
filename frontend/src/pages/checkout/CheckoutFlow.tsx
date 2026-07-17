@@ -1,77 +1,117 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { Navigate, Outlet } from "react-router-dom";
 import type { AddressIn } from "../../api/address";
-import type { DeliveryMethod, OrderCreate, PaymentMethod, PurchaseType } from "../../api/order";
+import type {
+  DeliveryMethod,
+  OrderCreate,
+  PaymentMethod,
+} from "../../api/order";
 import CheckoutStepper from "../../components/checkout/CheckoutStepper";
+import CartCheckoutLayout from "../../layouts/CartCheckoutLayout";
 import {
   useCompanyBillingAddress,
   useCompanyShippingAddresses,
   usePersonalAddresses,
 } from "../../hooks/address/useAddresses";
-import { useCheckoutOptions, useCreateOrder } from "../../hooks/order/useOrders";
+import {
+  useCheckoutOptions,
+  useCreateOrder,
+} from "../../hooks/order/useOrders";
 import { useCartQuote } from "../../hooks/pricing/useCartQuote";
 import { useCartView } from "../../hooks/cart/useCartView";
 import { useAuth } from "../../hooks/user/useAuth";
 import { usePurchaseMode } from "../../store/purchaseModeStore";
 import {
   buildBillingDocumentIn,
-  detailsSchema,
+  createDetailsSchema,
   emptyBillingValues,
   type DetailsFormData,
 } from "../../schemas/checkoutSchema";
+import { cartEligibility } from "../../utils/cartEligibility";
+import { derivePurchaseType } from "../../utils/derivePurchaseType";
 import type { CheckoutContext } from "./checkoutTypes";
 
 /**
- * Route element for `/checkout/*`. Not a visual shell like `MainLayout` —
- * it owns the wizard state (purchase type, address, delivery, payment, note)
- * and data hooks for the whole checkout flow, exposing them to the step
- * routes (`DetailsStep`, `DeliveryPaymentStep`, `SummaryStep`) via
- * `useOutletContext`. Recipient + billing document fields live on a single
- * shared `useForm<DetailsFormData>` instance, exposed to the steps via
- * `<FormProvider>` / `useFormContext` so validation state survives step
- * route changes. It only *also* renders the shared `CheckoutStepper` +
- * `<Outlet />`.
+ * Route element for `/checkout/*`. Owns wizard state and exposes it to step
+ * routes via `useOutletContext`. Shell chrome comes from MainLayout (slim
+ * NavBar on wizard paths). Purchase mode is snapshotted at mount from the
+ * cart — checkout does not react to live navbar/store changes.
  */
 export default function CheckoutFlow() {
   const { user } = useAuth();
-  const purchaseModeStore = usePurchaseMode();
+  const liveMode = usePurchaseMode();
+  const [checkoutMode] = useState(() => liveMode);
 
-  const { lines, quoteItems } = useCartView();
-  const selectedLines = lines.filter((l) => l.available && l.selected);
+  const { lines } = useCartView();
 
-  // Whether any selected line is a B2B-only product.
-  const hasB2bSelected = selectedLines.some((l) => l.is_b2b_only);
-  const hasCompany = !!user?.company_id;
+  const purchaseType = derivePurchaseType(checkoutMode, user?.company_id);
+  const isB2bPurchase = purchaseType === "B2B";
+  const useProfileBilling = isB2bPurchase;
 
-  const [purchaseType, setPurchaseType] = useState<PurchaseType>(
-    purchaseModeStore === "COMPANY" && hasCompany ? "B2B" : "B2C",
+  const selectedLines = useMemo(
+    () =>
+      lines.filter((l) => {
+        if (!l.selected) return false;
+        return cartEligibility(
+          {
+            id: l.product_id,
+            name: l.name,
+            slug: l.slug,
+            sku: l.sku,
+            base_price: String(l.base_price),
+            stock_quantity: l.stock_quantity,
+            main_image_url: l.main_image_url,
+            is_b2b_only: l.is_b2b_only,
+            is_active: l.is_active,
+          },
+          user?.company_id,
+          l.quantity,
+          checkoutMode,
+        ).available;
+      }),
+    [lines, checkoutMode, user?.company_id],
   );
+
+  const quoteItems = useMemo(
+    () =>
+      selectedLines.map((l) => ({
+        product_id: l.product_id,
+        quantity: l.quantity,
+      })),
+    [selectedLines],
+  );
+
   const [addressId, setAddressId] = useState<string | null>(null);
   const [inlineAddress, setInlineAddress] = useState<AddressIn | null>(null);
   const [saveAddress, setSaveAddress] = useState(false);
 
+  const detailsFormSchema = createDetailsSchema(useProfileBilling);
+
   const methods = useForm<DetailsFormData>({
-    resolver: zodResolver(detailsSchema),
+    resolver: zodResolver(detailsFormSchema),
     reValidateMode: "onBlur",
     defaultValues: {
       recipient: {
-        recipient_name: user ? `${user.first_name} ${user.last_name}`.trim() : "",
+        recipient_name: user
+          ? `${user.first_name} ${user.last_name}`.trim()
+          : "",
         recipient_email: user?.email ?? "",
         recipient_phone: "",
       },
-      billing: emptyBillingValues,
+      billing: isB2bPurchase
+        ? { ...emptyBillingValues, documentType: "COMPANY_INVOICE" }
+        : emptyBillingValues,
     },
   });
   const { getValues, setValue, handleSubmit, control } = methods;
-  // Subscribing here re-renders CheckoutFlow on every field change so the
-  // derived guards below (and the outlet context they feed) stay fresh —
-  // the fields themselves are registered deeper in the tree via useFormContext.
   const watchedValues = useWatch({ control });
 
-  const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>("COURIER");
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("BANK_TRANSFER");
+  const [deliveryMethod, setDeliveryMethod] =
+    useState<DeliveryMethod>("COURIER");
+  const [paymentMethod, setPaymentMethod] =
+    useState<PaymentMethod>("BANK_TRANSFER");
   const [deliveryConfirmed, setDeliveryConfirmed] = useState(false);
   const [note, setNote] = useState("");
 
@@ -80,14 +120,9 @@ export default function CheckoutFlow() {
   const { data: companyBillingAddress } = useCompanyBillingAddress();
   const { data: checkoutOptions } = useCheckoutOptions();
 
-  const { data: quote } = useCartQuote(quoteItems);
+  const { data: quote } = useCartQuote(quoteItems, checkoutMode);
   const createOrder = useCreateOrder();
 
-  // When cart has b2b-only items and user has a company → force B2B regardless of stored mode.
-  const effectivePurchaseType: PurchaseType =
-    hasB2bSelected && hasCompany ? "B2B" : purchaseType;
-  const isCompanyMode = effectivePurchaseType === "B2B";
-  const hasB2B = hasCompany;
   const grandTotal = quote ? Number(quote.grand_total) : null;
 
   const shippingCost = Number(
@@ -97,16 +132,7 @@ export default function CheckoutFlow() {
   );
   const orderTotal = grandTotal !== null ? grandTotal + shippingCost : null;
 
-  function changePurchaseType(type: PurchaseType) {
-    setPurchaseType(type);
-    setAddressId(null);
-    setInlineAddress(null);
-    if (type !== "B2B" && paymentMethod === "DEFERRED") {
-      setPaymentMethod("BANK_TRANSFER");
-    }
-  }
-
-  const selectedAddress = isCompanyMode
+  const selectedAddress = isB2bPurchase
     ? companyAddresses.find((a) => a.id === addressId)
     : personalAddresses.find((a) => a.id === addressId);
 
@@ -119,35 +145,35 @@ export default function CheckoutFlow() {
     if (addr) {
       setValue("billing.billingStreet", addr.street, { shouldValidate: true });
       setValue("billing.billingCity", addr.city, { shouldValidate: true });
-      setValue("billing.billingPostalCode", addr.postal_code, { shouldValidate: true });
-      setValue("billing.billingCountry", addr.country, { shouldValidate: true });
+      setValue("billing.billingPostalCode", addr.postal_code, {
+        shouldValidate: true,
+      });
+      setValue("billing.billingCountry", addr.country, {
+        shouldValidate: true,
+      });
     }
   }
 
-  // B2B-only products without a company account → hard block on the details step.
-  const b2bBlockedNoCompany = hasB2bSelected && !hasCompany;
-
-  const hasShippingAddress = isCompanyMode
+  const hasShippingAddress = isB2bPurchase
     ? !!addressId
     : !!addressId || !!inlineAddress;
-  const isDetailsValid = detailsSchema.safeParse(watchedValues).success;
+  const isDetailsValid = detailsFormSchema.safeParse(watchedValues).success;
 
-  const canProceedToDelivery =
-    !b2bBlockedNoCompany && isDetailsValid && hasShippingAddress;
+  const canProceedToDelivery = isDetailsValid && hasShippingAddress;
 
   const canProceedToSummary =
     canProceedToDelivery &&
     !!deliveryMethod &&
     !!paymentMethod &&
-    !(paymentMethod === "DEFERRED" && !isCompanyMode);
+    !(paymentMethod === "DEFERRED" && !isB2bPurchase);
 
   function submitOrder(data: DetailsFormData) {
     const payload: OrderCreate = {
       product_ids: selectedLines.map((l) => l.product_id),
-      purchase_type: effectivePurchaseType,
-      document: buildBillingDocumentIn(data.billing, isCompanyMode),
+      purchase_type: purchaseType,
+      document: buildBillingDocumentIn(data.billing, useProfileBilling),
       ...(addressId ? { address_id: addressId } : {}),
-      ...(inlineAddress
+      ...(!isB2bPurchase && inlineAddress
         ? { shipping_address: inlineAddress, save_address: saveAddress }
         : {}),
       delivery_method: deliveryMethod,
@@ -177,14 +203,10 @@ export default function CheckoutFlow() {
     shippingCost,
     orderTotal,
 
+    checkoutMode,
     purchaseType,
-    effectivePurchaseType,
-    isCompanyMode,
-    hasB2B,
-    hasCompany,
-    hasB2bSelected,
-    b2bBlockedNoCompany,
-    changePurchaseType,
+    useProfileBilling,
+    isB2bPurchase,
 
     personalAddresses,
     companyAddresses,
@@ -219,11 +241,10 @@ export default function CheckoutFlow() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-10">
-      <CheckoutStepper />
+    <CartCheckoutLayout header={<CheckoutStepper />}>
       <FormProvider {...methods}>
         <Outlet context={checkoutCtx} />
       </FormProvider>
-    </div>
+    </CartCheckoutLayout>
   );
 }

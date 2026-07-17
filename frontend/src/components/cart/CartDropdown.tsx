@@ -4,6 +4,8 @@ import { useAuth } from "../../hooks/user/useAuth";
 import { useCartActions } from "../../hooks/cart/useCartActions";
 import { useCartView } from "../../hooks/cart/useCartView";
 import { useCartQuote } from "../../hooks/pricing/useCartQuote";
+import { usePurchaseMode } from "../../store/purchaseModeStore";
+import { canProceedToCheckout } from "../../utils/canProceedToCheckout";
 import CartLineItem from "./CartLineItem";
 import { openAuth } from "../../utils/openAuth";
 
@@ -13,7 +15,8 @@ interface CartDropdownProps {
 }
 
 export default function CartDropdown({ isOpen, onClose }: CartDropdownProps) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  const purchaseMode = usePurchaseMode();
   const navigate = useNavigate();
   const location = useLocation();
   const { lines, quoteItems, availableSubtotal, isLoading, isError } =
@@ -22,6 +25,13 @@ export default function CartDropdown({ isOpen, onClose }: CartDropdownProps) {
   const { data: quote } = useCartQuote(quoteItems);
 
   const pricingMap = new Map(quote?.lines.map((l) => [l.product_id, l]));
+
+  const selectedLines = lines.filter((l) => l.available && l.selected);
+  const checkoutGate = canProceedToCheckout(
+    selectedLines,
+    purchaseMode,
+    user?.company_id,
+  );
 
   const availableLines = lines.filter((l) => l.available);
   const pricedSubtotal = quote
@@ -112,15 +122,16 @@ export default function CartDropdown({ isOpen, onClose }: CartDropdownProps) {
               View cart
             </Link>
             <button
+              disabled={!checkoutGate.ok}
               onClick={() => {
                 onClose();
                 if (!isAuthenticated) {
                   openAuth(navigate, location, { from: "/checkout" });
-                } else {
+                } else if (checkoutGate.ok) {
                   navigate("/checkout");
                 }
               }}
-              className="flex-1 py-2.5 text-sm font-semibold bg-primary text-white rounded-xl hover:bg-accent transition-colors shadow-sm"
+              className="flex-1 py-2.5 text-sm font-semibold bg-primary text-white rounded-xl hover:bg-accent transition-colors shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Checkout
             </button>

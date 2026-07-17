@@ -7,6 +7,7 @@ import type {
 } from "../../api/order";
 import type { useCartQuote } from "../../hooks/pricing/useCartQuote";
 import type { useCartView } from "../../hooks/cart/useCartView";
+import type { PurchaseMode } from "../../store/purchaseModeStore";
 
 export interface CheckoutContext {
   // Cart / pricing
@@ -19,15 +20,11 @@ export interface CheckoutContext {
   shippingCost: number;
   orderTotal: number | null;
 
-  // Purchase type
+  // Frozen purchase mode from cart entry (read-only in checkout)
+  checkoutMode: PurchaseMode;
   purchaseType: PurchaseType;
-  effectivePurchaseType: PurchaseType;
-  isCompanyMode: boolean;
-  hasB2B: boolean;
-  hasCompany: boolean;
-  hasB2bSelected: boolean;
-  b2bBlockedNoCompany: boolean;
-  changePurchaseType: (type: PurchaseType) => void;
+  useProfileBilling: boolean;
+  isB2bPurchase: boolean;
 
   // Shipping address
   personalAddresses: AddressOut[];
@@ -46,27 +43,19 @@ export interface CheckoutContext {
   setDeliveryMethod: (v: DeliveryMethod) => void;
   paymentMethod: PaymentMethod;
   setPaymentMethod: (v: PaymentMethod) => void;
-  // True once the user has reached the delivery step at least once — lets the
-  // order summary on step 1 keep showing the shipping cost after going back,
-  // instead of resetting to "not yet chosen".
   deliveryConfirmed: boolean;
   setDeliveryConfirmed: (v: boolean) => void;
 
-  // Recipient + billing document form (owned by the shared react-hook-form
-  // instance in CheckoutFlow, see <FormProvider>/useFormContext<DetailsFormData>).
   copyRecipientToBilling: () => void;
 
-  // Order note
   note: string;
   setNote: (v: string) => void;
 
-  // Derived guards
   isDetailsValid: boolean;
   hasShippingAddress: boolean;
   canProceedToDelivery: boolean;
   canProceedToSummary: boolean;
 
-  // Submission
   handlePlaceOrder: () => void;
   isPlacingOrder: boolean;
 }

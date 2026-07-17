@@ -20,7 +20,7 @@ export default function CheckoutStepper() {
   const progress = (trackWidth * (currentStep - 1)) / (n - 1);
 
   return (
-    <div className="relative w-full max-w-md mx-auto mb-10">
+    <div className="relative w-full max-w-md mx-auto mb-6">
       <div
         className="absolute top-3.5 h-px bg-border-base/40"
         style={{ left: `${edgeInset}%`, right: `${edgeInset}%` }}
@@ -35,10 +35,7 @@ export default function CheckoutStepper() {
           const isActive = stepNum === currentStep;
           const isDone = stepNum < currentStep;
           return (
-            <li
-              key={label}
-              className="flex-1 flex flex-col items-center gap-2"
-            >
+            <li key={label} className="flex-1 flex flex-col items-center gap-2">
               <span
                 className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-colors ${
                   isDone || isActive

@@ -142,6 +142,16 @@ export const PAYMENT_LABELS: Record<PaymentMethod, string> = {
   DEFERRED: "Deferred payment (invoice)",
 };
 
+export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
+  PENDING_PAYMENT: "Awaiting payment",
+  PAID: "Paid", // legacy status; new payments go straight to Processing
+  PROCESSING: "Processing",
+  SHIPPED: "Shipped",
+  DELIVERED: "Delivered",
+  CANCELLED: "Cancelled",
+  RETURNED: "Returned",
+};
+
 export const createOrder = (data: OrderCreate): Promise<OrderOut> =>
   apiFetch<OrderOut>("/orders", { method: "POST", body: data });
 
@@ -155,3 +165,15 @@ export const getOrder = (id: string): Promise<OrderOut> =>
 
 export const getCheckoutOptions = (): Promise<CheckoutOptionsOut> =>
   apiFetch<CheckoutOptionsOut>("/orders/checkout-options");
+
+export const mockPayment = (orderId: string, success: boolean): Promise<OrderOut> =>
+  apiFetch<OrderOut>(`/orders/${orderId}/payment/mock`, {
+    method: "POST",
+    body: { success },
+  });
+
+export const confirmPayment = (orderId: string): Promise<OrderOut> =>
+  apiFetch<OrderOut>(`/orders/${orderId}/payment/confirm`, { method: "POST" });
+
+export const advanceOrderStatus = (orderId: string): Promise<OrderOut> =>
+  apiFetch<OrderOut>(`/orders/${orderId}/advance-status`, { method: "POST" });

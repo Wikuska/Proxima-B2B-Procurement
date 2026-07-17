@@ -1,10 +1,15 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { quoteCart, type QuoteItem } from "../../api/pricing";
 import { usePurchaseMode } from "../../store/purchaseModeStore";
+import type { PurchaseMode } from "../../store/purchaseModeStore";
 import { useAuth } from "../user/useAuth";
 
-export function useCartQuote(items: QuoteItem[]) {
-  const mode = usePurchaseMode();
+export function useCartQuote(
+  items: QuoteItem[],
+  modeOverride?: PurchaseMode,
+) {
+  const storeMode = usePurchaseMode();
+  const mode = modeOverride ?? storeMode;
   const { user } = useAuth();
 
   return useQuery({

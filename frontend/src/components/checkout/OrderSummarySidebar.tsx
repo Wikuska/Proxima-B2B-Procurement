@@ -31,16 +31,16 @@ export default function OrderSummarySidebar({
   const total = grandTotal + (shippingCost ?? 0);
 
   return (
-    <aside className="bg-bg-surface border border-border-base/20 rounded-2xl shadow-sm overflow-hidden lg:sticky lg:top-24">
+    <aside className="bg-bg-surface border border-border-base/20 rounded-2xl px-4 py-3 space-y-5 lg:sticky lg:top-24 shadow-sm">
       <div className="px-5 py-4 border-b border-border-base/10 flex justify-between items-center">
-        <h2 className="text-base font-bold text-text-main">Order summary</h2>
+        <h2 className="text-lg font-bold text-text-main">Order summary</h2>
         <span className="text-xs font-medium text-text-muted bg-bg-base px-2 py-1 rounded-md">
           {lines.length} {lines.length === 1 ? "item" : "items"}
         </span>
       </div>
 
       <div
-        className="overflow-y-auto max-h-72 px-5 divide-y divide-border-base/10
+        className="overflow-y-auto max-h-73 px-2 divide-y divide-border-base/10
         [&::-webkit-scrollbar]:w-1.5
         [&::-webkit-scrollbar-track]:bg-transparent
         [&::-webkit-scrollbar-thumb]:bg-border-base/30
@@ -75,7 +75,7 @@ export default function OrderSummarySidebar({
         })}
       </div>
 
-      <div className="px-5 py-4 border-t border-border-base/10 space-y-1.5 bg-bg-base/50">
+      <div className="px-5 py-3 rounded-lg space-y-1.5 bg-bg-base/50">
         <div className="flex justify-between text-sm text-text-muted">
           <span>Subtotal</span>
           <span className="font-mono">${subtotal.toFixed(2)}</span>

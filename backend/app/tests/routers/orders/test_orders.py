@@ -314,7 +314,7 @@ async def test_company_mode_order_forces_company_invoice(
     payload = {
         "product_ids": [str(product_b2c.id)],
         "purchase_type": "B2B",
-        "document": {"document_type": "RECEIPT"},  # ignored — forced to COMPANY_INVOICE
+        "document": {"document_type": "COMPANY_INVOICE"},
         "address_id": str(company_shipping_address.id),
         **_SHIPPING_DEFAULTS,
     }
@@ -330,6 +330,76 @@ async def test_company_mode_order_forces_company_invoice(
     assert doc["billing_street"] == "HQ Ave 10"
     # Company 10% discount applied (270.00) + shipping (15.00)
     assert Decimal(data["total_amount"]) == Decimal("285.00")
+
+
+@pytest.mark.asyncio
+async def test_b2b_manual_company_invoice_uses_form_data(
+    async_client: AsyncClient,
+    db_session: AsyncSession,
+    company_and_buyer,
+    product_b2c,
+    company_shipping_address,
+    company_billing_address,
+    auth_headers,
+):
+    company, buyer, _ = company_and_buyer
+    await _add_to_cart(db_session, buyer.id, product_b2c.id, 3)
+
+    payload = {
+        "product_ids": [str(product_b2c.id)],
+        "purchase_type": "B2B",
+        "document": {
+            "document_type": "COMPANY_INVOICE",
+            "company_name": "Manual Corp",
+            "company_nip": "5555555555",
+            **_INLINE_BILLING_ADDR,
+        },
+        "address_id": str(company_shipping_address.id),
+        **_SHIPPING_DEFAULTS,
+    }
+    resp = await async_client.post("/orders", json=payload, headers=auth_headers(buyer))
+
+    assert resp.status_code == 201
+    data = resp.json()
+    assert data["purchase_type"] == "B2B"
+    doc = data["billing_document"]
+    assert doc["document_type"] == "COMPANY_INVOICE"
+    assert doc["company_name"] == "Manual Corp"
+    assert doc["company_nip"] == "5555555555"
+    assert doc["billing_street"] == "Billing Rd 3"
+    assert doc["company_name"] != company.name
+    assert doc["company_nip"] != company.nip
+    # Company 10% discount still applied (270.00) + shipping (15.00)
+    assert Decimal(data["total_amount"]) == Decimal("285.00")
+
+
+@pytest.mark.asyncio
+async def test_b2b_manual_company_invoice_missing_fields_returns_400(
+    async_client: AsyncClient,
+    db_session: AsyncSession,
+    company_and_buyer,
+    product_b2c,
+    company_shipping_address,
+    company_billing_address,
+    auth_headers,
+):
+    _, buyer, _ = company_and_buyer
+    await _add_to_cart(db_session, buyer.id, product_b2c.id, 1)
+
+    payload = {
+        "product_ids": [str(product_b2c.id)],
+        "purchase_type": "B2B",
+        "document": {
+            "document_type": "COMPANY_INVOICE",
+            "company_name": "Manual Corp",
+            "company_nip": "5555555555",
+            # missing billing address
+        },
+        "address_id": str(company_shipping_address.id),
+        **_SHIPPING_DEFAULTS,
+    }
+    resp = await async_client.post("/orders", json=payload, headers=auth_headers(buyer))
+    assert resp.status_code == 400
 
 
 # ---------------------------------------------------------------------------
@@ -961,3 +1031,279 @@ async def test_get_checkout_options_shape(
 async def test_get_checkout_options_requires_auth(async_client: AsyncClient):
     resp = await async_client.get("/orders/checkout-options")
     assert resp.status_code == 401
+
+
+# ---------------------------------------------------------------------------
+# Payment mock + status lifecycle
+# ---------------------------------------------------------------------------
+
+
+async def _create_b2c_order(
+    async_client: AsyncClient,
+    db_session: AsyncSession,
+    user,
+    product,
+    auth_headers,
+    payment_method: str = "BANK_TRANSFER",
+):
+    await _add_to_cart(db_session, user.id, product.id, 1)
+    payload = {
+        "product_ids": [str(product.id)],
+        "purchase_type": "B2C",
+        "document": {"document_type": "RECEIPT"},
+        "shipping_address": _INLINE_ADDR,
+        **{**_SHIPPING_DEFAULTS, "payment_method": payment_method},
+    }
+    resp = await async_client.post("/orders", json=payload, headers=auth_headers(user))
+    assert resp.status_code == 201
+    return resp.json()
+
+
+@pytest.mark.asyncio
+async def test_cod_order_starts_processing(
+    async_client: AsyncClient,
+    db_session: AsyncSession,
+    b2c_user,
+    product_b2c,
+    auth_headers,
+):
+    data = await _create_b2c_order(
+        async_client, db_session, b2c_user, product_b2c, auth_headers, "CASH_ON_DELIVERY"
+    )
+    assert data["status"] == "PROCESSING"
+
+
+@pytest.mark.asyncio
+async def test_deferred_b2b_order_starts_processing(
+    async_client: AsyncClient,
+    db_session: AsyncSession,
+    company_and_buyer,
+    product_b2c,
+    company_shipping_address,
+    company_billing_address,
+    auth_headers,
+):
+    _, buyer, _ = company_and_buyer
+    await _add_to_cart(db_session, buyer.id, product_b2c.id, 1)
+    payload = {
+        "product_ids": [str(product_b2c.id)],
+        "purchase_type": "B2B",
+        "document": {"document_type": "COMPANY_INVOICE"},
+        "address_id": str(company_shipping_address.id),
+        **{**_SHIPPING_DEFAULTS, "payment_method": "DEFERRED"},
+    }
+    resp = await async_client.post("/orders", json=payload, headers=auth_headers(buyer))
+    assert resp.status_code == 201
+    assert resp.json()["status"] == "PROCESSING"
+
+
+@pytest.mark.asyncio
+async def test_card_order_starts_pending_payment(
+    async_client: AsyncClient,
+    db_session: AsyncSession,
+    b2c_user,
+    product_b2c,
+    auth_headers,
+):
+    data = await _create_b2c_order(
+        async_client, db_session, b2c_user, product_b2c, auth_headers, "CARD"
+    )
+    assert data["status"] == "PENDING_PAYMENT"
+
+
+@pytest.mark.asyncio
+async def test_mock_payment_success_sets_processing(
+    async_client: AsyncClient,
+    db_session: AsyncSession,
+    b2c_user,
+    product_b2c,
+    auth_headers,
+):
+    data = await _create_b2c_order(
+        async_client, db_session, b2c_user, product_b2c, auth_headers, "CARD"
+    )
+    resp = await async_client.post(
+        f"/orders/{data['id']}/payment/mock",
+        json={"success": True},
+        headers=auth_headers(b2c_user),
+    )
+    assert resp.status_code == 200
+    assert resp.json()["status"] == "PROCESSING"
+
+
+@pytest.mark.asyncio
+async def test_mock_payment_failure_keeps_pending_payment(
+    async_client: AsyncClient,
+    db_session: AsyncSession,
+    b2c_user,
+    product_b2c,
+    auth_headers,
+):
+    data = await _create_b2c_order(
+        async_client, db_session, b2c_user, product_b2c, auth_headers, "BLIK"
+    )
+    resp = await async_client.post(
+        f"/orders/{data['id']}/payment/mock",
+        json={"success": False},
+        headers=auth_headers(b2c_user),
+    )
+    assert resp.status_code == 200
+    assert resp.json()["status"] == "PENDING_PAYMENT"
+
+
+@pytest.mark.asyncio
+async def test_mock_payment_rejects_bank_transfer(
+    async_client: AsyncClient,
+    db_session: AsyncSession,
+    b2c_user,
+    product_b2c,
+    auth_headers,
+):
+    data = await _create_b2c_order(
+        async_client, db_session, b2c_user, product_b2c, auth_headers, "BANK_TRANSFER"
+    )
+    resp = await async_client.post(
+        f"/orders/{data['id']}/payment/mock",
+        json={"success": True},
+        headers=auth_headers(b2c_user),
+    )
+    assert resp.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_confirm_bank_transfer_sets_processing(
+    async_client: AsyncClient,
+    db_session: AsyncSession,
+    b2c_user,
+    product_b2c,
+    auth_headers,
+):
+    data = await _create_b2c_order(
+        async_client, db_session, b2c_user, product_b2c, auth_headers, "BANK_TRANSFER"
+    )
+    resp = await async_client.post(
+        f"/orders/{data['id']}/payment/confirm",
+        headers=auth_headers(b2c_user),
+    )
+    assert resp.status_code == 200
+    assert resp.json()["status"] == "PROCESSING"
+
+
+@pytest.mark.asyncio
+async def test_confirm_bank_transfer_rejects_card_order(
+    async_client: AsyncClient,
+    db_session: AsyncSession,
+    b2c_user,
+    product_b2c,
+    auth_headers,
+):
+    data = await _create_b2c_order(
+        async_client, db_session, b2c_user, product_b2c, auth_headers, "CARD"
+    )
+    resp = await async_client.post(
+        f"/orders/{data['id']}/payment/confirm",
+        headers=auth_headers(b2c_user),
+    )
+    assert resp.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_confirm_bank_transfer_rejects_other_users_order(
+    async_client: AsyncClient,
+    db_session: AsyncSession,
+    b2c_user,
+    product_b2c,
+    auth_headers,
+    user_factory,
+):
+    other_user = await user_factory(email="other@test.com", is_verified=True)
+    data = await _create_b2c_order(
+        async_client, db_session, b2c_user, product_b2c, auth_headers, "BANK_TRANSFER"
+    )
+    resp = await async_client.post(
+        f"/orders/{data['id']}/payment/confirm",
+        headers=auth_headers(other_user),
+    )
+    assert resp.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_admin_advance_processing_to_delivered(
+    async_client: AsyncClient,
+    db_session: AsyncSession,
+    b2c_user,
+    product_b2c,
+    auth_headers,
+    user_factory,
+):
+    admin = await user_factory(
+        email="admin-advance@test.com",
+        is_verified=True,
+        role=UserRole.ADMIN,
+    )
+    data = await _create_b2c_order(
+        async_client, db_session, b2c_user, product_b2c, auth_headers, "CARD"
+    )
+    order_id = data["id"]
+
+    mock_resp = await async_client.post(
+        f"/orders/{order_id}/payment/mock",
+        json={"success": True},
+        headers=auth_headers(b2c_user),
+    )
+    assert mock_resp.json()["status"] == "PROCESSING"
+
+    for expected in ("SHIPPED", "DELIVERED"):
+        resp = await async_client.post(
+            f"/orders/{order_id}/advance-status",
+            headers=auth_headers(admin),
+        )
+        assert resp.status_code == 200
+        assert resp.json()["status"] == expected
+
+
+@pytest.mark.asyncio
+async def test_admin_advance_rejects_pending_payment(
+    async_client: AsyncClient,
+    db_session: AsyncSession,
+    b2c_user,
+    product_b2c,
+    auth_headers,
+    user_factory,
+):
+    admin = await user_factory(
+        email="admin-blocked@test.com",
+        is_verified=True,
+        role=UserRole.ADMIN,
+    )
+    data = await _create_b2c_order(
+        async_client, db_session, b2c_user, product_b2c, auth_headers, "BANK_TRANSFER"
+    )
+    resp = await async_client.post(
+        f"/orders/{data['id']}/advance-status",
+        headers=auth_headers(admin),
+    )
+    assert resp.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_advance_status_requires_admin(
+    async_client: AsyncClient,
+    db_session: AsyncSession,
+    b2c_user,
+    product_b2c,
+    auth_headers,
+):
+    data = await _create_b2c_order(
+        async_client, db_session, b2c_user, product_b2c, auth_headers, "CARD"
+    )
+    await async_client.post(
+        f"/orders/{data['id']}/payment/mock",
+        json={"success": True},
+        headers=auth_headers(b2c_user),
+    )
+    resp = await async_client.post(
+        f"/orders/{data['id']}/advance-status",
+        headers=auth_headers(b2c_user),
+    )
+    assert resp.status_code == 403

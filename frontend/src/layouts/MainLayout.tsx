@@ -1,12 +1,23 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import NavBar from "../components/nav/NavBar";
 import { useCartSync } from "../hooks/cart/useCartSync";
 
+function isCheckoutWizardPath(pathname: string): boolean {
+  return (
+    pathname === "/checkout" ||
+    pathname.startsWith("/checkout/details") ||
+    pathname.startsWith("/checkout/delivery") ||
+    pathname.startsWith("/checkout/summary")
+  );
+}
+
 export default function MainLayout() {
   useCartSync();
+  const { pathname } = useLocation();
+
   return (
     <div className="min-h-screen bg-bg-base text-text-main flex flex-col font-sans">
-      <NavBar />
+      <NavBar variant={isCheckoutWizardPath(pathname) ? "checkout" : "default"} />
 
       <main className="flex flex-grow flex-col">
         <Outlet />

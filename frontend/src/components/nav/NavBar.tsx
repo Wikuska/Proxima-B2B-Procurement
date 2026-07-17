@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { ChevronDown, Search, ShoppingCart } from "lucide-react";
+import { ArrowLeft, ChevronDown, Search, ShoppingCart } from "lucide-react";
 import { useCategories } from "../../hooks/catalog/categories";
 import { useCartView } from "../../hooks/cart/useCartView";
 import { useDelayedUnmount } from "../../hooks/common/useDelayedUnmount";
@@ -15,6 +15,10 @@ const DROPDOWN_EXIT_DURATION_MS = 100;
 const SEARCH_EXPAND_DURATION_MS = 200;
 const NAV_SEARCH_WIDTH_CLASS = "w-56 sm:w-64 md:w-72";
 
+type NavBarProps = {
+  variant?: "default" | "checkout";
+};
+
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   `inline-flex items-center h-9 border-b-2 transition-colors whitespace-nowrap ${
     isActive
@@ -22,7 +26,29 @@ const navLinkClass = ({ isActive }: { isActive: boolean }) =>
       : "text-text-main/80 border-transparent hover:text-accent"
   }`;
 
-export default function NavBar() {
+function CheckoutNavBar() {
+  return (
+    <header className="bg-bg-surface shadow-sm sticky top-0 z-50 border-b border-border-base/10">
+      <div className="max-w-7xl mx-auto px-2 sm:px-3 h-14 flex items-center justify-between gap-2 md:gap-4">
+        <Link
+          to="/"
+          className="text-2xl font-bold text-primary tracking-wide leading-none"
+        >
+          pro<span className="text-accent">xima</span>.
+        </Link>
+        <Link
+          to="/cart"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-text-muted hover:text-primary transition-colors"
+        >
+          <ArrowLeft size={16} />
+          Back to cart
+        </Link>
+      </div>
+    </header>
+  );
+}
+
+function DefaultNavBar() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -35,6 +61,7 @@ export default function NavBar() {
   const navigate = useNavigate();
   const location = useLocation();
   const isCatalogActive = location.pathname.startsWith("/catalog");
+  const hidePurchaseModeToggle = location.pathname === "/cart";
 
   const locationKey = `${location.pathname}${location.search}`;
   const [prevLocationKey, setPrevLocationKey] = useState(locationKey);
@@ -247,7 +274,7 @@ export default function NavBar() {
               )}
             </div>
 
-            <PurchaseModeToggle />
+            {!hidePurchaseModeToggle && <PurchaseModeToggle />}
 
             <NavRegionMenu isDisabled />
 
@@ -259,4 +286,11 @@ export default function NavBar() {
       </div>
     </header>
   );
+}
+
+export default function NavBar({ variant = "default" }: NavBarProps) {
+  if (variant === "checkout") {
+    return <CheckoutNavBar />;
+  }
+  return <DefaultNavBar />;
 }

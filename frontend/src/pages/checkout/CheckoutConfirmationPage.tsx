@@ -1,7 +1,51 @@
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, Clock } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
+import { DELIVERY_LABELS, ORDER_STATUS_LABELS, PAYMENT_LABELS } from "../../api/order";
+import BankTransferInstructions from "../../components/checkout/BankTransferInstructions";
 import { useOrder } from "../../hooks/order/useOrders";
-import { DELIVERY_LABELS, PAYMENT_LABELS } from "../../api/order";
+
+function ConfirmationHero({
+  status,
+  paymentMethod,
+}: {
+  status: string;
+  paymentMethod: string;
+}) {
+  if (status === "PENDING_PAYMENT") {
+    if (paymentMethod === "BANK_TRANSFER") {
+      return (
+        <>
+          <Clock className="mx-auto mb-5 text-yellow-500" size={56} strokeWidth={1.5} />
+          <h1 className="text-2xl font-bold text-text-main mb-2">Awaiting payment</h1>
+          <p className="text-sm text-text-muted mb-6">
+            Your order has been placed. Complete the bank transfer to start processing.
+          </p>
+        </>
+      );
+    }
+    return (
+      <>
+        <Clock className="mx-auto mb-5 text-yellow-500" size={56} strokeWidth={1.5} />
+        <h1 className="text-2xl font-bold text-text-main mb-2">Awaiting payment</h1>
+        <p className="text-sm text-text-muted mb-6">
+          Your order has been placed. Complete payment to start processing.
+        </p>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <CheckCircle className="mx-auto mb-5 text-green-500" size={56} strokeWidth={1.5} />
+      <h1 className="text-2xl font-bold text-text-main mb-2">Order placed!</h1>
+      <p className="text-sm text-text-muted mb-6">
+        {status === "PROCESSING"
+          ? "Your order is being prepared."
+          : "Thank you for your order."}
+      </p>
+    </>
+  );
+}
 
 export default function CheckoutConfirmationPage() {
   const { orderId } = useParams<{ orderId: string }>();
@@ -23,13 +67,29 @@ export default function CheckoutConfirmationPage() {
     );
   }
 
+  const showBankTransfer =
+    order.status === "PENDING_PAYMENT" && order.payment_method === "BANK_TRANSFER";
+
   return (
     <div className="max-w-xl mx-auto px-4 py-14 text-center">
-      <CheckCircle className="mx-auto mb-5 text-green-500" size={56} strokeWidth={1.5} />
-      <h1 className="text-2xl font-bold text-text-main mb-2">Order placed!</h1>
+      <ConfirmationHero status={order.status} paymentMethod={order.payment_method} />
+
       <p className="text-sm text-text-muted mb-6">
-        Order #{order.id.slice(0, 8).toUpperCase()} · Total ${Number(order.total_amount).toFixed(2)}
+        Order #{order.id.slice(0, 8).toUpperCase()} · Total $
+        {Number(order.total_amount).toFixed(2)} ·{" "}
+        <span className="font-medium text-text-main">
+          {ORDER_STATUS_LABELS[order.status]}
+        </span>
       </p>
+
+      {showBankTransfer && (
+        <div className="mb-8 text-left">
+          <BankTransferInstructions
+            orderId={order.id}
+            totalAmount={order.total_amount}
+          />
+        </div>
+      )}
 
       <div className="bg-bg-surface border border-border-base/20 rounded-2xl p-6 text-left shadow-sm mb-8">
         <h2 className="text-sm font-semibold text-text-main mb-3">Items ordered</h2>

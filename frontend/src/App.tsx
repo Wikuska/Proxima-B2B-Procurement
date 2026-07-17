@@ -7,6 +7,7 @@ import {
   CartPage,
   CheckoutConfirmationPage,
   CheckoutFlow,
+  CheckoutPaymentMockPage,
   CompanyAddressesTab,
   CompanyAffiliationTab,
   CompanyMembersTab,
@@ -54,7 +55,23 @@ export default function App() {
           <Route path="/cart" element={<CartPage />} />
           <Route path="/contact" element={<ContactPage />} />
 
-          {/* Checkout */}
+          <Route
+            path="/checkout/confirmation/:orderId"
+            element={
+              <ProtectedRoute>
+                <CheckoutConfirmationPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/checkout/payment/:orderId"
+            element={
+              <ProtectedRoute>
+                <CheckoutPaymentMockPage />
+              </ProtectedRoute>
+            }
+          />
+
           <Route
             path="/checkout"
             element={
@@ -69,14 +86,6 @@ export default function App() {
             <Route path="summary" element={<SummaryStep />} />
             <Route path="*" element={<Navigate to="details" replace />} />
           </Route>
-          <Route
-            path="/checkout/confirmation/:orderId"
-            element={
-              <ProtectedRoute>
-                <CheckoutConfirmationPage />
-              </ProtectedRoute>
-            }
-          />
 
           {/* Profile */}
           <Route

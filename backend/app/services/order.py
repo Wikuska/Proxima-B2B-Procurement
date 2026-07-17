@@ -17,11 +17,11 @@ from app.crud import address as address_crud
 from app.crud import cart as cart_crud
 from app.crud import order as order_crud
 from app.crud import product as product_crud
-from app.models.enums import DeliveryMethod, DocumentType, OrderStatus, PaymentMethod, PurchaseType
+from app.models.enums import DeliveryMethod, DocumentType, PaymentMethod, PurchaseType
 from app.models.order import BillingDocument, Order, OrderItem, Shipment
 from app.models.user import User
 from app.schemas.order import BillingDocumentIn, CheckoutOptionsOut, DeliveryOptionOut, OrderCreate, PaymentOptionOut
-from app.services import pricing
+from app.services import payment, pricing
 from sqlalchemy.ext.asyncio import AsyncSession
 
 SHIPPING_COSTS: dict[DeliveryMethod, Decimal] = {
@@ -100,7 +100,7 @@ async def create_order(db: AsyncSession, user: User, payload: OrderCreate) -> Or
     order = Order(
         user_id=user.id,
         purchase_type=payload.purchase_type,
-        status=OrderStatus.PENDING_PAYMENT,
+        status=payment.resolve_initial_status(payload.payment_method),
         payment_method=payload.payment_method,
         total_amount=quote["grand_total"] + shipment.shipping_cost,
         note=payload.note,
@@ -134,14 +134,26 @@ async def get_order(db: AsyncSession, user: User, order_id: uuid.UUID) -> Order:
 # ---------------------------------------------------------------------------
 
 
+def _uses_profile_billing(payload: OrderCreate) -> bool:
+    """Snapshot from company profile only when B2B + empty COMPANY_INVOICE document."""
+    if payload.purchase_type != PurchaseType.B2B:
+        return False
+    doc = payload.document
+    return (
+        doc.document_type == DocumentType.COMPANY_INVOICE
+        and not doc.company_name
+        and not doc.company_nip
+    )
+
+
 async def _build_billing_document(
     db: AsyncSession, user: User, payload: OrderCreate, mode: str
 ) -> BillingDocument:
     """
-    COMPANY mode → force COMPANY_INVOICE, snapshot from DB (company + billing address).
-    PRIVATE mode → validate required fields per document_type, use input data.
+    Profile billing → force COMPANY_INVOICE, snapshot from DB (company + billing address).
+    Manual billing → validate required fields per document_type, use input data.
     """
-    if mode == "COMPANY":
+    if _uses_profile_billing(payload):
         from app.crud import company as company_crud
 
         company = await company_crud.get_company_by_id(db, user.company_id)
@@ -254,6 +266,10 @@ async def _resolve_shipping(db: AsyncSession, user: User, payload: OrderCreate) 
         shipping_postal_code=address.postal_code,
         shipping_country=address.country,
     )
+
+
+async def advance_order_status(db: AsyncSession, order_id: uuid.UUID) -> Order:
+    return await payment.advance_order_status(db, order_id)
 
 
 async def get_checkout_options() -> CheckoutOptionsOut:

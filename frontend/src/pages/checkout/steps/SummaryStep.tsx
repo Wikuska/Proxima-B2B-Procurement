@@ -1,5 +1,7 @@
 import { useFormContext } from "react-hook-form";
 import { Navigate, useNavigate, useOutletContext } from "react-router-dom";
+import CheckoutSection from "../../../components/checkout/CheckoutSection";
+import { TwoColumn } from "../../../layouts/CartCheckoutLayout";
 import { DELIVERY_LABELS, PAYMENT_LABELS } from "../../../api/order";
 import type { DetailsFormData } from "../../../schemas/checkoutSchema";
 import type { CheckoutContext } from "../checkoutTypes";
@@ -31,7 +33,8 @@ export default function SummaryStep() {
     grandTotal,
     shippingCost,
     orderTotal,
-    isCompanyMode,
+    useProfileBilling,
+    purchaseType,
     selectedAddress,
     inlineAddress,
     deliveryMethod,
@@ -56,9 +59,32 @@ export default function SummaryStep() {
   const shipToAddress = selectedAddress ?? inlineAddress;
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
-      <section className="bg-bg-surface border border-border-base/20 rounded-2xl p-6 shadow-sm">
-        <h2 className="text-xl font-bold text-text-main mb-4">Items</h2>
+    <TwoColumn
+      sidebar={
+        <aside className="bg-bg-surface border border-border-base/20 rounded-2xl p-7 space-y-4 lg:sticky lg:top-24 shadow-sm">
+          <h2 className="text-lg font-bold text-text-main">Ready to order?</h2>
+          <p className="text-sm text-text-muted">
+            Review the details on the left, then place your order.
+          </p>
+          <div className="space-y-2 pt-2">
+            <button
+              onClick={handlePlaceOrder}
+              disabled={isPlacingOrder}
+              className="w-full py-3.5 bg-primary text-white rounded-lg font-semibold text-base hover:bg-accent transition-colors disabled:opacity-60 shadow-sm"
+            >
+              {isPlacingOrder ? "Placing order…" : "Place Order"}
+            </button>
+            <button
+              onClick={() => navigate("/checkout/delivery")}
+              className="w-full py-3.5 border border-border-base text-text-muted rounded-lg font-semibold text-sm hover:text-primary hover:border-primary transition-colors"
+            >
+              Back
+            </button>
+          </div>
+        </aside>
+      }
+    >
+      <CheckoutSection title="Items">
         <div className="divide-y divide-border-base/10">
           {selectedLines.map((l) => {
             const priceLine = quote?.lines.find(
@@ -70,9 +96,7 @@ export default function SummaryStep() {
                 className="py-3 flex justify-between items-center gap-4"
               >
                 <div>
-                  <p className="text-sm font-medium text-text-main">
-                    {l.name}
-                  </p>
+                  <p className="text-sm font-medium text-text-main">{l.name}</p>
                   <p className="text-xs text-text-muted">
                     {l.sku} · qty {l.quantity}
                   </p>
@@ -107,20 +131,20 @@ export default function SummaryStep() {
             </div>
           </div>
         )}
-      </section>
+      </CheckoutSection>
 
-      <section className="bg-bg-surface border border-border-base/20 rounded-2xl p-6 shadow-sm space-y-4">
-        <h2 className="text-xl font-bold text-text-main">
-          Delivery & Payment
-        </h2>
+      <CheckoutSection title="Delivery & Payment" stacked className="space-y-4">
+        <SummaryField label="Purchase type">
+          {purchaseType === "B2B" ? "Company (B2B)" : "Private (B2C)"}
+        </SummaryField>
         <SummaryField label="Document">
-          {isCompanyMode
-            ? "Company Invoice (B2B)"
+          {useProfileBilling
+            ? "Company Invoice (from company profile)"
             : billing.documentType === "RECEIPT"
               ? "Receipt"
-              : billing.documentType === "PERSONAL_INVOICE"
-                ? "Personal Invoice"
-                : "Company Invoice (manual)"}
+              : billing.documentType === "COMPANY_INVOICE"
+                ? "Company Invoice (manual)"
+                : "Personal Invoice"}
         </SummaryField>
 
         {shipToAddress && (
@@ -142,13 +166,18 @@ export default function SummaryStep() {
         <SummaryField label="Payment method">
           {PAYMENT_LABELS[paymentMethod]}
         </SummaryField>
-      </section>
+      </CheckoutSection>
 
-      <section className="bg-bg-surface border border-border-base/20 rounded-2xl p-6 shadow-sm space-y-3">
-        <h2 className="text-xl font-bold text-text-main">
-          Order note{" "}
-          <span className="font-normal text-text-muted">(optional)</span>
-        </h2>
+      <CheckoutSection
+        title={
+          <>
+            Order note{" "}
+            <span className="font-normal text-text-muted">(optional)</span>
+          </>
+        }
+        stacked
+        className="space-y-3"
+      >
         <textarea
           value={note}
           onChange={(e) => setNote(e.target.value)}
@@ -156,23 +185,7 @@ export default function SummaryStep() {
           rows={3}
           className="w-full px-3 py-2 text-sm border border-border-base rounded-lg focus:outline-none focus:border-primary bg-bg-surface text-text-main resize-none"
         />
-      </section>
-
-      <div className="flex gap-3">
-        <button
-          onClick={() => navigate("/checkout/delivery")}
-          className="flex-1 py-3.5 border border-border-base text-text-muted rounded-lg font-semibold text-sm hover:text-primary hover:border-primary transition-colors"
-        >
-          Back
-        </button>
-        <button
-          onClick={handlePlaceOrder}
-          disabled={isPlacingOrder}
-          className="flex-1 py-3.5 bg-primary text-white rounded-lg font-semibold text-sm hover:bg-accent transition-colors disabled:opacity-60 shadow-sm"
-        >
-          {isPlacingOrder ? "Placing order…" : "Place Order"}
-        </button>
-      </div>
-    </div>
+      </CheckoutSection>
+    </TwoColumn>
   );
 }

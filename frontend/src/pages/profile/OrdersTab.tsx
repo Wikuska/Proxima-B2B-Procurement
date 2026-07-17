@@ -3,10 +3,11 @@ import { Link } from "react-router-dom";
 import { useOrders } from "../../hooks/order/useOrders";
 import { useAuth } from "../../hooks/user/useAuth";
 import type { PurchaseType, OrderSummaryOut } from "../../api/order";
+import { ORDER_STATUS_LABELS } from "../../api/order";
 
 const STATUS_STYLES: Record<string, string> = {
   PENDING_PAYMENT: "bg-yellow-500/10 text-yellow-600 border border-yellow-500/20",
-  PAID: "bg-green-500/10 text-green-600 border border-green-500/20",
+  PAID: "bg-green-500/10 text-green-600 border border-green-500/20", // legacy
   PROCESSING: "bg-blue-500/10 text-blue-600 border border-blue-500/20",
   SHIPPED: "bg-indigo-500/10 text-indigo-600 border border-indigo-500/20",
   DELIVERED: "bg-green-600/10 text-green-700 border border-green-600/20",
@@ -57,7 +58,7 @@ function OrderList({ orders }: { orders: OrderSummaryOut[] }) {
                 STATUS_STYLES[order.status] ?? "bg-border-base/20 text-text-main"
               }`}
             >
-              {order.status.replace("_", " ")}
+              {ORDER_STATUS_LABELS[order.status]}
             </span>
           </div>
         </Link>
