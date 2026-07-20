@@ -1,0 +1,11 @@
+# Optional AI extras for local semantic / hybrid catalog search.
+# Base install (requirements.txt) stays enough for FTS-only catalog.
+#
+#   pip install -r requirements-ai.txt
+#   Set SEMANTIC_SEARCH_ENABLED=true in .env
+#   python -m app.scripts.embed_products
+#
+# First embed run downloads the Hugging Face model (~120MB) into the local cache.
+
+sentence-transformers>=3.0.0
+torch

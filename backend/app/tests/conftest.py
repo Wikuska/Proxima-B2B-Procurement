@@ -27,6 +27,7 @@ engine = create_async_engine(
 @pytest_asyncio.fixture(scope="session", autouse=True)
 async def setup_db():
     async with engine.begin() as conn:
+        await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
         await conn.run_sync(Base.metadata.create_all)
         await conn.execute(
             text(
@@ -43,6 +44,17 @@ async def setup_db():
             text(
                 "CREATE INDEX IF NOT EXISTS ix_products_search_vector "
                 "ON products USING GIN (search_vector)"
+            )
+        )
+        await conn.execute(
+            text(
+                "ALTER TABLE products ADD COLUMN IF NOT EXISTS embedding vector(384)"
+            )
+        )
+        await conn.execute(
+            text(
+                "CREATE INDEX IF NOT EXISTS ix_products_embedding_hnsw "
+                "ON products USING hnsw (embedding vector_cosine_ops)"
             )
         )
     yield

@@ -21,6 +21,16 @@ class Settings(BaseSettings):
     EMAIL_VERIFICATION_LOCK_SECONDS: int = 15
     PORTFOLIO_VERIFICATION_CODE: str = "000000"
 
+    # Semantic / hybrid search (optional). Default off = classic FTS for clones.
+    SEMANTIC_SEARCH_ENABLED: bool = False
+    EMBEDDING_MODEL_NAME: str = (
+        "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+    )
+    SEMANTIC_SEARCH_CANDIDATE_LIMIT: int = 50
+    # Cosine distance cutoff for vector hits (normalized embeddings: 0 = identical).
+    # Lower = stricter. FTS matches are never dropped by this threshold.
+    SEMANTIC_SEARCH_MAX_DISTANCE: float = 0.70
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
 

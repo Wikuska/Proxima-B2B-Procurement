@@ -17,3 +17,4 @@ asyncpg==0.31.0
 python-slugify
 redis>=5.0.0
 fakeredis[lua]>=2.26.0
+pgvector>=0.3.0

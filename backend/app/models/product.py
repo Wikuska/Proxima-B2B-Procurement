@@ -2,6 +2,7 @@ import uuid
 from decimal import Decimal
 from typing import List
 
+from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
     Boolean,
     ForeignKey,
@@ -14,6 +15,9 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base
+
+# Must match the local embedding model (paraphrase-multilingual-MiniLM-L12-v2).
+EMBEDDING_DIMENSIONS = 384
 
 
 class Category(Base):
@@ -47,6 +51,11 @@ class Product(Base):
 
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     is_b2b_only: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    # NULL until embed_products (or semantic search disabled).
+    embedding: Mapped[list[float] | None] = mapped_column(
+        Vector(EMBEDDING_DIMENSIONS), nullable=True
+    )
 
     # Relations
     category: Mapped["Category"] = relationship(back_populates="products")

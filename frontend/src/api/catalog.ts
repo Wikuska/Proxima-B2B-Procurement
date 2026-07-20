@@ -26,6 +26,8 @@ export interface PaginatedProductListOut {
   page: number;
   size: number;
   pages: number;
+  /** "fts" (default) or "hybrid" when local semantic search is active */
+  search_mode?: string;
 }
 
 export interface ProductVolumeDiscountOut {
