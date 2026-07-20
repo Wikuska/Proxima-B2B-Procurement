@@ -45,8 +45,12 @@ async def setup_search_products(db_session: AsyncSession):
 
 @pytest.mark.asyncio
 async def test_catalog_search_defaults_to_fts_without_model(
-    async_client: AsyncClient, setup_search_products
+    async_client: AsyncClient,
+    setup_search_products,
+    monkeypatch: pytest.MonkeyPatch,
 ):
+    monkeypatch.setattr(embedding_service, "is_available", lambda: False)
+
     response = await async_client.get(
         "/catalog/products", params={"search_query": "Nitrile"}
     )
@@ -86,3 +90,33 @@ async def test_catalog_search_uses_hybrid_when_embeddings_available(
     body = response.json()
     assert body["search_mode"] == "hybrid"
     assert body["items"][0]["sku"] == "SAF-GLV-001"
+
+
+@pytest.mark.asyncio
+async def test_hybrid_search_drops_weak_vector_hits(
+    async_client: AsyncClient,
+    setup_search_products,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """Beaker embedding is orthogonal to the query — must not appear via vector branch."""
+    monkeypatch.setattr(embedding_service, "is_available", lambda: True)
+    monkeypatch.setattr(
+        embedding_service,
+        "embed_query",
+        MagicMock(return_value=[0.9] + [0.0] * 383),
+    )
+    monkeypatch.setattr(
+        "app.core.settings.settings.SEMANTIC_SEARCH_MAX_DISTANCE",
+        0.55,
+    )
+
+    response = await async_client.get(
+        "/catalog/products",
+        params={"search_query": "hand protection chemicals"},
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["search_mode"] == "hybrid"
+    skus = {item["sku"] for item in body["items"]}
+    assert "SAF-GLV-001" in skus
+    assert "GLS-BEA-250" not in skus

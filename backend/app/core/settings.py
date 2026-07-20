@@ -27,6 +27,9 @@ class Settings(BaseSettings):
         "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
     )
     SEMANTIC_SEARCH_CANDIDATE_LIMIT: int = 50
+    # Cosine distance cutoff for vector hits (normalized embeddings: 0 = identical).
+    # Lower = stricter. FTS matches are never dropped by this threshold.
+    SEMANTIC_SEARCH_MAX_DISTANCE: float = 0.70
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 

@@ -86,6 +86,7 @@ async def fetch_products_for_catalog(
             skip=skip,
             limit=size,
             candidate_limit=settings.SEMANTIC_SEARCH_CANDIDATE_LIMIT,
+            max_distance=settings.SEMANTIC_SEARCH_MAX_DISTANCE,
         )
         search_mode = "hybrid"
     else:

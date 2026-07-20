@@ -93,8 +93,13 @@ async def get_active_products_hybrid(
     skip: int = 0,
     limit: int = 24,
     candidate_limit: int = 50,
+    max_distance: float = 0.55,
 ) -> tuple[list[Product], int]:
-    """FTS + vector candidates fused with RRF, then paginated."""
+    """FTS + vector candidates fused with RRF, then paginated.
+
+    Vector hits must be within ``max_distance`` (cosine). FTS hits are kept
+    regardless so exact SKU / name matches never disappear.
+    """
     fts_stmt = select(Product.id).where(Product.is_active)
     if category_slug:
         fts_stmt = fts_stmt.join(Product.category).where(Category.slug == category_slug)
@@ -108,7 +113,9 @@ async def get_active_products_hybrid(
 
     distance = Product.embedding.cosine_distance(query_embedding)
     vector_stmt = select(Product.id).where(
-        Product.is_active, Product.embedding.isnot(None)
+        Product.is_active,
+        Product.embedding.isnot(None),
+        distance < max_distance,
     )
     if category_slug:
         vector_stmt = vector_stmt.join(Product.category).where(
