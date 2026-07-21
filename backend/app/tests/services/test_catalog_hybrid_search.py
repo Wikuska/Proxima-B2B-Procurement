@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 
 import pytest
 from app.models.product import Category, Product
-from app.services.embedding import embedding_service
+from app.ai.embedding import embedding_service
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 

@@ -1,6 +1,6 @@
 import uuid
 
-from app.services.hybrid_search import reciprocal_rank_fusion
+from app.ai.hybrid_search import reciprocal_rank_fusion
 
 
 def test_reciprocal_rank_fusion_prefers_items_high_on_both_lists():

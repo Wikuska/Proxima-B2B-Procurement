@@ -20,7 +20,7 @@ from sqlalchemy.orm import selectinload
 
 from app.database import AsyncSessionLocal
 from app.models.product import Product
-from app.services.embedding import build_product_embedding_text, embedding_service
+from app.ai.embedding import build_product_embedding_text, embedding_service
 
 
 async def embed_products(*, force: bool = False, batch_size: int = 32) -> int:

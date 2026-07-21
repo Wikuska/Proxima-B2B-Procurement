@@ -12,6 +12,11 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./backend/app/docker/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U b2b_admin -d b2b_platform"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   pgadmin:
     image: dpage/pgadmin4
@@ -23,7 +28,8 @@ services:
     ports:
       - "5050:80"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     volumes:
       - pgadmin_data:/var/lib/pgadmin
 
@@ -33,9 +39,48 @@ services:
     restart: unless-stopped
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+    container_name: b2b_backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+asyncpg://b2b_admin:secret_password123@db:5432/b2b_platform
+      TEST_DATABASE_URL: postgresql+asyncpg://b2b_admin:secret_password123@db:5432/b2b_platform_test
+      SECRET_KEY: changeme-local-docker-only
+      FRONTEND_URL: http://localhost:5173
+      REDIS_URL: redis://redis:6379/0
+      PORTFOLIO_MODE: "true"
+      PORTFOLIO_VERIFICATION_CODE: "000000"
+      SEMANTIC_SEARCH_ENABLED: "true"
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: http://localhost:8000
+    container_name: b2b_frontend
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
 
 volumes:
   postgres_data:
     name: b2b_db_data
-  pgadmin_data:                      
-    name: b2b_pgadmin_data     
+  pgadmin_data:
+    name: b2b_pgadmin_data

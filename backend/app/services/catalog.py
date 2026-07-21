@@ -8,7 +8,7 @@ from app.core.settings import settings
 from app.crud import category as category_crud
 from app.crud import product as product_crud
 from app.models.enums import ProductSortBy
-from app.services.embedding import embedding_service
+from app.ai.embedding import embedding_service
 from app.services.pricing import compute_unit, resolve_company_pct
 
 

@@ -21,7 +21,8 @@ class Settings(BaseSettings):
     EMAIL_VERIFICATION_LOCK_SECONDS: int = 15
     PORTFOLIO_VERIFICATION_CODE: str = "000000"
 
-    # Semantic / hybrid search (optional). Default off = classic FTS for clones.
+    # Semantic / hybrid search. Default off for lightweight local/tests;
+    # Docker Compose enables it and bakes EMBEDDING_MODEL_NAME into the image.
     SEMANTIC_SEARCH_ENABLED: bool = False
     EMBEDDING_MODEL_NAME: str = (
         "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"

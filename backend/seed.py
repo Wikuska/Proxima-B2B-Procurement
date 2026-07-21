@@ -1,12 +1,14 @@
 """
 Proxima Lab Supply — Database Seed Script
-Run from backend/ directory: python -m app.seeds.seed_catalog
+Run from backend/ directory: python seed.py
 """
 
 import asyncio
+import json
 import uuid
 from datetime import datetime, timezone
 from decimal import Decimal
+from pathlib import Path
 
 from app.database import AsyncSessionLocal
 from app.models import (
@@ -25,6 +27,19 @@ from app.models import (
 )
 from pwdlib import PasswordHash
 from sqlalchemy import delete
+
+DEMO_EMBEDDINGS_PATH = Path(__file__).resolve().parent / "data" / "demo_product_embeddings.json"
+
+
+def _load_demo_embeddings() -> dict[str, list[float]]:
+    if not DEMO_EMBEDDINGS_PATH.is_file():
+        print(f"   ! Demo embeddings file missing: {DEMO_EMBEDDINGS_PATH}")
+        return {}
+    data = json.loads(DEMO_EMBEDDINGS_PATH.read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        print("   ! Demo embeddings file has unexpected format")
+        return {}
+    return data
 
 # ── CATEGORIES ──────────────────────────────────────────────────────────────
 
@@ -643,12 +658,20 @@ async def seed():
 
         # PRODUCTS
         print("📦 Creating products...")
+        embeddings_by_sku = _load_demo_embeddings()
+        embedded_count = 0
+        missing_embedding_skus: list[str] = []
         total_products = 0
         created_products_for_discounts = []
 
         for category_slug, products in PRODUCTS.items():
             category_id = category_map[category_slug]
             for name, slug, sku, description, price, stock, is_b2b, img_url in products:
+                embedding = embeddings_by_sku.get(sku)
+                if embedding is None:
+                    missing_embedding_skus.append(sku)
+                else:
+                    embedded_count += 1
                 product = Product(
                     category_id=category_id,
                     name=name,
@@ -660,6 +683,7 @@ async def seed():
                     is_active=True,
                     is_b2b_only=is_b2b,
                     main_image_url=img_url,
+                    embedding=embedding,
                 )
                 db.add(product)
                 await db.flush()
@@ -672,6 +696,13 @@ async def seed():
 
                 total_products += 1
             print(f"   ✓ {category_slug} — {len(products)} products")
+
+        print(f"   ✓ Product embeddings loaded: {embedded_count}/{total_products}")
+        if missing_embedding_skus:
+            print(
+                "   ! Missing embeddings for SKUs: "
+                + ", ".join(missing_embedding_skus)
+            )
 
         # PRODUCT VOLUME DISCOUNTS
 
@@ -701,7 +732,7 @@ async def seed():
         print("\n✅ Seed complete!")
         print(f"   {len(CATEGORIES)} categories")
         print(f"   {total_products} products")
-        print("   Test accounts ready to use with password: password123")
+        print("   Test accounts ready to use with password: Password123")
 
 
 if __name__ == "__main__":

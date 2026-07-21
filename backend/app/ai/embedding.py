@@ -27,12 +27,17 @@ def build_product_embedding_text(
 
 
 class EmbeddingService:
-    """Lazy-loads sentence-transformers; never raises into catalog request handlers."""
+    """Loads sentence-transformers on warm-up; never raises into catalog request handlers."""
 
     def __init__(self) -> None:
         self._model = None
         self._load_attempted = False
         self._available = False
+
+    def warm_up(self) -> None:
+        """Eager-load the model at app startup when semantic search is enabled."""
+        if settings.SEMANTIC_SEARCH_ENABLED and not self._load_attempted:
+            self._try_load()
 
     def is_available(self) -> bool:
         if not settings.SEMANTIC_SEARCH_ENABLED:

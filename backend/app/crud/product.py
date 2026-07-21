@@ -2,7 +2,7 @@ import uuid
 
 from app.models import Category, Product
 from app.models.enums import ProductSortBy
-from app.services.hybrid_search import reciprocal_rank_fusion
+from app.ai.hybrid_search import reciprocal_rank_fusion
 from sqlalchemy import desc, func, or_, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload

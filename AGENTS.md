@@ -19,6 +19,7 @@ volume-based discounts, email double opt-in, and company verification via NIP.
 - `backend/app/schemas/`  Pydantic request/response DTOs.
 - `backend/app/crud/`     DB access only (queries). No business logic.
 - `backend/app/services/` Business logic. Orchestrates crud + raises domain exceptions.
+- `backend/app/ai/` Optional local embeddings / hybrid search (no external AI APIs).
 - `backend/app/routers/`  HTTP endpoints. Thin — delegate to services.
 - `backend/app/core/`     settings, security (JWT/hashing), exceptions.
 - `backend/app/tests/`    pytest suite (savepoint-isolated DB fixtures).
