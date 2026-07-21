@@ -69,7 +69,7 @@ backend image at build time.
 ![Home](docs/home.png)
 ![Catalog](docs/catalog.png)
 ![Checkout](docs/checkout.png)
-![Database diagram](docs/swagger.png)
+![Database diagram](docs/diagram.png)
 
 <br>
 
