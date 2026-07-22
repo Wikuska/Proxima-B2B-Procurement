@@ -1,5 +1,8 @@
 # Proxima - B2B / B2C Procurement Platform
 
+[![Backend CI](https://github.com/Wikuska/Proxima-B2B-Procurement/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/Wikuska/Proxima-B2B-Procurement/actions/workflows/backend-ci.yml)
+[![Frontend CI](https://github.com/Wikuska/Proxima-B2B-Procurement/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/Wikuska/Proxima-B2B-Procurement/actions/workflows/frontend-ci.yml)
+
 ![Python](https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white)
 ![React](https://img.shields.io/badge/React-20232A?style=flat-square&logo=react&logoColor=61DAFB)

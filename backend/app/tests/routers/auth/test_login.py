@@ -33,7 +33,9 @@ async def test_login_success_returns_valid_jwt(
     #  Token Validity and Content
     token = data["access_token"]
     decoded_payload = jwt.decode(
-        token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+        token,
+        settings.SECRET_KEY.get_secret_value(),
+        algorithms=[settings.ALGORITHM],
     )
 
     # In JWT, the subject ('sub') is cast to a string

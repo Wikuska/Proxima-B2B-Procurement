@@ -81,7 +81,7 @@ async def test_me_with_wrong_token_type_returns_401(async_client: AsyncClient):
             "sub": "test@example.com",
             "type": "email_verification",
         },
-        settings.SECRET_KEY,
+        settings.SECRET_KEY.get_secret_value(),
         algorithm=settings.ALGORITHM,
     )
 
