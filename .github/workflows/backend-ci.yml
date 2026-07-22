@@ -1,0 +1,64 @@
+name: Backend CI
+
+on:
+  pull_request:
+    paths:
+      - "backend/**"
+      - "docker-compose.yml"
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - "docker-compose.yml"
+
+jobs:
+  backend-tests:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: pgvector/pgvector:pg15
+        env:
+          POSTGRES_USER: b2b_admin
+          POSTGRES_PASSWORD: secret_password123
+          POSTGRES_DB: b2b_platform
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U b2b_admin -d b2b_platform"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql+asyncpg://b2b_admin:secret_password123@localhost:5432/b2b_platform
+      TEST_DATABASE_URL: postgresql+asyncpg://b2b_admin:secret_password123@localhost:5432/b2b_platform_test
+      SECRET_KEY: ci-test-secret-key
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Prepare test database
+        env:
+          PGPASSWORD: secret_password123
+        run: |
+          psql -h localhost -U b2b_admin -d b2b_platform -c "CREATE DATABASE b2b_platform_test;"
+          psql -h localhost -U b2b_admin -d b2b_platform_test -c "CREATE EXTENSION IF NOT EXISTS vector;"
+
+      - name: Install dependencies
+        run: pip install -r backend/requirements.txt
+
+      - name: Run tests
+        working-directory: backend
+        run: pytest
