@@ -34,6 +34,8 @@ jobs:
       DATABASE_URL: postgresql+asyncpg://b2b_admin:secret_password123@localhost:5432/b2b_platform
       TEST_DATABASE_URL: postgresql+asyncpg://b2b_admin:secret_password123@localhost:5432/b2b_platform_test
       SECRET_KEY: ci-test-secret-key
+      # Tests that use fixed_otp expect real OTP flow, not portfolio code "000000".
+      PORTFOLIO_MODE: "false"
 
     steps:
       - name: Checkout

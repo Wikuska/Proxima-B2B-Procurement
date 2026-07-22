@@ -63,7 +63,11 @@ def test_create_access_token_contains_correct_claims():
     subject = "user_12345"
 
     token = create_access_token(subject=subject)
-    decoded = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+    decoded = jwt.decode(
+        token,
+        settings.SECRET_KEY.get_secret_value(),
+        algorithms=[settings.ALGORITHM],
+    )
 
     assert decoded["sub"] == subject
     assert decoded["type"] == "access"
@@ -108,7 +112,7 @@ def test_decode_access_token_raises_invalid_token_type_exception():
     expire = datetime.now(timezone.utc) + timedelta(hours=1)
     verification_token = jwt.encode(
         {"exp": expire, "sub": "test@example.com", "type": "email_verification"},
-        settings.SECRET_KEY,
+        settings.SECRET_KEY.get_secret_value(),
         algorithm=settings.ALGORITHM,
     )
 
