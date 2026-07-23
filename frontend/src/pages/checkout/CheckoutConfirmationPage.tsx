@@ -39,7 +39,7 @@ function ConfirmationHero({
       <CheckCircle className="mx-auto mb-5 text-green-500" size={56} strokeWidth={1.5} />
       <h1 className="text-2xl font-bold text-text-main mb-2">Order placed!</h1>
       <p className="text-sm text-text-muted mb-6">
-        {status === "PROCESSING"
+        {status === "PREPARING"
           ? "Your order is being prepared."
           : "Thank you for your order."}
       </p>

@@ -89,6 +89,11 @@ class Order(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
+    company_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("companies.id", ondelete="RESTRICT"),
+        nullable=True,
+        index=True,
+    )
 
     purchase_type: Mapped[PurchaseType] = mapped_column(
         SQLEnum(PurchaseType), nullable=False
@@ -107,12 +112,24 @@ class Order(Base):
 
     # Relations
     user: Mapped["User"] = relationship(back_populates="orders")
+    company: Mapped["Company | None"] = relationship(back_populates="orders")
     items: Mapped[List["OrderItem"]] = relationship(back_populates="order")
     billing_document: Mapped["BillingDocument"] = relationship(
         back_populates="order", cascade="all, delete-orphan", uselist=False
     )
     shipment: Mapped["Shipment"] = relationship(
         back_populates="order", cascade="all, delete-orphan", uselist=False
+    )
+
+    __table_args__ = (
+        CheckConstraint(
+            "("
+            "CAST(purchase_type AS TEXT) = 'B2B' AND company_id IS NOT NULL"
+            ") OR ("
+            "CAST(purchase_type AS TEXT) = 'B2C' AND company_id IS NULL"
+            ")",
+            name="ck_orders_purchase_type_company_id",
+        ),
     )
 
     @property

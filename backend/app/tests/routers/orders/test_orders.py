@@ -1070,7 +1070,7 @@ async def test_cod_order_starts_processing(
     data = await _create_b2c_order(
         async_client, db_session, b2c_user, product_b2c, auth_headers, "CASH_ON_DELIVERY"
     )
-    assert data["status"] == "PROCESSING"
+    assert data["status"] == "PREPARING"
 
 
 @pytest.mark.asyncio
@@ -1094,7 +1094,7 @@ async def test_deferred_b2b_order_starts_processing(
     }
     resp = await async_client.post("/orders", json=payload, headers=auth_headers(buyer))
     assert resp.status_code == 201
-    assert resp.json()["status"] == "PROCESSING"
+    assert resp.json()["status"] == "PREPARING"
 
 
 @pytest.mark.asyncio
@@ -1128,7 +1128,7 @@ async def test_mock_payment_success_sets_processing(
         headers=auth_headers(b2c_user),
     )
     assert resp.status_code == 200
-    assert resp.json()["status"] == "PROCESSING"
+    assert resp.json()["status"] == "PREPARING"
 
 
 @pytest.mark.asyncio
@@ -1186,7 +1186,7 @@ async def test_confirm_bank_transfer_sets_processing(
         headers=auth_headers(b2c_user),
     )
     assert resp.status_code == 200
-    assert resp.json()["status"] == "PROCESSING"
+    assert resp.json()["status"] == "PREPARING"
 
 
 @pytest.mark.asyncio
@@ -1251,7 +1251,7 @@ async def test_admin_advance_processing_to_delivered(
         json={"success": True},
         headers=auth_headers(b2c_user),
     )
-    assert mock_resp.json()["status"] == "PROCESSING"
+    assert mock_resp.json()["status"] == "PREPARING"
 
     for expected in ("SHIPPED", "DELIVERED"):
         resp = await async_client.post(

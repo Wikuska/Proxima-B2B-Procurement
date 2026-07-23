@@ -14,6 +14,7 @@ export { default as CompanyPage } from "./company/CompanyPage";
 export { default as CompanyAddressesTab } from "./company/CompanyAddressesTab";
 export { default as CompanyMembersTab } from "./company/CompanyMembersTab";
 export { default as CompanyOrdersTab } from "./company/CompanyOrdersTab";
+export { default as CompanyOrderDetailPage } from "./company/CompanyOrderDetailPage";
 export { default as CompanyOverviewTab } from "./company/CompanyOverviewTab";
 export { default as CompanySettingsTab } from "./company/CompanySettingsTab";
 export { default as JoinRequestsTab } from "./company/JoinRequestsTab";

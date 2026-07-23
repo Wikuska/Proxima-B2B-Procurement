@@ -11,7 +11,7 @@ from .base import Base
 from .enums import RequestStatus
 
 if TYPE_CHECKING:
-    from .order import Address
+    from .order import Address, Order
     from .user import User
 
 
@@ -34,6 +34,7 @@ class Company(Base):
     # Relations
     users: Mapped[List["User"]] = relationship(back_populates="company")
     addresses: Mapped[List["Address"]] = relationship(back_populates="company")
+    orders: Mapped[List["Order"]] = relationship(back_populates="company")
 
 
 class CompanyRequest(Base):

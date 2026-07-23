@@ -5,16 +5,19 @@ from app.database import get_db
 from app.models import User
 from app.schemas.address import AddressIn, AddressOut
 from app.schemas.common import MessageOut
+from app.models.enums import OrderStatus
 from app.schemas.company import (
     CompanyAffiliationOut,
     CompanyMemberOut,
+    CompanyOrderOut,
+    CompanyOrderSummaryOut,
     CompanyRequestAdminOut,
     CompanyRequestCreate,
     CompanyRequestOut,
 )
 from app.services import address as address_service
 from app.services import company as company_service
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/companies", tags=["Companies"])
@@ -96,6 +99,24 @@ async def list_members(
     db: AsyncSession = Depends(get_db),
 ):
     return await company_service.list_company_members(db, admin)
+
+
+@router.get("/orders", response_model=list[CompanyOrderSummaryOut])
+async def list_company_orders(
+    status_filter: OrderStatus | None = Query(default=None, alias="status"),
+    admin: User = Depends(require_company_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    return await company_service.list_company_orders(db, admin, status_filter)
+
+
+@router.get("/orders/{order_id}", response_model=CompanyOrderOut)
+async def get_company_order(
+    order_id: uuid.UUID,
+    admin: User = Depends(require_company_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    return await company_service.get_company_order(db, admin, order_id)
 
 
 @router.delete("/members/{user_id}", response_model=MessageOut)
