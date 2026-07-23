@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Navigate, useNavigate, useOutletContext } from "react-router-dom";
-import CheckoutSection from "../../../components/checkout/CheckoutSection";
+import Panel from "../../../components/common/Panel";
 import OrderSummarySidebar from "../../../components/checkout/OrderSummarySidebar";
 import { TwoColumn } from "../../../layouts/CartCheckoutLayout";
 import { DELIVERY_LABELS, PAYMENT_LABELS } from "../../../api/order";
@@ -51,7 +51,7 @@ export default function DeliveryPaymentStep() {
         />
       }
     >
-      <CheckoutSection title="Delivery method">
+      <Panel title="Delivery method">
         <div className="space-y-2">
           {checkoutOptions?.delivery_methods.map((opt) => {
             const cost = Number(opt.cost);
@@ -79,9 +79,9 @@ export default function DeliveryPaymentStep() {
             );
           })}
         </div>
-      </CheckoutSection>
+      </Panel>
 
-      <CheckoutSection title="Payment method">
+      <Panel title="Payment method">
         <div className="space-y-2">
           {checkoutOptions?.payment_methods.map((opt) => {
             const disabled = opt.b2b_only && !isB2bPurchase;
@@ -116,7 +116,7 @@ export default function DeliveryPaymentStep() {
             );
           })}
         </div>
-      </CheckoutSection>
+      </Panel>
 
       {triedNext && !canProceedToSummary && (
         <p className="text-xs font-semibold text-red-500 -mt-4">

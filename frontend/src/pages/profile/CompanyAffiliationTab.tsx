@@ -1,6 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import Panel from "../../components/common/Panel";
 import FormButton from "../../components/forms/FormButton";
 import FormInput from "../../components/forms/FormInput";
 import {
@@ -54,17 +55,11 @@ function AffiliationCard({
 
   return (
     <div className="w-full h-full flex flex-col">
-      <div className="bg-bg-base border border-border-base/40 rounded-lg p-6 shadow-sm">
-        <div>
-          <h2 className="text-xl font-bold text-text-main">
-            {affiliation.company_name}
-          </h2>
-          <p className="text-sm font-mono text-text-muted mt-1">
-            NIP: {formatNip(affiliation.company_nip)}
-          </p>
-        </div>
-
-        <div className="divide-y divide-border-base/20 mt-5">
+      <Panel
+        title={affiliation.company_name}
+        description={`NIP: ${formatNip(affiliation.company_nip)}`}
+      >
+        <div className="divide-y divide-border-base/20">
           <div className="flex justify-between items-center py-3">
             <span className="text-sm text-text-muted">Role</span>
             <span
@@ -85,12 +80,10 @@ function AffiliationCard({
           </div>
           <div className="flex justify-between items-center py-3">
             <span className="text-sm text-text-muted">Member since</span>
-            <span className="text-sm font-bold text-text-main">
-              {joinedAt}
-            </span>
+            <span className="text-sm font-bold text-text-main">{joinedAt}</span>
           </div>
         </div>
-      </div>
+      </Panel>
 
       <div className="mt-auto pt-6 border-t border-border-base/30">
         <h3 className="text-sm font-semibold text-red-600 mb-1">Danger Zone</h3>
@@ -127,7 +120,6 @@ export default function CompanyAffiliationTab() {
   });
 
   const onSubmit = (data: JoinCompanyFormData) => {
-    // Zachowujemy usuwanie znaków do backendu
     const nip = data.requested_nip.replace(/[\s-]/g, "");
     submit(
       { requested_nip: nip },
@@ -157,69 +149,59 @@ export default function CompanyAffiliationTab() {
   }
 
   return (
-    <div className="w-full">
-      <div className="grid md:grid-cols-2 gap-10 md:gap-16">
-        <section>
-          <div className="mb-6">
-            <h2 className="text-lg font-semibold text-text-main">
-              Join a Company
-            </h2>
-            <p className="text-sm text-text-muted mt-1">
-              Enter the NIP of your company to request an affiliation.
+    <div className="w-full grid md:grid-cols-2 gap-6">
+      <Panel
+        title="Join a Company"
+        description="Enter the NIP of your company to request an affiliation."
+      >
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <FormInput
+            id="requested_nip"
+            label="Company NIP"
+            placeholder="e.g. 123-456-78-90"
+            isAuth
+            hideLabel={false}
+            error={errors.requested_nip?.message}
+            {...register("requested_nip")}
+          />
+          <FormButton type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Sending..." : "Send Request"}
+          </FormButton>
+        </form>
+      </Panel>
+
+      <Panel title="My Requests">
+        {loadingRequests ? (
+          <p className="text-text-muted text-sm">Loading...</p>
+        ) : !requests?.length ? (
+          <div className="flex flex-col items-center justify-center p-8 bg-bg-base border border-dashed border-border-base/40 rounded-lg">
+            <p className="text-text-muted text-sm text-center">
+              You haven't sent any requests yet.
             </p>
           </div>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <FormInput
-              id="requested_nip"
-              label="Company NIP"
-              placeholder="e.g. 123-456-78-90"
-              isAuth
-              hideLabel={false}
-              error={errors.requested_nip?.message}
-              {...register("requested_nip")}
-            />
-            <FormButton type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Sending..." : "Send Request"}
-            </FormButton>
-          </form>
-        </section>
-
-        <section>
-          <h2 className="text-lg font-semibold text-text-main mb-6">
-            My Requests
-          </h2>
-          {loadingRequests ? (
-            <p className="text-text-muted text-sm">Loading...</p>
-          ) : !requests?.length ? (
-            <div className="flex flex-col items-center justify-center p-8 bg-bg-base border border-dashed border-border-base/40 rounded-lg">
-              <p className="text-text-muted text-sm text-center">
-                You haven't sent any requests yet.
-              </p>
-            </div>
-          ) : (
-            <ul className="space-y-3">
-              {requests.map((req) => (
-                <li
-                  key={req.id}
-                  className="flex justify-between items-center p-3.5 bg-bg-base border border-border-base/40 rounded-lg shadow-sm"
+        ) : (
+          <ul className="space-y-3">
+            {requests.map((req) => (
+              <li
+                key={req.id}
+                className="flex justify-between items-center p-3.5 bg-bg-base border border-border-base/40 rounded-lg shadow-sm"
+              >
+                <span className="font-mono text-sm text-text-main">
+                  {formatNip(req.requested_nip)}
+                </span>
+                <span
+                  className={`text-[11px] uppercase tracking-wider font-semibold px-2.5 py-1 rounded-full ${
+                    STATUS_STYLES[req.status] ||
+                    "bg-border-base/20 text-text-main"
+                  }`}
                 >
-                  <span className="font-mono text-sm text-text-main">
-                    {formatNip(req.requested_nip)}
-                  </span>
-                  <span
-                    className={`text-[11px] uppercase tracking-wider font-semibold px-2.5 py-1 rounded-full ${
-                      STATUS_STYLES[req.status] ||
-                      "bg-border-base/20 text-text-main"
-                    }`}
-                  >
-                    {req.status}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-      </div>
+                  {req.status}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Panel>
     </div>
   );
 }

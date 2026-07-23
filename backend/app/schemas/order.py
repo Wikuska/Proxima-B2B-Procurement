@@ -96,6 +96,7 @@ class OrderItemOut(BaseModel):
     product_id: uuid.UUID
     product_name: str
     product_sku: str
+    product_slug: str | None = None
     quantity: int
     unit_price: Decimal
     discount_percentage: Decimal

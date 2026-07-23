@@ -69,6 +69,7 @@ export interface OrderItemOut {
   product_id: string;
   product_name: string;
   product_sku: string;
+  product_slug: string | null;
   quantity: number;
   unit_price: string;
   discount_percentage: string;

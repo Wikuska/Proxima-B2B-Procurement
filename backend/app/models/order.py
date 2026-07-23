@@ -154,6 +154,7 @@ class OrderItem(Base):
 
     product_name: Mapped[str] = mapped_column(String(255), nullable=False)
     product_sku: Mapped[str] = mapped_column(String(100), nullable=False)
+    product_slug: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     # Relations
     order: Mapped["Order"] = relationship(back_populates="items")

@@ -1,5 +1,6 @@
 import { DEMO_BANK_DETAILS, formatTransferTitle } from "../../config/payment";
 import { useConfirmPayment } from "../../hooks/order/useOrders";
+import Panel from "../common/Panel";
 
 interface BankTransferInstructionsProps {
   orderId: string;
@@ -15,12 +16,12 @@ export default function BankTransferInstructions({
   const confirmPayment = useConfirmPayment(orderId);
 
   return (
-    <div className="bg-bg-surface border border-border-base/20 rounded-2xl p-6 text-left shadow-sm space-y-3">
-      <h2 className="text-sm font-semibold text-text-main">Bank transfer instructions</h2>
-      <p className="text-sm text-text-muted">
-        Transfer the exact amount to the account below. Use the transfer title so we can match
-        your payment.
-      </p>
+    <Panel
+      title="Bank transfer instructions"
+      description="Transfer the exact amount to the account below. Use the transfer title so we can match your payment."
+      stacked
+      className="space-y-3 text-left"
+    >
       <dl className="space-y-2 text-sm">
         <div>
           <dt className="text-text-muted">Bank</dt>
@@ -61,6 +62,6 @@ export default function BankTransferInstructions({
           {confirmPayment.isPending ? "Confirming…" : "I've made the transfer"}
         </button>
       )}
-    </div>
+    </Panel>
   );
 }

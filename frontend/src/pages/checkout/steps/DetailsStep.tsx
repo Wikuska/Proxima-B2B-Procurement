@@ -3,7 +3,7 @@ import { useFormContext } from "react-hook-form";
 import { Link, useNavigate, useOutletContext } from "react-router-dom";
 import type { DocumentType } from "../../../api/order";
 import AddressPicker from "../../../components/checkout/AddressPicker";
-import CheckoutSection from "../../../components/checkout/CheckoutSection";
+import Panel from "../../../components/common/Panel";
 import OrderSummarySidebar from "../../../components/checkout/OrderSummarySidebar";
 import { TwoColumn } from "../../../layouts/CartCheckoutLayout";
 import FormInput from "../../../components/forms/FormInput";
@@ -91,7 +91,7 @@ export default function DetailsStep() {
         </Link>
       </div>
 
-      <CheckoutSection
+      <Panel
         title="Shipping address"
         headerAside={
           triedNext && !hasShippingAddress ? (
@@ -125,9 +125,9 @@ export default function DetailsStep() {
             }}
           />
         )}
-      </CheckoutSection>
+      </Panel>
 
-      <CheckoutSection
+      <Panel
         title="Recipient"
         description="Who should receive this order? Defaults to your account details but can be edited."
       >
@@ -161,7 +161,7 @@ export default function DetailsStep() {
             error={errors.recipient?.recipient_email?.message}
           />
         </div>
-      </CheckoutSection>
+      </Panel>
 
       {useProfileBilling ? (
         <CompanyInvoiceReadOnly

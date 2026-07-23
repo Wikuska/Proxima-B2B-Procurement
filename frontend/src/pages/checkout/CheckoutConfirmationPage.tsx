@@ -2,6 +2,7 @@ import { CheckCircle, Clock } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { DELIVERY_LABELS, ORDER_STATUS_LABELS, PAYMENT_LABELS } from "../../api/order";
 import BankTransferInstructions from "../../components/checkout/BankTransferInstructions";
+import Panel from "../../components/common/Panel";
 import { useOrder } from "../../hooks/order/useOrders";
 
 function ConfirmationHero({
@@ -91,8 +92,7 @@ export default function CheckoutConfirmationPage() {
         </div>
       )}
 
-      <div className="bg-bg-surface border border-border-base/20 rounded-2xl p-6 text-left shadow-sm mb-8">
-        <h2 className="text-sm font-semibold text-text-main mb-3">Items ordered</h2>
+      <Panel title="Items ordered" className="mb-8 text-left">
         <div className="divide-y divide-border-base/10">
           {order.items.map((item) => (
             <div key={item.id} className="py-2.5 flex justify-between gap-4">
@@ -124,10 +124,9 @@ export default function CheckoutConfirmationPage() {
             </span>
           </div>
         </div>
-      </div>
+      </Panel>
 
-      <div className="bg-bg-surface border border-border-base/20 rounded-2xl p-6 text-left shadow-sm mb-8 space-y-1.5">
-        <h2 className="text-sm font-semibold text-text-main mb-2">Delivery</h2>
+      <Panel title="Delivery" stacked className="mb-8 space-y-1.5 text-left">
         <p className="text-sm text-text-muted">
           <span className="font-medium text-text-main">Recipient:</span>{" "}
           {order.shipment.recipient_name} · {order.shipment.recipient_phone}
@@ -150,7 +149,7 @@ export default function CheckoutConfirmationPage() {
             <span className="font-medium text-text-main">Note:</span> {order.note}
           </p>
         )}
-      </div>
+      </Panel>
 
       <div className="flex gap-3 justify-center">
         <Link

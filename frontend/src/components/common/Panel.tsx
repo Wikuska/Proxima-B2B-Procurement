@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-interface CheckoutSectionProps {
+interface PanelProps {
   title: ReactNode;
   description?: string;
   headerAside?: ReactNode;
@@ -10,14 +10,18 @@ interface CheckoutSectionProps {
   children: ReactNode;
 }
 
-export default function CheckoutSection({
+/**
+ * Shared content card: white surface, md padding, bold xl title.
+ * Used across checkout, order detail, and profile.
+ */
+export default function Panel({
   title,
   description,
   headerAside,
   stacked = false,
   className = "",
   children,
-}: CheckoutSectionProps) {
+}: PanelProps) {
   const titleClass = stacked
     ? "text-xl font-bold text-text-main"
     : description

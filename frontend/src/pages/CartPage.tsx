@@ -127,7 +127,7 @@ export default function CartPage() {
         <TwoColumn
           sidebar={
             /* ── Right: summary panel ── */
-            <div className="bg-bg-surface border border-border-base/20 rounded-2xl p-7 space-y-5 lg:sticky lg:top-24 shadow-sm">
+            <div className="bg-bg-surface border border-border-base/20 rounded-2xl p-7 space-y-5 lg:sticky lg:top-4 shadow-sm">
               <h2 className="text-lg font-bold text-text-main">Summary</h2>
 
               {user?.company_id && (

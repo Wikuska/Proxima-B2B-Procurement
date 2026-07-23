@@ -18,6 +18,7 @@ export default function CompanyOrderDetailPage() {
       order={order}
       backTo={{ href: "/company/orders", label: "Back to company orders" }}
       placedBy={{ name, email: order.placed_by.email }}
+      layout="wide"
     />
   );
 }
