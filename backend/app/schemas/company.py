@@ -62,6 +62,7 @@ class CompanyMemberOut(BaseModel):
     first_name: str
     last_name: str
     role: UserRole
+    company_joined_at: datetime | None
 
     model_config = ConfigDict(from_attributes=True)
 

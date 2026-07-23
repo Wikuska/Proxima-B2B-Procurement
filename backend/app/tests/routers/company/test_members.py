@@ -44,10 +44,12 @@ async def test_list_members_returns_own_company_only(
     )
 
     assert response.status_code == 200
-    ids = [u["id"] for u in response.json()]
+    body = response.json()
+    ids = [u["id"] for u in body]
     assert str(admin.id) in ids
     assert str(member.id) in ids
     assert len(ids) == 2
+    assert "company_joined_at" in body[0]
 
 
 async def test_list_members_customer_forbidden(

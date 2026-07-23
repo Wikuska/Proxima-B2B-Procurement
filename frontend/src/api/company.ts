@@ -35,6 +35,7 @@ export interface CompanyMember {
   first_name: string;
   last_name: string;
   role: "CUSTOMER" | "COMPANY_ADMIN" | "ADMIN";
+  company_joined_at: string | null;
 }
 
 export const submitCompanyRequest = (payload: SubmitRequestPayload) =>
