@@ -65,7 +65,10 @@ export default function OrdersTable({
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, pageCount - 1);
-  const pageItems = filtered.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE);
+  const pageItems = filtered.slice(
+    safePage * PAGE_SIZE,
+    (safePage + 1) * PAGE_SIZE,
+  );
   const from = filtered.length === 0 ? 0 : safePage * PAGE_SIZE + 1;
   const to = Math.min((safePage + 1) * PAGE_SIZE, filtered.length);
 
@@ -134,8 +137,10 @@ export default function OrdersTable({
           <div className="overflow-x-auto">
             <table className="w-full table-fixed border-collapse min-w-[720px]">
               <thead>
-                <tr className="bg-primary/[0.04] text-[11px] uppercase tracking-wider text-text-muted">
-                  <th className="px-4 py-3 font-semibold text-left w-[12%]">Order #</th>
+                <tr className="bg-bg-base text-[11px] uppercase tracking-wider text-text-muted">
+                  <th className="px-4 py-3 font-semibold text-left w-[12%]">
+                    Order #
+                  </th>
                   <th className="px-4 py-3 font-semibold text-center">Date</th>
                   {showPlacedBy && (
                     <th className="px-4 py-3 font-semibold text-center w-[22%]">
@@ -143,9 +148,15 @@ export default function OrdersTable({
                     </th>
                   )}
                   <th className="px-4 py-3 font-semibold text-center">Items</th>
-                  <th className="px-4 py-3 font-semibold text-center">Amount</th>
-                  <th className="px-4 py-3 font-semibold text-center">Status</th>
-                  <th className="px-4 py-3 font-semibold text-right w-[8%]">Actions</th>
+                  <th className="px-4 py-3 font-semibold text-center">
+                    Amount
+                  </th>
+                  <th className="px-4 py-3 font-semibold text-center">
+                    Status
+                  </th>
+                  <th className="px-4 py-3 font-semibold text-right w-[8%]">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody>

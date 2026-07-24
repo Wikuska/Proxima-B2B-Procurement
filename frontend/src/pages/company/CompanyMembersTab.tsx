@@ -44,8 +44,9 @@ export default function CompanyMembersTab() {
     const q = search.trim().toLowerCase();
     if (!q) return allRows;
     return allRows.filter((member) => {
-      const fullName =
-        `${member.first_name} ${member.last_name}`.trim().toLowerCase();
+      const fullName = `${member.first_name} ${member.last_name}`
+        .trim()
+        .toLowerCase();
       return (
         fullName.includes(q) ||
         member.first_name.toLowerCase().includes(q) ||
@@ -113,7 +114,7 @@ export default function CompanyMembersTab() {
             <div className="overflow-x-auto">
               <table className="w-full table-fixed border-collapse min-w-[720px]">
                 <thead>
-                  <tr className="bg-primary/[0.04] text-[11px] uppercase tracking-wider text-text-muted">
+                  <tr className="bg-bg-base text-[11px] uppercase tracking-wider text-text-muted">
                     <th className="px-4 py-3 font-semibold text-left w-[28%]">
                       Name
                     </th>
@@ -123,7 +124,9 @@ export default function CompanyMembersTab() {
                     <th className="px-4 py-3 font-semibold text-center">
                       Joined
                     </th>
-                    <th className="px-4 py-3 font-semibold text-center">Role</th>
+                    <th className="px-4 py-3 font-semibold text-center">
+                      Role
+                    </th>
                     <th className="px-4 py-3 font-semibold text-right w-[12%]">
                       Actions
                     </th>
