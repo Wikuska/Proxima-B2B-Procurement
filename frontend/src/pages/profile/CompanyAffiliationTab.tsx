@@ -149,7 +149,7 @@ export default function CompanyAffiliationTab() {
   }
 
   return (
-    <div className="w-full grid md:grid-cols-2 gap-6">
+    <div className="w-full grid md:grid-cols-2 gap-6 items-start">
       <Panel
         title="Join a Company"
         description="Enter the NIP of your company to request an affiliation."
@@ -180,7 +180,7 @@ export default function CompanyAffiliationTab() {
             </p>
           </div>
         ) : (
-          <ul className="space-y-3">
+          <ul className="space-y-3 max-h-72 overflow-y-auto pr-1">
             {requests.map((req) => (
               <li
                 key={req.id}

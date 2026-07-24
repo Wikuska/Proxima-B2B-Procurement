@@ -18,8 +18,8 @@ export default function ProfilePage() {
   const fullName = user ? `${user.first_name} ${user.last_name}` : "";
 
   return (
-    <div className="max-w-7xl mx-auto mt-10 mb-12 px-4 w-full">
-      <div className="flex items-center gap-3 mb-8">
+    <div className="max-w-7xl mx-auto px-4 w-full flex-1 min-h-0 flex flex-col pt-10 pb-6">
+      <div className="flex items-center gap-3 mb-8 shrink-0">
         <div className="w-11 h-11 rounded-full bg-accent/20 text-accent flex items-center justify-center text-sm font-bold shrink-0">
           {getInitials(fullName)}
         </div>
@@ -31,8 +31,8 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      <div className="flex flex-col md:flex-row border border-border-base/30 rounded-lg shadow-sm min-h-[650px] overflow-hidden bg-bg-surface">
-        <aside className="w-full md:w-60 border-b md:border-b-0 md:border-r border-border-base/30 p-6 shrink-0 bg-bg-surface z-10">
+      <div className="flex flex-col md:flex-row border mb-6 border-border-base/30 rounded-lg shadow-sm flex-1 min-h-0 overflow-hidden bg-bg-surface">
+        <aside className="w-full md:w-60 border-b md:border-b-0 md:border-r border-border-base/30 p-6 shrink-0 bg-bg-surface z-10 overflow-y-auto">
           <nav className="flex flex-col">
             {profileTabs.map(({ to, label }) => {
               const isOrdersTab = to === "/profile/orders";
@@ -56,8 +56,7 @@ export default function ProfilePage() {
           </nav>
         </aside>
 
-        {/* Same tone as page bg — white Panels sit on top (2 tones, not 3). */}
-        <main className="flex-1 p-6 md:p-8 bg-bg-base">
+        <main className="flex-1 min-h-0 overflow-y-auto p-6 md:p-8 bg-bg-base">
           <Outlet />
         </main>
       </div>
