@@ -83,3 +83,18 @@ async def get_request_by_id(
         select(CompanyRequest).where(CompanyRequest.id == request_id)
     )
     return result.scalar_one_or_none()
+
+
+async def update_company_fields(
+    db: AsyncSession,
+    company: Company,
+    fields: dict,
+) -> Company:
+    if "name" in fields and fields["name"] is not None:
+        company.name = fields["name"].strip()
+    if "phone" in fields:
+        phone = fields["phone"]
+        company.phone = phone.strip() if isinstance(phone, str) and phone.strip() else None
+    await db.commit()
+    await db.refresh(company)
+    return company

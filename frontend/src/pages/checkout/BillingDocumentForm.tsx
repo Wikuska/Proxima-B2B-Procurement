@@ -1,5 +1,5 @@
 import { useFormContext } from "react-hook-form";
-import CheckoutSection from "../../components/checkout/CheckoutSection";
+import Panel from "../../components/common/Panel";
 import FormInput from "../../components/forms/FormInput";
 import type { DocumentType } from "../../api/order";
 import type { DetailsFormData } from "../../schemas/checkoutSchema";
@@ -18,7 +18,7 @@ export function CompanyInvoiceReadOnly({
   billingAddress: AddressOut | null;
 }) {
   return (
-    <CheckoutSection title="Billing document" stacked className="space-y-4">
+    <Panel title="Billing document" stacked className="space-y-4">
       <div className="p-4 bg-bg-base border border-primary/20 rounded-xl space-y-1">
         <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-2">
           Company Invoice
@@ -40,7 +40,7 @@ export function CompanyInvoiceReadOnly({
           </p>
         )}
       </div>
-    </CheckoutSection>
+    </Panel>
   );
 }
 
@@ -83,7 +83,7 @@ export function PrivateBillingForm({
     | undefined;
 
   return (
-    <CheckoutSection title="Billing document" stacked className="space-y-5">
+    <Panel title="Billing document" stacked className="space-y-5">
       {showDocumentTypeRadios ? (
         <div className="space-y-2">
           {documentTypeOptions
@@ -195,6 +195,6 @@ export function PrivateBillingForm({
           </>
         )}
       </div>
-    </CheckoutSection>
+    </Panel>
   );
 }

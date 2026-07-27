@@ -1,4 +1,12 @@
 import apiFetch from "./client";
+import type {
+  BillingDocumentOut,
+  OrderItemOut,
+  OrderStatus,
+  PaymentMethod,
+  PurchaseType,
+  ShipmentOut,
+} from "./order";
 
 export interface CompanyRequest {
   id: string;
@@ -27,6 +35,7 @@ export interface CompanyMember {
   first_name: string;
   last_name: string;
   role: "CUSTOMER" | "COMPANY_ADMIN" | "ADMIN";
+  company_joined_at: string | null;
 }
 
 export const submitCompanyRequest = (payload: SubmitRequestPayload) =>
@@ -74,3 +83,72 @@ export interface CompanyAffiliation {
 
 export const getMyAffiliation = () =>
   apiFetch<CompanyAffiliation>("/companies/me");
+
+export interface CompanySettings {
+  id: string;
+  name: string;
+  nip: string;
+  phone: string | null;
+  discount_percentage: string;
+}
+
+export interface CompanySettingsUpdate {
+  name?: string;
+  phone?: string | null;
+}
+
+export const getCompanySettings = () =>
+  apiFetch<CompanySettings>("/companies/settings");
+
+export const updateCompanySettings = (payload: CompanySettingsUpdate) =>
+  apiFetch<CompanySettings>("/companies/settings", {
+    method: "PATCH",
+    body: payload,
+  });
+
+export const transferCompanyOwnership = (userId: string) =>
+  apiFetch<{ message: string }>("/companies/transfer-ownership", {
+    method: "POST",
+    body: { user_id: userId },
+  });
+
+export interface CompanyOrderPlacer {
+  id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+}
+
+export interface CompanyOrderSummary {
+  id: string;
+  status: OrderStatus;
+  purchase_type: PurchaseType;
+  company_id: string | null;
+  total_amount: string;
+  created_at: string;
+  item_count: number;
+  placed_by: CompanyOrderPlacer;
+}
+
+export interface CompanyOrderDetail {
+  id: string;
+  status: OrderStatus;
+  purchase_type: PurchaseType;
+  company_id: string | null;
+  payment_method: PaymentMethod;
+  total_amount: string;
+  note: string | null;
+  created_at: string;
+  billing_document: BillingDocumentOut;
+  shipment: ShipmentOut;
+  items: OrderItemOut[];
+  placed_by: CompanyOrderPlacer;
+}
+
+export const getCompanyOrders = (status?: OrderStatus) => {
+  const qs = status ? `?status=${status}` : "";
+  return apiFetch<CompanyOrderSummary[]>(`/companies/orders${qs}`);
+};
+
+export const getCompanyOrder = (orderId: string) =>
+  apiFetch<CompanyOrderDetail>(`/companies/orders/${orderId}`);

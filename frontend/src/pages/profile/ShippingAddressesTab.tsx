@@ -1,12 +1,13 @@
 import { Trash2 } from "lucide-react";
 import { useState } from "react";
+import type { AddressOut } from "../../api/address";
+import Panel from "../../components/common/Panel";
 import AddressForm from "../../components/forms/AddressForm";
 import {
   useCreatePersonalAddress,
   useDeletePersonalAddress,
   usePersonalAddresses,
 } from "../../hooks/address/useAddresses";
-import type { AddressOut } from "../../api/address";
 
 function AddressCard({
   label,
@@ -36,6 +37,7 @@ function AddressCard({
         </p>
       </div>
       <button
+        type="button"
         onClick={onDelete}
         className="text-text-muted hover:text-red-500 transition-colors shrink-0 mt-0.5"
         aria-label="Delete address"
@@ -56,54 +58,55 @@ export default function ShippingAddressesTab() {
 
   return (
     <div className="w-full space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-base font-semibold text-text-main">
-          Shipping Addresses
-        </h2>
-        <button
-          onClick={() => setShowForm((v) => !v)}
-          className="text-sm text-primary hover:underline"
-        >
-          {showForm ? "Cancel" : "+ Add shipping address"}
-        </button>
-      </div>
-
-      {showForm && (
-        <div className="bg-bg-base border border-border-base/40 rounded-lg p-4 shadow-sm">
-          <AddressForm
-            showSaveOption={false}
-            onSubmit={(data) => {
-              createAddress.mutate(
-                { ...data, address_type: "SHIPPING" },
-                { onSuccess: () => setShowForm(false) },
-              );
-            }}
-          />
-        </div>
-      )}
-
-      {addresses.length === 0 ? (
-        !showForm && (
-          <div className="p-8 bg-bg-base border border-dashed border-border-base/40 rounded-lg text-center text-text-muted text-sm">
-            No shipping addresses yet.
+      <Panel
+        title="Shipping Addresses"
+        headerAside={
+          <button
+            type="button"
+            onClick={() => setShowForm((v) => !v)}
+            className="text-sm text-primary hover:underline shrink-0"
+          >
+            {showForm ? "Cancel" : "+ Add shipping address"}
+          </button>
+        }
+      >
+        {showForm && (
+          <div className="mb-4 p-4 bg-bg-base border border-border-base/40 rounded-lg">
+            <AddressForm
+              showSaveOption={false}
+              onSubmit={(data) => {
+                createAddress.mutate(
+                  { ...data, address_type: "SHIPPING" },
+                  { onSuccess: () => setShowForm(false) },
+                );
+              }}
+            />
           </div>
-        )
-      ) : (
-        <ul className="space-y-3">
-          {addresses.map((a: AddressOut) => (
-            <li key={a.id}>
-              <AddressCard
-                label={a.label}
-                street={a.street}
-                city={a.city}
-                postal_code={a.postal_code}
-                country={a.country}
-                onDelete={() => deleteAddress.mutate(a.id)}
-              />
-            </li>
-          ))}
-        </ul>
-      )}
+        )}
+
+        {addresses.length === 0 ? (
+          !showForm && (
+            <div className="p-8 bg-bg-base border border-dashed border-border-base/40 rounded-lg text-center text-text-muted text-sm">
+              No shipping addresses yet.
+            </div>
+          )
+        ) : (
+          <ul className="space-y-3">
+            {addresses.map((a: AddressOut) => (
+              <li key={a.id}>
+                <AddressCard
+                  label={a.label}
+                  street={a.street}
+                  city={a.city}
+                  postal_code={a.postal_code}
+                  country={a.country}
+                  onDelete={() => deleteAddress.mutate(a.id)}
+                />
+              </li>
+            ))}
+          </ul>
+        )}
+      </Panel>
     </div>
   );
 }

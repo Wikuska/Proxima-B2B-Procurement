@@ -88,6 +88,7 @@ async def create_order(db: AsyncSession, user: User, payload: OrderCreate) -> Or
                 product_id=ci.product_id,
                 product_name=product.name,
                 product_sku=product.sku,
+                product_slug=product.slug,
                 quantity=ci.quantity,
                 unit_price=line["final_unit_price"],
                 discount_percentage=line["effective_pct"],
@@ -99,6 +100,9 @@ async def create_order(db: AsyncSession, user: User, payload: OrderCreate) -> Or
 
     order = Order(
         user_id=user.id,
+        company_id=(
+            user.company_id if payload.purchase_type == PurchaseType.B2B else None
+        ),
         purchase_type=payload.purchase_type,
         status=payment.resolve_initial_status(payload.payment_method),
         payment_method=payload.payment_method,

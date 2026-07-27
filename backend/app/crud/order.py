@@ -87,3 +87,42 @@ async def get_order(db: AsyncSession, order_id: uuid.UUID, user_id: uuid.UUID) -
     )
     result = await db.execute(stmt)
     return result.scalar_one_or_none()
+
+
+async def get_orders_for_company(
+    db: AsyncSession,
+    company_id: uuid.UUID,
+    status: OrderStatus | None = None,
+) -> list[Order]:
+    stmt = (
+        select(Order)
+        .where(Order.company_id == company_id)
+        .options(
+            selectinload(Order.items),
+            selectinload(Order.user),
+            selectinload(Order.billing_document),
+            selectinload(Order.shipment),
+        )
+        .order_by(Order.created_at.desc())
+    )
+    if status is not None:
+        stmt = stmt.where(Order.status == status)
+    result = await db.scalars(stmt)
+    return list(result.all())
+
+
+async def get_order_for_company(
+    db: AsyncSession, order_id: uuid.UUID, company_id: uuid.UUID
+) -> Order | None:
+    stmt = (
+        select(Order)
+        .where(Order.id == order_id, Order.company_id == company_id)
+        .options(
+            selectinload(Order.items),
+            selectinload(Order.user),
+            selectinload(Order.billing_document),
+            selectinload(Order.shipment),
+        )
+    )
+    result = await db.execute(stmt)
+    return result.scalar_one_or_none()

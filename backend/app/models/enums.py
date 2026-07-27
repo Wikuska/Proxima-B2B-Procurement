@@ -20,8 +20,7 @@ class PurchaseType(str, enum.Enum):
 
 class OrderStatus(str, enum.Enum):
     PENDING_PAYMENT = "PENDING_PAYMENT"
-    PAID = "PAID"
-    PROCESSING = "PROCESSING"
+    PREPARING = "PREPARING"
     SHIPPED = "SHIPPED"
     DELIVERED = "DELIVERED"
     CANCELLED = "CANCELLED"

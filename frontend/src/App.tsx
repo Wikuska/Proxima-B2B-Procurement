@@ -12,6 +12,7 @@ import {
   CompanyAffiliationTab,
   CompanyMembersTab,
   CompanyOrdersTab,
+  CompanyOrderDetailPage,
   CompanyOverviewTab,
   CompanyPage,
   CompanySettingsTab,
@@ -125,6 +126,7 @@ export default function App() {
           <Route index element={<Navigate to="overview" replace />} />
           <Route path="overview" element={<CompanyOverviewTab />} />
           <Route path="orders" element={<CompanyOrdersTab />} />
+          <Route path="orders/:orderId" element={<CompanyOrderDetailPage />} />
           <Route path="members" element={<CompanyMembersTab />} />
           <Route path="addresses" element={<CompanyAddressesTab />} />
           <Route path="requests" element={<JoinRequestsTab />} />

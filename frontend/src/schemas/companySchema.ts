@@ -11,3 +11,10 @@ export const joinCompanySchema = z.object({
 });
 
 export type JoinCompanyFormData = z.infer<typeof joinCompanySchema>;
+
+export const companySettingsSchema = z.object({
+  name: z.string().trim().min(1, "Company name is required").max(255),
+  phone: z.string().max(50),
+});
+
+export type CompanySettingsFormData = z.infer<typeof companySettingsSchema>;

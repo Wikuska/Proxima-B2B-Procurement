@@ -28,7 +28,7 @@ const navLinkClass = ({ isActive }: { isActive: boolean }) =>
 
 function CheckoutNavBar() {
   return (
-    <header className="bg-bg-surface shadow-sm sticky top-0 z-50 border-b border-border-base/10">
+    <header className="shrink-0 bg-bg-surface shadow-sm z-50 border-b border-border-base/10">
       <div className="max-w-7xl mx-auto px-2 sm:px-3 h-14 flex items-center justify-between gap-2 md:gap-4">
         <Link
           to="/"
@@ -147,7 +147,7 @@ function DefaultNavBar() {
   return (
     <header
       ref={searchRef}
-      className="bg-bg-surface shadow-sm sticky top-0 z-50 border-b border-border-base/10"
+      className="shrink-0 bg-bg-surface shadow-sm z-50 border-b border-border-base/10"
     >
       <div className="max-w-7xl mx-auto px-2 sm:px-3 h-14 flex items-center gap-2 md:gap-4">
         {/* Left — logo, minimum width */}

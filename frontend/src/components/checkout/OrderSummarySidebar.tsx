@@ -31,7 +31,7 @@ export default function OrderSummarySidebar({
   const total = grandTotal + (shippingCost ?? 0);
 
   return (
-    <aside className="bg-bg-surface border border-border-base/20 rounded-2xl px-4 py-3 space-y-5 lg:sticky lg:top-24 shadow-sm">
+    <aside className="bg-bg-surface border border-border-base/20 rounded-2xl px-4 py-3 space-y-5 lg:sticky lg:top-4 shadow-sm">
       <div className="px-5 py-4 border-b border-border-base/10 flex justify-between items-center">
         <h2 className="text-lg font-bold text-text-main">Order summary</h2>
         <span className="text-xs font-medium text-text-muted bg-bg-base px-2 py-1 rounded-md">

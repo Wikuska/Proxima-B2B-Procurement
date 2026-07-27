@@ -70,3 +70,10 @@ async def count_company_admins_in_company(
         )
     )
     return result.scalar_one()
+
+
+async def set_user_role(db: AsyncSession, user: User, role: UserRole) -> User:
+    user.role = role
+    await db.commit()
+    await db.refresh(user)
+    return user

@@ -13,23 +13,20 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 ALLOWED_TRANSITIONS: dict[OrderStatus, set[OrderStatus]] = {
     # Successful payment (card/BLIK/transfer) always enters fulfillment.
-    OrderStatus.PENDING_PAYMENT: {OrderStatus.PROCESSING},
-    # Legacy PAID rows can still be advanced into the fulfillment pipeline.
-    OrderStatus.PAID: {OrderStatus.PROCESSING},
-    OrderStatus.PROCESSING: {OrderStatus.SHIPPED},
+    OrderStatus.PENDING_PAYMENT: {OrderStatus.PREPARING},
+    OrderStatus.PREPARING: {OrderStatus.SHIPPED},
     OrderStatus.SHIPPED: {OrderStatus.DELIVERED},
 }
 
 FULFILLMENT_TRANSITIONS: dict[OrderStatus, OrderStatus] = {
-    OrderStatus.PAID: OrderStatus.PROCESSING,  # legacy
-    OrderStatus.PROCESSING: OrderStatus.SHIPPED,
+    OrderStatus.PREPARING: OrderStatus.SHIPPED,
     OrderStatus.SHIPPED: OrderStatus.DELIVERED,
 }
 
 
 def resolve_initial_status(payment_method: PaymentMethod) -> OrderStatus:
     if payment_method in (PaymentMethod.CASH_ON_DELIVERY, PaymentMethod.DEFERRED):
-        return OrderStatus.PROCESSING
+        return OrderStatus.PREPARING
     return OrderStatus.PENDING_PAYMENT
 
 
@@ -71,7 +68,7 @@ async def mock_payment_result(
     if not success:
         return order
 
-    return await _transition_order(db, order, OrderStatus.PROCESSING)
+    return await _transition_order(db, order, OrderStatus.PREPARING)
 
 
 async def confirm_bank_transfer(
@@ -84,7 +81,7 @@ async def confirm_bank_transfer(
     if order.status != OrderStatus.PENDING_PAYMENT:
         raise PaymentActionNotAllowedException()
 
-    return await _transition_order(db, order, OrderStatus.PROCESSING)
+    return await _transition_order(db, order, OrderStatus.PREPARING)
 
 
 async def advance_order_status(

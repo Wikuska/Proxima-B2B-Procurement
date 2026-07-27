@@ -5,16 +5,22 @@ from app.database import get_db
 from app.models import User
 from app.schemas.address import AddressIn, AddressOut
 from app.schemas.common import MessageOut
+from app.models.enums import OrderStatus
 from app.schemas.company import (
     CompanyAffiliationOut,
     CompanyMemberOut,
+    CompanyOrderOut,
+    CompanyOrderSummaryOut,
     CompanyRequestAdminOut,
     CompanyRequestCreate,
     CompanyRequestOut,
+    CompanySettingsOut,
+    CompanySettingsUpdate,
+    TransferOwnershipIn,
 )
 from app.services import address as address_service
 from app.services import company as company_service
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/companies", tags=["Companies"])
@@ -98,6 +104,24 @@ async def list_members(
     return await company_service.list_company_members(db, admin)
 
 
+@router.get("/orders", response_model=list[CompanyOrderSummaryOut])
+async def list_company_orders(
+    status_filter: OrderStatus | None = Query(default=None, alias="status"),
+    admin: User = Depends(require_company_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    return await company_service.list_company_orders(db, admin, status_filter)
+
+
+@router.get("/orders/{order_id}", response_model=CompanyOrderOut)
+async def get_company_order(
+    order_id: uuid.UUID,
+    admin: User = Depends(require_company_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    return await company_service.get_company_order(db, admin, order_id)
+
+
 @router.delete("/members/{user_id}", response_model=MessageOut)
 async def remove_member(
     user_id: uuid.UUID,
@@ -106,6 +130,33 @@ async def remove_member(
 ):
     await company_service.remove_company_member(db, admin, user_id)
     return MessageOut(message="Member removed successfully")
+
+
+@router.get("/settings", response_model=CompanySettingsOut)
+async def get_company_settings(
+    admin: User = Depends(require_company_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    return await company_service.get_company_settings(db, admin)
+
+
+@router.patch("/settings", response_model=CompanySettingsOut)
+async def update_company_settings(
+    payload: CompanySettingsUpdate,
+    admin: User = Depends(require_company_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    return await company_service.update_company_settings(db, admin, payload)
+
+
+@router.post("/transfer-ownership", response_model=MessageOut)
+async def transfer_ownership(
+    payload: TransferOwnershipIn,
+    admin: User = Depends(require_company_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    await company_service.transfer_company_ownership(db, admin, payload.user_id)
+    return MessageOut(message="Company ownership transferred successfully")
 
 
 @router.get("/addresses/shipping", response_model=list[AddressOut])

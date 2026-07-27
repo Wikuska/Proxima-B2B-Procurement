@@ -96,6 +96,7 @@ class OrderItemOut(BaseModel):
     product_id: uuid.UUID
     product_name: str
     product_sku: str
+    product_slug: str | None = None
     quantity: int
     unit_price: Decimal
     discount_percentage: Decimal
@@ -107,6 +108,7 @@ class OrderOut(BaseModel):
     id: uuid.UUID
     status: OrderStatus
     purchase_type: PurchaseType
+    company_id: uuid.UUID | None = None
     payment_method: PaymentMethod
     total_amount: Decimal
     note: str | None
@@ -124,6 +126,7 @@ class OrderSummaryOut(BaseModel):
     id: uuid.UUID
     status: OrderStatus
     purchase_type: PurchaseType
+    company_id: uuid.UUID | None = None
     total_amount: Decimal
     created_at: datetime
     item_count: int

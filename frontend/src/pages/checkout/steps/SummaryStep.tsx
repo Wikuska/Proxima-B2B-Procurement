@@ -1,6 +1,6 @@
 import { useFormContext } from "react-hook-form";
 import { Navigate, useNavigate, useOutletContext } from "react-router-dom";
-import CheckoutSection from "../../../components/checkout/CheckoutSection";
+import Panel from "../../../components/common/Panel";
 import { TwoColumn } from "../../../layouts/CartCheckoutLayout";
 import { DELIVERY_LABELS, PAYMENT_LABELS } from "../../../api/order";
 import type { DetailsFormData } from "../../../schemas/checkoutSchema";
@@ -61,7 +61,7 @@ export default function SummaryStep() {
   return (
     <TwoColumn
       sidebar={
-        <aside className="bg-bg-surface border border-border-base/20 rounded-2xl p-7 space-y-4 lg:sticky lg:top-24 shadow-sm">
+        <aside className="bg-bg-surface border border-border-base/20 rounded-2xl p-7 space-y-4 lg:sticky lg:top-4 shadow-sm">
           <h2 className="text-lg font-bold text-text-main">Ready to order?</h2>
           <p className="text-sm text-text-muted">
             Review the details on the left, then place your order.
@@ -84,7 +84,7 @@ export default function SummaryStep() {
         </aside>
       }
     >
-      <CheckoutSection title="Items">
+      <Panel title="Items">
         <div className="divide-y divide-border-base/10">
           {selectedLines.map((l) => {
             const priceLine = quote?.lines.find(
@@ -131,9 +131,9 @@ export default function SummaryStep() {
             </div>
           </div>
         )}
-      </CheckoutSection>
+      </Panel>
 
-      <CheckoutSection title="Delivery & Payment" stacked className="space-y-4">
+      <Panel title="Delivery & Payment" stacked className="space-y-4">
         <SummaryField label="Purchase type">
           {purchaseType === "B2B" ? "Company (B2B)" : "Private (B2C)"}
         </SummaryField>
@@ -166,9 +166,9 @@ export default function SummaryStep() {
         <SummaryField label="Payment method">
           {PAYMENT_LABELS[paymentMethod]}
         </SummaryField>
-      </CheckoutSection>
+      </Panel>
 
-      <CheckoutSection
+      <Panel
         title={
           <>
             Order note{" "}
@@ -185,7 +185,7 @@ export default function SummaryStep() {
           rows={3}
           className="w-full px-3 py-2 text-sm border border-border-base rounded-lg focus:outline-none focus:border-primary bg-bg-surface text-text-main resize-none"
         />
-      </CheckoutSection>
+      </Panel>
     </TwoColumn>
   );
 }

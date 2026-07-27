@@ -5,8 +5,7 @@ export type PurchaseType = "B2B" | "B2C";
 export type DocumentType = "RECEIPT" | "PERSONAL_INVOICE" | "COMPANY_INVOICE";
 export type OrderStatus =
   | "PENDING_PAYMENT"
-  | "PAID"
-  | "PROCESSING"
+  | "PREPARING"
   | "SHIPPED"
   | "DELIVERED"
   | "CANCELLED"
@@ -70,6 +69,7 @@ export interface OrderItemOut {
   product_id: string;
   product_name: string;
   product_sku: string;
+  product_slug: string | null;
   quantity: number;
   unit_price: string;
   discount_percentage: string;
@@ -79,6 +79,7 @@ export interface OrderOut {
   id: string;
   status: OrderStatus;
   purchase_type: PurchaseType;
+  company_id: string | null;
   payment_method: PaymentMethod;
   total_amount: string;
   note: string | null;
@@ -92,6 +93,7 @@ export interface OrderSummaryOut {
   id: string;
   status: OrderStatus;
   purchase_type: PurchaseType;
+  company_id: string | null;
   total_amount: string;
   created_at: string;
   item_count: number;
@@ -144,8 +146,7 @@ export const PAYMENT_LABELS: Record<PaymentMethod, string> = {
 
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   PENDING_PAYMENT: "Awaiting payment",
-  PAID: "Paid", // legacy status; new payments go straight to Processing
-  PROCESSING: "Processing",
+  PREPARING: "Preparing",
   SHIPPED: "Shipped",
   DELIVERED: "Delivered",
   CANCELLED: "Cancelled",

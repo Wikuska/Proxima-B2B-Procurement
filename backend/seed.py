@@ -28,7 +28,9 @@ from app.models import (
 from pwdlib import PasswordHash
 from sqlalchemy import delete
 
-DEMO_EMBEDDINGS_PATH = Path(__file__).resolve().parent / "data" / "demo_product_embeddings.json"
+DEMO_EMBEDDINGS_PATH = (
+    Path(__file__).resolve().parent / "data" / "seed_products_embeddings.json"
+)
 
 
 def _load_demo_embeddings() -> dict[str, list[float]]:
@@ -40,6 +42,7 @@ def _load_demo_embeddings() -> dict[str, list[float]]:
         print("   ! Demo embeddings file has unexpected format")
         return {}
     return data
+
 
 # ── CATEGORIES ──────────────────────────────────────────────────────────────
 
@@ -700,8 +703,7 @@ async def seed():
         print(f"   ✓ Product embeddings loaded: {embedded_count}/{total_products}")
         if missing_embedding_skus:
             print(
-                "   ! Missing embeddings for SKUs: "
-                + ", ".join(missing_embedding_skus)
+                "   ! Missing embeddings for SKUs: " + ", ".join(missing_embedding_skus)
             )
 
         # PRODUCT VOLUME DISCOUNTS

@@ -49,7 +49,7 @@ export default function ProductDetailsPage() {
   return (
     <div className="max-w-[1400px] mx-auto px-4 lg:px-8 pt-10 lg:pt-14 pb-12 flex flex-col gap-12">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-16 items-center">
-        <div className="bg-bg-surface border border-border-base/20 rounded-2xl p-6 sticky top-24 w-full shadow-[0_4px_24px_rgba(38,84,124,0.10)]">
+        <div className="bg-bg-surface border border-border-base/20 rounded-2xl p-6 sticky top-4 w-full shadow-[0_4px_24px_rgba(38,84,124,0.10)]">
           <ProductImage
             src={product.main_image_url}
             alt={product.name || "Product image"}

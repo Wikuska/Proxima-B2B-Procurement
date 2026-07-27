@@ -2,7 +2,8 @@ import uuid
 from datetime import datetime
 from decimal import Decimal
 
-from app.models.enums import RequestStatus, UserRole
+from app.models.enums import OrderStatus, PaymentMethod, PurchaseType, RequestStatus, UserRole
+from app.schemas.order import BillingDocumentOut, OrderItemOut, ShipmentOut
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field
 from typing_extensions import Annotated
 
@@ -61,5 +62,55 @@ class CompanyMemberOut(BaseModel):
     first_name: str
     last_name: str
     role: UserRole
+    company_joined_at: datetime | None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class CompanySettingsOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    name: str
+    nip: str
+    phone: str | None
+    discount_percentage: Decimal
+
+
+class CompanySettingsUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=255)
+    phone: str | None = Field(default=None, max_length=50)
+
+
+class TransferOwnershipIn(BaseModel):
+    user_id: uuid.UUID
+
+
+class CompanyOrderSummaryOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    status: OrderStatus
+    purchase_type: PurchaseType
+    company_id: uuid.UUID | None
+    total_amount: Decimal
+    created_at: datetime
+    item_count: int
+    placed_by: RequesterMini
+
+
+class CompanyOrderOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    status: OrderStatus
+    purchase_type: PurchaseType
+    company_id: uuid.UUID | None
+    payment_method: PaymentMethod
+    total_amount: Decimal
+    note: str | None
+    created_at: datetime
+    billing_document: BillingDocumentOut
+    shipment: ShipmentOut
+    items: list[OrderItemOut]
+    placed_by: RequesterMini
