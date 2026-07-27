@@ -67,6 +67,25 @@ class CompanyMemberOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class CompanySettingsOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    name: str
+    nip: str
+    phone: str | None
+    discount_percentage: Decimal
+
+
+class CompanySettingsUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=255)
+    phone: str | None = Field(default=None, max_length=50)
+
+
+class TransferOwnershipIn(BaseModel):
+    user_id: uuid.UUID
+
+
 class CompanyOrderSummaryOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   approveCompanyRequest,
   getCompanyMembers,
+  getCompanySettings,
   getMyAffiliation,
   getMyCompanyRequests,
   getPendingCompanyRequests,
@@ -9,6 +10,9 @@ import {
   rejectCompanyRequest,
   removeCompanyMember,
   submitCompanyRequest,
+  transferCompanyOwnership,
+  updateCompanySettings,
+  type CompanySettingsUpdate,
   type SubmitRequestPayload,
 } from "../../api/company";
 import { useAuthStore } from "../../store/authStore";
@@ -84,6 +88,36 @@ export const useLeaveCompany = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["me"] });
       queryClient.invalidateQueries({ queryKey: ["company-requests", "me"] });
+      queryClient.invalidateQueries({ queryKey: ["company-affiliation", "me"] });
+    },
+  });
+};
+
+export const useCompanySettings = () =>
+  useQuery({
+    queryKey: ["company-settings"],
+    queryFn: getCompanySettings,
+  });
+
+export const useUpdateCompanySettings = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: CompanySettingsUpdate) => updateCompanySettings(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["company-settings"] });
+      queryClient.invalidateQueries({ queryKey: ["company-affiliation", "me"] });
+    },
+  });
+};
+
+export const useTransferCompanyOwnership = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (userId: string) => transferCompanyOwnership(userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["me"] });
+      queryClient.invalidateQueries({ queryKey: ["company-members"] });
+      queryClient.invalidateQueries({ queryKey: ["company-settings"] });
       queryClient.invalidateQueries({ queryKey: ["company-affiliation", "me"] });
     },
   });

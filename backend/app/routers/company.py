@@ -14,6 +14,9 @@ from app.schemas.company import (
     CompanyRequestAdminOut,
     CompanyRequestCreate,
     CompanyRequestOut,
+    CompanySettingsOut,
+    CompanySettingsUpdate,
+    TransferOwnershipIn,
 )
 from app.services import address as address_service
 from app.services import company as company_service
@@ -127,6 +130,33 @@ async def remove_member(
 ):
     await company_service.remove_company_member(db, admin, user_id)
     return MessageOut(message="Member removed successfully")
+
+
+@router.get("/settings", response_model=CompanySettingsOut)
+async def get_company_settings(
+    admin: User = Depends(require_company_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    return await company_service.get_company_settings(db, admin)
+
+
+@router.patch("/settings", response_model=CompanySettingsOut)
+async def update_company_settings(
+    payload: CompanySettingsUpdate,
+    admin: User = Depends(require_company_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    return await company_service.update_company_settings(db, admin, payload)
+
+
+@router.post("/transfer-ownership", response_model=MessageOut)
+async def transfer_ownership(
+    payload: TransferOwnershipIn,
+    admin: User = Depends(require_company_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    await company_service.transfer_company_ownership(db, admin, payload.user_id)
+    return MessageOut(message="Company ownership transferred successfully")
 
 
 @router.get("/addresses/shipping", response_model=list[AddressOut])

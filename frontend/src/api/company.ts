@@ -84,6 +84,34 @@ export interface CompanyAffiliation {
 export const getMyAffiliation = () =>
   apiFetch<CompanyAffiliation>("/companies/me");
 
+export interface CompanySettings {
+  id: string;
+  name: string;
+  nip: string;
+  phone: string | null;
+  discount_percentage: string;
+}
+
+export interface CompanySettingsUpdate {
+  name?: string;
+  phone?: string | null;
+}
+
+export const getCompanySettings = () =>
+  apiFetch<CompanySettings>("/companies/settings");
+
+export const updateCompanySettings = (payload: CompanySettingsUpdate) =>
+  apiFetch<CompanySettings>("/companies/settings", {
+    method: "PATCH",
+    body: payload,
+  });
+
+export const transferCompanyOwnership = (userId: string) =>
+  apiFetch<{ message: string }>("/companies/transfer-ownership", {
+    method: "POST",
+    body: { user_id: userId },
+  });
+
 export interface CompanyOrderPlacer {
   id: string;
   email: string;

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { cn } from "../../utils/cn";
 
 interface PanelProps {
   title: ReactNode;
@@ -30,9 +31,12 @@ export default function Panel({
 
   return (
     <section
-      className={`bg-bg-surface border border-border-base/20 rounded-2xl p-6 shadow-sm ${className}`}
+      className={cn(
+        "bg-bg-surface border border-border-base/20 rounded-xl p-6 shadow-sm",
+        className,
+      )}
     >
-      {(headerAside || description) ? (
+      {headerAside || description ? (
         <div className="mb-4">
           <div className="flex items-start justify-between gap-4">
             <h2 className="text-xl font-bold text-text-main">{title}</h2>

@@ -8,6 +8,7 @@ from app.core.exceptions import (
     CompanyRequestNotFoundException,
     DuplicateCompanyRequestException,
     InsufficientPermissionsException,
+    InvalidTransferTargetException,
     LastCompanyAdminException,
     NotInCompanyException,
     OrderNotFoundException,
@@ -17,12 +18,13 @@ from app.core.exceptions import (
 from app.crud import company as company_crud
 from app.crud import order as order_crud
 from app.crud import user as user_crud
-from app.models import CompanyRequest, User
+from app.models import Company, CompanyRequest, User
 from app.models.enums import OrderStatus, RequestStatus, UserRole
 from app.models.order import Order
 from app.schemas.company import (
     CompanyOrderOut,
     CompanyOrderSummaryOut,
+    CompanySettingsUpdate,
     RequesterMini,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -89,6 +91,46 @@ async def remove_company_member(
         raise CannotRemoveSelfException()
     await user_crud.set_user_company(db, target, None)
     return target
+
+
+async def get_company_settings(db: AsyncSession, admin: User) -> Company:
+    if admin.company_id is None:
+        raise NotInCompanyException()
+    company = await company_crud.get_company_by_id(db, admin.company_id)
+    if company is None:
+        raise CompanyNotFoundException()
+    return company
+
+
+async def update_company_settings(
+    db: AsyncSession, admin: User, payload: CompanySettingsUpdate
+) -> Company:
+    company = await get_company_settings(db, admin)
+    fields = payload.model_dump(exclude_unset=True)
+    if not fields:
+        return company
+    return await company_crud.update_company_fields(db, company, fields)
+
+
+async def transfer_company_ownership(
+    db: AsyncSession, admin: User, target_user_id: uuid.UUID
+) -> None:
+    if admin.company_id is None:
+        raise NotInCompanyException()
+    if target_user_id == admin.id:
+        raise CannotRemoveSelfException()
+
+    target = await user_crud.get_user_by_id(db, target_user_id)
+    if target is None:
+        raise UserNotFoundException()
+    if target.company_id != admin.company_id:
+        raise InsufficientPermissionsException()
+    if target.role == UserRole.COMPANY_ADMIN or target.role == UserRole.ADMIN:
+        raise InvalidTransferTargetException()
+
+    admin.role = UserRole.CUSTOMER
+    target.role = UserRole.COMPANY_ADMIN
+    await db.commit()
 
 
 def _placed_by(order: Order) -> RequesterMini:
