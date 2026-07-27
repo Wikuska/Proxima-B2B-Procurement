@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { Bell, Store } from "lucide-react";
+import { Store } from "lucide-react";
 import { Link, NavLink, Outlet } from "react-router-dom";
 import { getInitials } from "../utils/getInitials";
 
@@ -84,13 +84,6 @@ export default function AppDashboardLayout({
 
       <div className="flex-1 flex flex-col min-w-0">
         <header className="h-16 shrink-0 bg-bg-surface border-b border-border-base/20 flex items-center justify-end gap-1.5 px-6 text-text-muted">
-          <button
-            type="button"
-            aria-label="Notifications"
-            className="p-2 hover:text-primary hover:bg-slate-100 rounded-lg transition-colors"
-          >
-            <Bell size={18} />
-          </button>
           <Link
             to="/"
             aria-label="Back to store"

@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Eye } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ORDER_STATUS_LABELS, type OrderStatus } from "../../api/order";
@@ -38,6 +38,7 @@ export interface OrdersTableProps {
   detailHref: (orderId: string) => string;
   showPlacedBy?: boolean;
   emptyContent?: ReactNode;
+  initialStatus?: OrderStatus | "";
 }
 
 export default function OrdersTable({
@@ -45,11 +46,17 @@ export default function OrdersTable({
   detailHref,
   showPlacedBy = false,
   emptyContent,
+  initialStatus = "",
 }: OrdersTableProps) {
   const [search, setSearch] = useState("");
-  const [status, setStatus] = useState<OrderStatus | "">("");
+  const [status, setStatus] = useState<OrderStatus | "">(initialStatus);
   const [date, setDate] = useState("");
   const [page, setPage] = useState(0);
+
+  useEffect(() => {
+    setStatus(initialStatus);
+    setPage(0);
+  }, [initialStatus]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
