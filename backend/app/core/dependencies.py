@@ -91,6 +91,7 @@ def require_role(*allowed: UserRole):
     return checker
 
 
-# Convenience guards for use in later roadmap steps (dashboards, admin endpoints).
+# Convenience guards for dashboards / admin endpoints.
+# Platform ADMIN and company admin are deliberately separate — do not mix.
 require_admin = require_role(UserRole.ADMIN)
-require_company_admin = require_role(UserRole.COMPANY_ADMIN, UserRole.ADMIN)
+require_company_admin = require_role(UserRole.COMPANY_ADMIN)

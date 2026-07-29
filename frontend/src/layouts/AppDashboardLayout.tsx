@@ -22,7 +22,7 @@ interface AppDashboardLayoutProps {
 }
 
 /**
- * Full-viewport app shell for authenticated dashboards (e.g. /company).
+ * Full-viewport app shell for authenticated dashboards (`/company`, `/admin`).
  * Deliberately outside `MainLayout` — no site NavBar/footer, own left
  * sidebar navigation instead. Mirrors `DashboardLayout`'s props-driven
  * approach but for a standalone, icon-driven sidebar layout.

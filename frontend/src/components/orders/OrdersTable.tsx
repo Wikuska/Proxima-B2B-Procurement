@@ -5,13 +5,16 @@ import { ORDER_STATUS_LABELS, type OrderStatus } from "../../api/order";
 import DataTableShell, {
   DataTableSearch,
   TablePagination,
+} from "../common/DataTableShell";
+import DataTableSelect from "../common/DataTableSelect";
+import {
   dataTableClass,
   dataTableHeadRowClass,
   dataTableRowClass,
   dataTableTdClass,
   dataTableThClass,
   paginateRows,
-} from "../common/DataTableShell";
+} from "../common/dataTable";
 import { avatarTone } from "../../utils/avatarTone";
 import { getInitials } from "../../utils/getInitials";
 import {
@@ -107,22 +110,22 @@ export default function OrdersTable({
             }}
             placeholder="Search orders…"
           />
-          <select
+          <DataTableSelect
             value={status}
-            onChange={(e) => {
-              setStatus(e.target.value as OrderStatus | "");
+            onChange={(value) => {
+              setStatus(value as OrderStatus | "");
               setPage(0);
             }}
-            className="sm:w-48 px-3 py-2 text-sm rounded-lg border border-border-base/40 bg-bg-base text-text-main focus:outline-none focus:border-border-focus"
+            options={[
+              { value: "", label: "Status: All" },
+              ...ALL_STATUSES.map((s) => ({
+                value: s,
+                label: ORDER_STATUS_LABELS[s],
+              })),
+            ]}
             aria-label="Filter by status"
-          >
-            <option value="">Status: All</option>
-            {ALL_STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {ORDER_STATUS_LABELS[s]}
-              </option>
-            ))}
-          </select>
+            className="sm:w-48"
+          />
           <input
             type="date"
             value={date}

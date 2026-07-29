@@ -24,6 +24,7 @@ export function useAuth() {
     isCustomer: role === "CUSTOMER",
     isCompanyAdmin: role === "COMPANY_ADMIN",
     isAdmin: role === "ADMIN",
-    isB2B: role === "COMPANY_ADMIN" || role === "ADMIN",
+    /** Company-scoped B2B dashboard access (not platform ADMIN). */
+    isB2B: role === "COMPANY_ADMIN",
   };
 }

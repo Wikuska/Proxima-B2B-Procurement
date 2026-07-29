@@ -10,7 +10,7 @@ import {
   dataTableRowClass,
   dataTableTdClass,
   dataTableThClass,
-} from "../../components/common/DataTableShell";
+} from "../../components/common/dataTable";
 import {
   ORDER_STATUS_STYLES,
   formatOrderDate,

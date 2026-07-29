@@ -12,7 +12,7 @@ const DROPDOWN_EXIT_DURATION_MS = 100;
 
 export default function NavAuthButtons() {
   const { token, clearAuth } = useAuthStore();
-  const { user, isB2B } = useAuth();
+  const { user, isAdmin, isCompanyAdmin } = useAuth();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const location = useLocation();
@@ -70,9 +70,18 @@ export default function NavAuthButtons() {
               ))}
 
               <hr className="my-1 border-border-base/20" />
-              {isB2B && (
+              {isCompanyAdmin && (
                 <Link
                   to="/company"
+                  onClick={() => setIsOpen(false)}
+                  className="block px-4 py-2 text-sm text-text-main hover:bg-accent/10 hover:text-primary transition-colors"
+                >
+                  Go to dashboard
+                </Link>
+              )}
+              {isAdmin && (
+                <Link
+                  to="/admin"
                   onClick={() => setIsOpen(false)}
                   className="block px-4 py-2 text-sm text-text-main hover:bg-accent/10 hover:text-primary transition-colors"
                 >

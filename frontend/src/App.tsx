@@ -4,6 +4,10 @@ import AuthModal from "./components/auth/AuthModal";
 import ProtectedRoute from "./components/common/ProtectedRoute";
 import MainLayout from "./layouts/MainLayout";
 import {
+  AdminCatalogTab,
+  AdminPage,
+  AdminProductCreatePage,
+  AdminProductDetailPage,
   CartPage,
   CheckoutConfirmationPage,
   CheckoutFlow,
@@ -118,7 +122,7 @@ export default function App() {
         <Route
           path="/company"
           element={
-            <ProtectedRoute allow={["COMPANY_ADMIN", "ADMIN"]}>
+            <ProtectedRoute allow={["COMPANY_ADMIN"]}>
               <CompanyPage />
             </ProtectedRoute>
           }
@@ -131,6 +135,25 @@ export default function App() {
           <Route path="addresses" element={<CompanyAddressesTab />} />
           <Route path="requests" element={<JoinRequestsTab />} />
           <Route path="settings" element={<CompanySettingsTab />} />
+          <Route path="*" element={<NotFoundPage />} />
+        </Route>
+
+        {/* Platform admin dashboard — same shell pattern, ADMIN only */}
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute allow={["ADMIN"]}>
+              <AdminPage />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Navigate to="catalog" replace />} />
+          <Route path="catalog" element={<AdminCatalogTab />} />
+          <Route path="catalog/new" element={<AdminProductCreatePage />} />
+          <Route
+            path="catalog/:productId"
+            element={<AdminProductDetailPage />}
+          />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
 

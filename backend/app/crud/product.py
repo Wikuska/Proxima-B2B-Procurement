@@ -142,6 +142,33 @@ async def get_product_by_id(db: AsyncSession, product_id: uuid.UUID) -> Product 
     return result.scalar_one_or_none()
 
 
+async def get_all_products_for_admin(db: AsyncSession) -> list[Product]:
+    """All products (including inactive), with category loaded, ordered by name."""
+    stmt = (
+        select(Product)
+        .options(selectinload(Product.category))
+        .order_by(Product.name.asc())
+    )
+    result = await db.scalars(stmt)
+    return list(result.all())
+
+
+async def get_product_for_admin(
+    db: AsyncSession, product_id: uuid.UUID
+) -> Product | None:
+    """Single product with category (and volume discounts) for admin detail."""
+    stmt = (
+        select(Product)
+        .where(Product.id == product_id)
+        .options(
+            selectinload(Product.category),
+            selectinload(Product.volume_discounts),
+        )
+    )
+    result = await db.execute(stmt)
+    return result.scalar_one_or_none()
+
+
 async def get_products_by_ids(
     db: AsyncSession, ids: list[uuid.UUID]
 ) -> list[Product]:

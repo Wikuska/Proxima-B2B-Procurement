@@ -4,13 +4,15 @@ import { toast } from "sonner";
 import DataTableShell, {
   DataTableSearch,
   TablePagination,
+} from "../../components/common/DataTableShell";
+import {
   dataTableClass,
   dataTableHeadRowClass,
   dataTableRowClass,
   dataTableTdClass,
   dataTableThClass,
   paginateRows,
-} from "../../components/common/DataTableShell";
+} from "../../components/common/dataTable";
 import { formatOrderDate } from "../../components/orders/types";
 import {
   usePendingCompanyRequests,

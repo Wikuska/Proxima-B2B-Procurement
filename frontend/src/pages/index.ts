@@ -10,6 +10,10 @@ export { default as CheckoutPaymentMockPage } from "./checkout/CheckoutPaymentMo
 export { default as DetailsStep } from "./checkout/steps/DetailsStep";
 export { default as DeliveryPaymentStep } from "./checkout/steps/DeliveryPaymentStep";
 export { default as SummaryStep } from "./checkout/steps/SummaryStep";
+export { default as AdminPage } from "./admin/AdminPage";
+export { default as AdminCatalogTab } from "./admin/AdminCatalogTab";
+export { default as AdminProductCreatePage } from "./admin/AdminProductCreatePage";
+export { default as AdminProductDetailPage } from "./admin/AdminProductDetailPage";
 export { default as CompanyPage } from "./company/CompanyPage";
 export { default as CompanyAddressesTab } from "./company/CompanyAddressesTab";
 export { default as CompanyMembersTab } from "./company/CompanyMembersTab";
