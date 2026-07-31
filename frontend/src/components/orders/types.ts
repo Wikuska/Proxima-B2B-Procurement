@@ -38,6 +38,7 @@ export interface OrdersTableRow {
     first_name: string;
     last_name: string;
   };
+  company_name?: string | null;
 }
 
 export const ORDER_STATUS_STYLES: Record<OrderStatus, string> = {

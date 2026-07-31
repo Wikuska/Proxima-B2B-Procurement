@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import {
@@ -101,17 +102,22 @@ export interface OrderDetailViewProps {
   order: OrderDetailData;
   backTo: { href: string; label: string };
   placedBy?: OrderPlacerInfo;
+  companyName?: string | null;
   showOwnerPaymentActions?: boolean;
   /** Profile stays narrow; company dashboard uses full content width. */
   layout?: "narrow" | "wide";
+  /** Optional fulfillment / admin actions under the header. */
+  actions?: ReactNode;
 }
 
 export default function OrderDetailView({
   order,
   backTo,
   placedBy,
+  companyName,
   showOwnerPaymentActions = false,
   layout = "narrow",
+  actions,
 }: OrderDetailViewProps) {
   const showBankTransfer =
     showOwnerPaymentActions &&
@@ -214,7 +220,15 @@ export default function OrderDetailView({
             {placedBy.email}
           </p>
         )}
+        {companyName && (
+          <p className="text-xs text-text-muted mt-1">
+            Company{" "}
+            <span className="font-medium text-text-main">{companyName}</span>
+          </p>
+        )}
       </div>
+
+      {actions && <div>{actions}</div>}
 
       {showBankTransfer && (
         <BankTransferInstructions orderId={order.id} totalAmount={order.total_amount} />

@@ -88,7 +88,8 @@ async def create_order(db: AsyncSession, user: User, payload: OrderCreate) -> Or
                 product_id=ci.product_id,
                 product_name=product.name,
                 product_sku=product.sku,
-                product_slug=product.slug,
+                # product_slug is not a fiscal snapshot — OrderItemOut resolves
+                # the live Product.slug via product_id at read time.
                 quantity=ci.quantity,
                 unit_price=line["final_unit_price"],
                 discount_percentage=line["effective_pct"],
@@ -116,8 +117,10 @@ async def create_order(db: AsyncSession, user: User, payload: OrderCreate) -> Or
         await db.delete(ci)
 
     await db.commit()
-    await db.refresh(created, ["items", "billing_document", "shipment"])
-    return created
+    # Re-load with items.product so OrderItemOut can expose the live slug.
+    reloaded = await order_crud.get_order_by_id(db, created.id)
+    assert reloaded is not None
+    return reloaded
 
 
 async def list_orders(

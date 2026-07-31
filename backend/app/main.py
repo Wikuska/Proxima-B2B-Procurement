@@ -5,6 +5,7 @@ from app.core.exceptions import AppException
 from app.core.settings import settings
 from app.routers.address import router as address_router
 from app.routers.admin_catalog import router as admin_catalog_router
+from app.routers.admin_orders import router as admin_orders_router
 from app.routers.auth import router as auth_router
 from app.routers.cart import router as cart_router
 from app.routers.catalog import router as catalog_router
@@ -44,6 +45,7 @@ app = FastAPI(
 app.include_router(auth_router)
 app.include_router(address_router)
 app.include_router(admin_catalog_router)
+app.include_router(admin_orders_router)
 app.include_router(cart_router)
 app.include_router(catalog_router)
 app.include_router(company_router)

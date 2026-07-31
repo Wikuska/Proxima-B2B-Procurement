@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+/* App shell scrolls inside MainLayout <main>, not the document. */
+html,
+body,
+#root {
+  height: 100%;
+  overflow: hidden;
+}
+
 @theme {
   /* Główne kolory marki */
   --color-primary: #26547C; /* Dusk Blue - Navbar, przyciski akcji*/

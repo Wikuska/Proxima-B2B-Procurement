@@ -666,6 +666,45 @@ async def test_get_order_detail_own(
 
 
 @pytest.mark.asyncio
+async def test_order_item_slug_follows_live_product_after_rename(
+    async_client: AsyncClient,
+    db_session: AsyncSession,
+    b2c_user,
+    product_b2c,
+    auth_headers,
+):
+    """Fiscal name/sku stay snapshotted; link slug comes from live Product."""
+    await _add_to_cart(db_session, b2c_user.id, product_b2c.id, 1)
+    payload = {
+        "product_ids": [str(product_b2c.id)],
+        "purchase_type": "B2C",
+        "document": {"document_type": "RECEIPT"},
+        "shipping_address": _INLINE_ADDR,
+        **_SHIPPING_DEFAULTS,
+    }
+    create_resp = await async_client.post(
+        "/orders", json=payload, headers=auth_headers(b2c_user)
+    )
+    assert create_resp.status_code == 201
+    order_id = create_resp.json()["id"]
+    snapshotted_name = product_b2c.name
+    snapshotted_sku = product_b2c.sku
+    old_slug = product_b2c.slug
+
+    product_b2c.name = "Renamed Product"
+    product_b2c.slug = "renamed-product-live"
+    await db_session.commit()
+
+    resp = await async_client.get(f"/orders/{order_id}", headers=auth_headers(b2c_user))
+    assert resp.status_code == 200
+    item = resp.json()["items"][0]
+    assert item["product_name"] == snapshotted_name
+    assert item["product_sku"] == snapshotted_sku
+    assert item["product_slug"] == "renamed-product-live"
+    assert item["product_slug"] != old_slug
+
+
+@pytest.mark.asyncio
 async def test_get_order_detail_other_user_returns_404(
     async_client: AsyncClient,
     db_session: AsyncSession,

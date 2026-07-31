@@ -12,6 +12,8 @@ export { default as DeliveryPaymentStep } from "./checkout/steps/DeliveryPayment
 export { default as SummaryStep } from "./checkout/steps/SummaryStep";
 export { default as AdminPage } from "./admin/AdminPage";
 export { default as AdminCatalogTab } from "./admin/AdminCatalogTab";
+export { default as AdminOrdersTab } from "./admin/AdminOrdersTab";
+export { default as AdminOrderDetailPage } from "./admin/AdminOrderDetailPage";
 export { default as AdminProductFormPage } from "./admin/AdminProductFormPage";
 export { default as CompanyPage } from "./company/CompanyPage";
 export { default as CompanyAddressesTab } from "./company/CompanyAddressesTab";

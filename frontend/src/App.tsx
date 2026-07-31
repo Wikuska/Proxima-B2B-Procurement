@@ -5,6 +5,8 @@ import ProtectedRoute from "./components/common/ProtectedRoute";
 import MainLayout from "./layouts/MainLayout";
 import {
   AdminCatalogTab,
+  AdminOrderDetailPage,
+  AdminOrdersTab,
   AdminPage,
   AdminProductFormPage,
   CartPage,
@@ -153,6 +155,8 @@ export default function App() {
             path="catalog/:productId"
             element={<AdminProductFormPage />}
           />
+          <Route path="orders" element={<AdminOrdersTab />} />
+          <Route path="orders/:orderId" element={<AdminOrderDetailPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
 

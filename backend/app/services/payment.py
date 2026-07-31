@@ -51,8 +51,9 @@ async def _transition_order(
     _validate_transition(order.status, target)
     updated = await order_crud.update_order_status(db, order.id, target)
     await db.commit()
-    await db.refresh(updated, ["items", "billing_document", "shipment"])
-    return updated
+    reloaded = await order_crud.get_order_by_id(db, updated.id)
+    assert reloaded is not None
+    return reloaded
 
 
 async def mock_payment_result(

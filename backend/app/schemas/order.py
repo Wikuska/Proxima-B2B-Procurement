@@ -1,10 +1,12 @@
 import uuid
 from datetime import datetime
 from decimal import Decimal
+from typing import Any
 
 from app.models.enums import DeliveryMethod, DocumentType, OrderStatus, PaymentMethod, PurchaseType
 from app.schemas.address import AddressIn
 from pydantic import BaseModel, ConfigDict, model_validator
+from sqlalchemy import inspect as sa_inspect
 
 
 class BillingDocumentIn(BaseModel):
@@ -100,6 +102,30 @@ class OrderItemOut(BaseModel):
     quantity: int
     unit_price: Decimal
     discount_percentage: Decimal
+
+    @model_validator(mode="before")
+    @classmethod
+    def resolve_live_product_slug(cls, data: Any) -> Any:
+        """Link slug from live Product; name/sku stay fiscal snapshots on the row."""
+        if isinstance(data, dict):
+            return data
+
+        live_slug: str | None = None
+        insp = sa_inspect(data, raiseerr=False)
+        if insp is not None and "product" not in insp.unloaded:
+            product = data.product
+            live_slug = product.slug if product is not None else None
+
+        return {
+            "id": data.id,
+            "product_id": data.product_id,
+            "product_name": data.product_name,
+            "product_sku": data.product_sku,
+            "product_slug": live_slug,
+            "quantity": data.quantity,
+            "unit_price": data.unit_price,
+            "discount_percentage": data.discount_percentage,
+        }
 
 
 class OrderOut(BaseModel):

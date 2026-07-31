@@ -1,9 +1,21 @@
 import uuid
 from datetime import datetime
 from decimal import Decimal
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, CheckConstraint, DateTime, ForeignKey, Index, Integer, Numeric, String, Text, UniqueConstraint, func
+from sqlalchemy import (
+    Boolean,
+    CheckConstraint,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    Numeric,
+    String,
+    Text,
+    UniqueConstraint,
+    func,
+)
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -113,7 +125,7 @@ class Order(Base):
     # Relations
     user: Mapped["User"] = relationship(back_populates="orders")
     company: Mapped["Company | None"] = relationship(back_populates="orders")
-    items: Mapped[List["OrderItem"]] = relationship(back_populates="order")
+    items: Mapped[list["OrderItem"]] = relationship(back_populates="order")
     billing_document: Mapped["BillingDocument"] = relationship(
         back_populates="order", cascade="all, delete-orphan", uselist=False
     )
@@ -154,6 +166,7 @@ class OrderItem(Base):
 
     product_name: Mapped[str] = mapped_column(String(255), nullable=False)
     product_sku: Mapped[str] = mapped_column(String(100), nullable=False)
+    # Legacy column — no longer written. OrderItemOut resolves live Product.slug.
     product_slug: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     # Relations

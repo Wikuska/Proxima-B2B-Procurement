@@ -7,6 +7,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 
+def _order_detail_options(*extra: object):
+    """Items include live Product so OrderItemOut can resolve current slug."""
+    return (
+        selectinload(Order.items).selectinload(OrderItem.product),
+        selectinload(Order.billing_document),
+        selectinload(Order.shipment),
+        *extra,
+    )
+
+
 async def create_order(
     db: AsyncSession,
     order: Order,
@@ -65,11 +75,7 @@ async def get_order_by_id(db: AsyncSession, order_id: uuid.UUID) -> Order | None
     stmt = (
         select(Order)
         .where(Order.id == order_id)
-        .options(
-            selectinload(Order.items),
-            selectinload(Order.billing_document),
-            selectinload(Order.shipment),
-        )
+        .options(*_order_detail_options())
     )
     result = await db.execute(stmt)
     return result.scalar_one_or_none()
@@ -79,11 +85,7 @@ async def get_order(db: AsyncSession, order_id: uuid.UUID, user_id: uuid.UUID) -
     stmt = (
         select(Order)
         .where(Order.id == order_id, Order.user_id == user_id)
-        .options(
-            selectinload(Order.items),
-            selectinload(Order.billing_document),
-            selectinload(Order.shipment),
-        )
+        .options(*_order_detail_options())
     )
     result = await db.execute(stmt)
     return result.scalar_one_or_none()
@@ -117,11 +119,45 @@ async def get_order_for_company(
     stmt = (
         select(Order)
         .where(Order.id == order_id, Order.company_id == company_id)
+        .options(*_order_detail_options(selectinload(Order.user)))
+    )
+    result = await db.execute(stmt)
+    return result.scalar_one_or_none()
+
+
+async def get_all_orders_for_admin(
+    db: AsyncSession,
+    status: OrderStatus | None = None,
+) -> list[Order]:
+    """All platform orders (B2B + B2C), newest first, with placer and company."""
+    stmt = (
+        select(Order)
         .options(
             selectinload(Order.items),
             selectinload(Order.user),
+            selectinload(Order.company),
             selectinload(Order.billing_document),
             selectinload(Order.shipment),
+        )
+        .order_by(Order.created_at.desc())
+    )
+    if status is not None:
+        stmt = stmt.where(Order.status == status)
+    result = await db.scalars(stmt)
+    return list(result.all())
+
+
+async def get_order_for_admin(
+    db: AsyncSession, order_id: uuid.UUID
+) -> Order | None:
+    stmt = (
+        select(Order)
+        .where(Order.id == order_id)
+        .options(
+            *_order_detail_options(
+                selectinload(Order.user),
+                selectinload(Order.company),
+            )
         )
     )
     result = await db.execute(stmt)

@@ -43,17 +43,19 @@ export function useDeletePersonalAddress() {
   });
 }
 
-export function useCompanyShippingAddresses() {
+export function useCompanyShippingAddresses(enabled = true) {
   return useQuery({
     queryKey: ["addresses", "company", "shipping"],
     queryFn: getCompanyShippingAddresses,
+    enabled,
   });
 }
 
-export function useCompanyBillingAddress() {
+export function useCompanyBillingAddress(enabled = true) {
   return useQuery({
     queryKey: ["addresses", "company", "billing"],
     queryFn: getCompanyBillingAddress,
+    enabled,
   });
 }
 

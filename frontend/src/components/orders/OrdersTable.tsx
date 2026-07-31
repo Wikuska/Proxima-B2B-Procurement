@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { Eye } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ORDER_STATUS_LABELS, type OrderStatus } from "../../api/order";
@@ -40,6 +40,7 @@ export interface OrdersTableProps {
   orders: OrdersTableRow[];
   detailHref: (orderId: string) => string;
   showPlacedBy?: boolean;
+  showCompany?: boolean;
   emptyContent?: ReactNode;
   initialStatus?: OrderStatus | "";
 }
@@ -48,6 +49,7 @@ export default function OrdersTable({
   orders,
   detailHref,
   showPlacedBy = false,
+  showCompany = false,
   emptyContent,
   initialStatus = "",
 }: OrdersTableProps) {
@@ -55,11 +57,14 @@ export default function OrdersTable({
   const [status, setStatus] = useState<OrderStatus | "">(initialStatus);
   const [date, setDate] = useState("");
   const [page, setPage] = useState(0);
+  const [prevInitialStatus, setPrevInitialStatus] = useState(initialStatus);
 
-  useEffect(() => {
+  // Sync filter when URL/prop-driven initialStatus changes (no effect needed).
+  if (initialStatus !== prevInitialStatus) {
+    setPrevInitialStatus(initialStatus);
     setStatus(initialStatus);
     setPage(0);
-  }, [initialStatus]);
+  }
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -71,9 +76,11 @@ export default function OrdersTable({
       const shortId = order.id.slice(0, 8).toLowerCase();
       const placer = placerLabel(order).toLowerCase();
       const email = order.placed_by?.email.toLowerCase() ?? "";
+      const company = order.company_name?.toLowerCase() ?? "";
       return (
         placer.includes(q) ||
         email.includes(q) ||
+        company.includes(q) ||
         id.includes(q) ||
         shortId.includes(q) ||
         `#${shortId}`.includes(q)
@@ -158,9 +165,12 @@ export default function OrdersTable({
             <th className={`${dataTableThClass} text-left w-[12%]`}>Order #</th>
             <th className={`${dataTableThClass} text-center`}>Date</th>
             {showPlacedBy && (
-              <th className={`${dataTableThClass} text-center w-[22%]`}>
+              <th className={`${dataTableThClass} text-center w-[19%]`}>
                 Ordered by
               </th>
+            )}
+            {showCompany && (
+              <th className={`${dataTableThClass} text-center`}>Company</th>
             )}
             <th className={`${dataTableThClass} text-center`}>Items</th>
             <th className={`${dataTableThClass} text-center`}>Amount</th>
@@ -189,7 +199,7 @@ export default function OrdersTable({
                 </td>
                 {showPlacedBy && (
                   <td className={dataTableTdClass}>
-                    <div className="flex items-center justify-center gap-2.5 min-w-0">
+                    <div className="flex items-center justify-start ml-13 gap-2.5 min-w-0">
                       <span
                         className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold ${avatarTone(order.placed_by?.id ?? order.id)}`}
                         aria-hidden
@@ -207,11 +217,17 @@ export default function OrdersTable({
                     </div>
                   </td>
                 )}
+                {showCompany && (
+                  <td
+                    className={`${dataTableTdClass} text-sm text-text-muted text-center`}
+                  >
+                    {order.company_name ?? "—"}
+                  </td>
+                )}
                 <td
                   className={`${dataTableTdClass} text-sm text-text-muted whitespace-nowrap text-center`}
                 >
-                  {order.item_count}{" "}
-                  {order.item_count === 1 ? "item" : "items"}
+                  {order.item_count} {order.item_count === 1 ? "item" : "items"}
                 </td>
                 <td
                   className={`${dataTableTdClass} text-sm font-semibold font-mono text-text-main whitespace-nowrap text-center`}

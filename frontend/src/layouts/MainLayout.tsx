@@ -22,14 +22,14 @@ export default function MainLayout() {
   }, [pathname, search]);
 
   return (
-    <div className="h-dvh flex flex-col bg-bg-base text-text-main font-sans overflow-hidden">
+    <div className="h-full flex flex-col bg-bg-base text-text-main font-sans overflow-hidden">
       <NavBar
         variant={isCheckoutWizardPath(pathname) ? "checkout" : "default"}
       />
 
       <main
         ref={mainRef}
-        className="flex-1 min-h-0 overflow-y-auto flex flex-col"
+        className="flex-1 min-h-0 overflow-y-auto overscroll-contain flex flex-col"
       >
         <div className="grow flex flex-col">
           <Outlet />

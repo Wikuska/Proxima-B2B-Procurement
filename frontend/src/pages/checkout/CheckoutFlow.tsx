@@ -116,8 +116,10 @@ export default function CheckoutFlow() {
   const [note, setNote] = useState("");
 
   const { data: personalAddresses = [] } = usePersonalAddresses();
-  const { data: companyAddresses = [] } = useCompanyShippingAddresses();
-  const { data: companyBillingAddress } = useCompanyBillingAddress();
+  const { data: companyAddresses = [] } =
+    useCompanyShippingAddresses(isB2bPurchase);
+  const { data: companyBillingAddress } =
+    useCompanyBillingAddress(isB2bPurchase);
   const { data: checkoutOptions } = useCheckoutOptions();
 
   const { data: quote } = useCartQuote(quoteItems, checkoutMode);

@@ -39,15 +39,7 @@ export default function OrderSummarySidebar({
         </span>
       </div>
 
-      <div
-        className="overflow-y-auto max-h-73 px-2 divide-y divide-border-base/10
-        [&::-webkit-scrollbar]:w-1.5
-        [&::-webkit-scrollbar-track]:bg-transparent
-        [&::-webkit-scrollbar-thumb]:bg-border-base/30
-        [&::-webkit-scrollbar-thumb]:rounded-full
-        hover:[&::-webkit-scrollbar-thumb]:bg-border-base/50
-        transition-colors"
-      >
+      <div className="px-2 divide-y divide-border-base/10">
         {lines.map((l) => {
           const priceLine = pricingMap.get(l.product_id);
           const lineTotal = priceLine
