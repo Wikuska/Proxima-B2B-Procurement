@@ -1,6 +1,6 @@
-import { Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import type { AddressOut } from "../../api/address";
+import AddressCard from "../../components/address/AddressCard";
 import Panel from "../../components/common/Panel";
 import AddressForm from "../../components/forms/AddressForm";
 import {
@@ -11,65 +11,6 @@ import {
   useUpdateCompanyAddress,
 } from "../../hooks/address/useAddresses";
 import { useAuth } from "../../hooks/user/useAuth";
-
-function AddressCard({
-  label,
-  street,
-  city,
-  postal_code,
-  country,
-  onDelete,
-  onEdit,
-  canDelete,
-  canEdit,
-}: {
-  label?: string | null;
-  street: string;
-  city: string;
-  postal_code: string;
-  country: string;
-  onDelete?: () => void;
-  onEdit?: () => void;
-  canDelete?: boolean;
-  canEdit?: boolean;
-}) {
-  return (
-    <div className="flex items-start justify-between gap-4 p-4 bg-bg-base border border-border-base/40 rounded-xl">
-      <div>
-        {label && (
-          <p className="text-xs font-semibold text-text-muted mb-0.5 uppercase tracking-wide">
-            {label}
-          </p>
-        )}
-        <p className="text-sm text-text-main">
-          {street}, {city} {postal_code}, {country}
-        </p>
-      </div>
-      <div className="flex items-center gap-2 shrink-0 mt-0.5">
-        {canEdit && onEdit && (
-          <button
-            type="button"
-            onClick={onEdit}
-            className="text-text-muted hover:text-primary transition-colors"
-            aria-label="Edit address"
-          >
-            <Pencil size={16} />
-          </button>
-        )}
-        {canDelete && onDelete && (
-          <button
-            type="button"
-            onClick={onDelete}
-            className="text-text-muted hover:text-red-500 transition-colors"
-            aria-label="Delete address"
-          >
-            <Trash2 size={16} />
-          </button>
-        )}
-      </div>
-    </div>
-  );
-}
 
 export default function CompanyAddressesTab() {
   const { isCompanyAdmin } = useAuth();
@@ -141,7 +82,6 @@ export default function CompanyAddressesTab() {
 
             {shippingAddresses.length === 0 ? (
               !showShippingForm && (
-                // <div className="p-8 border border-dashed border-border-base/40 rounded-xl text-center text-text-muted text-sm">
                 <div className="p-6 bg-bg-base border border-border-base/40 rounded-xl text-center text-text-muted text-sm">
                   No shipping addresses yet.
                 </div>
@@ -156,8 +96,11 @@ export default function CompanyAddressesTab() {
                       city={a.city}
                       postal_code={a.postal_code}
                       country={a.country}
-                      canDelete={isCompanyAdmin}
-                      onDelete={() => deleteAddress.mutate(a.id)}
+                      onDelete={
+                        isCompanyAdmin
+                          ? () => deleteAddress.mutate(a.id)
+                          : undefined
+                      }
                     />
                   </li>
                 ))}

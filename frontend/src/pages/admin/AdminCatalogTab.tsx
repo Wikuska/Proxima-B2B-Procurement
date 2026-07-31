@@ -7,7 +7,7 @@ import DataTableShell, {
   TablePagination,
 } from "../../components/common/DataTableShell";
 import CustomSelect from "../../components/common/CustomSelect";
-import DataTableSegmented from "../../components/common/DataTableSegmented";
+import SegmentedControl from "../../components/common/SegmentedControl";
 import {
   dataTableClass,
   dataTableHeadRowClass,
@@ -125,7 +125,7 @@ export default function AdminCatalogTab() {
               aria-label="Filter by category"
               className="sm:w-52"
             />
-            <DataTableSegmented
+            <SegmentedControl
               value={statusFilter}
               onChange={(value) => {
                 setStatusFilter(value);

@@ -1,6 +1,6 @@
-import { Trash2 } from "lucide-react";
 import { useState } from "react";
 import type { AddressOut } from "../../api/address";
+import AddressCard from "../../components/address/AddressCard";
 import Panel from "../../components/common/Panel";
 import AddressForm from "../../components/forms/AddressForm";
 import {
@@ -8,45 +8,6 @@ import {
   useDeletePersonalAddress,
   usePersonalAddresses,
 } from "../../hooks/address/useAddresses";
-
-function AddressCard({
-  label,
-  street,
-  city,
-  postal_code,
-  country,
-  onDelete,
-}: {
-  label?: string | null;
-  street: string;
-  city: string;
-  postal_code: string;
-  country: string;
-  onDelete: () => void;
-}) {
-  return (
-    <div className="flex items-start justify-between gap-4 p-4 bg-bg-base border border-border-base/40 rounded-lg shadow-sm">
-      <div>
-        {label && (
-          <p className="text-xs font-semibold text-text-muted mb-0.5 uppercase tracking-wide">
-            {label}
-          </p>
-        )}
-        <p className="text-sm text-text-main">
-          {street}, {city} {postal_code}, {country}
-        </p>
-      </div>
-      <button
-        type="button"
-        onClick={onDelete}
-        className="text-text-muted hover:text-red-500 transition-colors shrink-0 mt-0.5"
-        aria-label="Delete address"
-      >
-        <Trash2 size={16} />
-      </button>
-    </div>
-  );
-}
 
 export default function ShippingAddressesTab() {
   const { data: addresses = [], isLoading } = usePersonalAddresses();
@@ -71,7 +32,7 @@ export default function ShippingAddressesTab() {
         }
       >
         {showForm && (
-          <div className="mb-4 p-4 bg-bg-base border border-border-base/40 rounded-lg">
+          <div className="mb-4 p-4 bg-bg-base border border-border-base/40 rounded-xl">
             <AddressForm
               showSaveOption={false}
               onSubmit={(data) => {
@@ -86,7 +47,7 @@ export default function ShippingAddressesTab() {
 
         {addresses.length === 0 ? (
           !showForm && (
-            <div className="p-8 bg-bg-base border border-dashed border-border-base/40 rounded-lg text-center text-text-muted text-sm">
+            <div className="p-8 bg-bg-base border border-dashed border-border-base/40 rounded-xl text-center text-text-muted text-sm">
               No shipping addresses yet.
             </div>
           )

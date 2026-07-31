@@ -3,23 +3,29 @@ interface SegmentOption<T extends string> {
   label: string;
 }
 
-interface DataTableSegmentedProps<T extends string> {
+interface SegmentedControlProps<T extends string> {
   value: T;
   onChange: (value: T) => void;
   options: SegmentOption<T>[];
   "aria-label": string;
+  /** Compact fits navbar; default suits toolbars and forms. */
+  size?: "sm" | "md";
 }
 
-/** Compact segmented filter matching PurchaseModeSelector chrome. */
-export default function DataTableSegmented<T extends string>({
+export default function SegmentedControl<T extends string>({
   value,
   onChange,
   options,
   "aria-label": ariaLabel,
-}: DataTableSegmentedProps<T>) {
+  size = "md",
+}: SegmentedControlProps<T>) {
+  const isSm = size === "sm";
+
   return (
     <div
-      className="inline-flex shrink-0 items-center gap-0.5 rounded-lg border border-border-base/30 bg-bg-base p-0.5 text-sm font-medium"
+      className={`inline-flex shrink-0 items-center gap-0.5 rounded-lg border border-border-base/30 bg-bg-base p-0.5 font-medium ${
+        isSm ? "text-xs" : "text-sm"
+      }`}
       role="group"
       aria-label={ariaLabel}
     >
@@ -30,7 +36,9 @@ export default function DataTableSegmented<T extends string>({
             key={option.value}
             type="button"
             onClick={() => onChange(option.value)}
-            className={`rounded-md px-3 py-1.5 transition-colors ${
+            className={`rounded-md transition-colors ${
+              isSm ? "px-2.5 py-1" : "px-3 py-1.5"
+            } ${
               active
                 ? "bg-primary text-white shadow-sm"
                 : "text-text-muted hover:text-text-main hover:bg-bg-surface"

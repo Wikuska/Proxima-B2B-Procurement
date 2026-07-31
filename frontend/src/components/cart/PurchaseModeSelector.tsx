@@ -1,9 +1,15 @@
+import SegmentedControl from "../common/SegmentedControl";
 import type { PurchaseMode } from "../../store/purchaseModeStore";
 import { usePurchaseModeStore } from "../../store/purchaseModeStore";
 
 interface PurchaseModeSelectorProps {
   variant?: "compact" | "card";
 }
+
+const MODE_OPTIONS: { value: PurchaseMode; label: string }[] = [
+  { value: "COMPANY", label: "Company" },
+  { value: "PRIVATE", label: "Private" },
+];
 
 export default function PurchaseModeSelector({
   variant = "compact",
@@ -12,18 +18,13 @@ export default function PurchaseModeSelector({
 
   if (variant === "compact") {
     return (
-      <div className="flex items-center gap-1 bg-bg-base border border-border-base/30 rounded-lg p-0.5 text-xs font-medium">
-        <ModeButton
-          label="Company"
-          active={mode === "COMPANY"}
-          onClick={() => setMode("COMPANY")}
-        />
-        <ModeButton
-          label="Private"
-          active={mode === "PRIVATE"}
-          onClick={() => setMode("PRIVATE")}
-        />
-      </div>
+      <SegmentedControl
+        value={mode}
+        onChange={setMode}
+        options={MODE_OPTIONS}
+        aria-label="Purchase mode"
+        size="sm"
+      />
     );
   }
 
@@ -45,30 +46,6 @@ export default function PurchaseModeSelector({
         />
       </div>
     </div>
-  );
-}
-
-function ModeButton({
-  label,
-  active,
-  onClick,
-}: {
-  label: string;
-  active: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`px-2.5 py-1 rounded-md transition-colors ${
-        active
-          ? "bg-primary text-white"
-          : "text-text-muted hover:text-text-main"
-      }`}
-    >
-      {label}
-    </button>
   );
 }
 
