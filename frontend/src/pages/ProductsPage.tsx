@@ -9,7 +9,6 @@ import {
 import { ApiError } from "../api/client";
 import ErrorState from "../components/common/ErrorState";
 import CatalogHeader from "../components/catalog/CatalogHeader";
-import CatalogSidebar from "../components/catalog/CatalogSidebar";
 import PaginationControls from "../components/catalog/PaginationControls";
 
 export default function ProductsPage() {
@@ -65,12 +64,10 @@ export default function ProductsPage() {
         onSortChange={setSort}
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-[16rem_minmax(0,1fr)] gap-8 w-full">
-        <CatalogSidebar />
-
+      <div className="grid grid-cols-1 gap-8 w-full">
         <div className="min-w-0 w-full">
           <div
-            className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 transition-opacity duration-300 ${
+            className={`grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5 transition-opacity duration-300 ${
               isPlaceholderData
                 ? "opacity-50 pointer-events-none grayscale-[20%]"
                 : "opacity-100"

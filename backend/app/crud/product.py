@@ -1,4 +1,5 @@
 import uuid
+from decimal import Decimal
 
 from app.models import Category, Product
 from app.models.enums import ProductSortBy
@@ -167,6 +168,51 @@ async def get_product_for_admin(
     )
     result = await db.execute(stmt)
     return result.scalar_one_or_none()
+
+
+async def get_product_by_sku(db: AsyncSession, sku: str) -> Product | None:
+    stmt = select(Product).where(Product.sku == sku)
+    result = await db.execute(stmt)
+    return result.scalar_one_or_none()
+
+
+async def create_product(db: AsyncSession, **fields) -> Product:
+    product = Product(**fields)
+    db.add(product)
+    await db.flush()
+    return product
+
+
+async def update_product(db: AsyncSession, product: Product, **fields) -> Product:
+    for key, value in fields.items():
+        setattr(product, key, value)
+    await db.flush()
+    return product
+
+
+async def replace_volume_discounts(
+    db: AsyncSession,
+    product: Product,
+    tiers: list[tuple[int, Decimal]],
+) -> None:
+    """Replace all volume discount rows for a product (ordered by min_quantity)."""
+    from app.models import ProductVolumeDiscount
+    from sqlalchemy import delete
+
+    await db.execute(
+        delete(ProductVolumeDiscount).where(
+            ProductVolumeDiscount.product_id == product.id
+        )
+    )
+    for min_quantity, discount_percentage in sorted(tiers, key=lambda t: t[0]):
+        db.add(
+            ProductVolumeDiscount(
+                product_id=product.id,
+                min_quantity=min_quantity,
+                discount_percentage=discount_percentage,
+            )
+        )
+    await db.flush()
 
 
 async def get_products_by_ids(

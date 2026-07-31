@@ -1,12 +1,12 @@
 import { useMemo, useState } from "react";
-import { Eye, Plus } from "lucide-react";
+import { Pencil, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import DataTableShell, {
   DataTableSearch,
   TablePagination,
 } from "../../components/common/DataTableShell";
-import DataTableSelect from "../../components/common/DataTableSelect";
+import CustomSelect from "../../components/common/CustomSelect";
 import DataTableSegmented from "../../components/common/DataTableSegmented";
 import {
   dataTableClass,
@@ -115,7 +115,7 @@ export default function AdminCatalogTab() {
               }}
               placeholder="Search by name or SKU…"
             />
-            <DataTableSelect
+            <CustomSelect
               value={categoryId}
               onChange={(value) => {
                 setCategoryId(value);
@@ -249,10 +249,10 @@ export default function AdminCatalogTab() {
                   <Link
                     to={`/admin/catalog/${product.id}`}
                     className="inline-flex items-center justify-center w-8 h-8 rounded-md text-text-muted hover:text-primary hover:bg-primary/5 transition-colors"
-                    aria-label={`View ${product.name}`}
-                    title="View product"
+                    aria-label={`Edit ${product.name}`}
+                    title="Edit product"
                   >
-                    <Eye size={16} />
+                    <Pencil size={16} />
                   </Link>
                 </td>
               </tr>

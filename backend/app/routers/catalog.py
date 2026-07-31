@@ -26,7 +26,7 @@ async def get_categories(db: AsyncSession = Depends(get_db)):
 async def get_products_by_category(
     category_slug: str,
     page: int = Query(1, ge=1, description="Page number"),
-    size: int = Query(24, ge=1, le=100, description="Items per page"),
+    size: int = Query(25, ge=1, le=100, description="Items per page"),
     sort_by: ProductSortBy | None = Query(
         None, description="Sort order (defaults to name_asc)"
     ),
@@ -48,7 +48,7 @@ async def get_products_by_category(
 async def get_all_products(
     search_query: str | None = Query(None, description="Search by name or sku"),
     page: int = Query(1, ge=1, description="Page number"),
-    size: int = Query(24, ge=1, le=100, description="Items per page"),
+    size: int = Query(25, ge=1, le=100, description="Items per page"),
     sort_by: ProductSortBy | None = Query(
         None, description="Sort order (defaults to relevance when searching)"
     ),
@@ -88,9 +88,7 @@ async def get_product_details(
     return await catalog_service.fetch_product_details(db, product_slug)
 
 
-@router.get(
-    "/products/{product_slug}/related", response_model=list[ProductListOut]
-)
+@router.get("/products/{product_slug}/related", response_model=list[ProductListOut])
 async def get_related_products(
     product_slug: str,
     limit: int = Query(8, ge=1, le=24, description="Max number of related products"),

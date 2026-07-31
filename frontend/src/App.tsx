@@ -6,8 +6,7 @@ import MainLayout from "./layouts/MainLayout";
 import {
   AdminCatalogTab,
   AdminPage,
-  AdminProductCreatePage,
-  AdminProductDetailPage,
+  AdminProductFormPage,
   CartPage,
   CheckoutConfirmationPage,
   CheckoutFlow,
@@ -149,10 +148,10 @@ export default function App() {
         >
           <Route index element={<Navigate to="catalog" replace />} />
           <Route path="catalog" element={<AdminCatalogTab />} />
-          <Route path="catalog/new" element={<AdminProductCreatePage />} />
+          <Route path="catalog/new" element={<AdminProductFormPage />} />
           <Route
             path="catalog/:productId"
-            element={<AdminProductDetailPage />}
+            element={<AdminProductFormPage />}
           />
           <Route path="*" element={<NotFoundPage />} />
         </Route>

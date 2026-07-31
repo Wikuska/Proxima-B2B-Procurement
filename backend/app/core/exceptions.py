@@ -69,6 +69,11 @@ class ProductNotFoundException(AppException):
     detail = "Product not found"
 
 
+class DuplicateProductSkuException(AppException):
+    status_code = 400
+    detail = "A product with this SKU already exists"
+
+
 class CompanyNotFoundException(AppException):
     status_code = 404
     detail = "No active company is registered with this NIP"

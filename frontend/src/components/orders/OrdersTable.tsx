@@ -6,7 +6,7 @@ import DataTableShell, {
   DataTableSearch,
   TablePagination,
 } from "../common/DataTableShell";
-import DataTableSelect from "../common/DataTableSelect";
+import CustomSelect from "../common/CustomSelect";
 import {
   dataTableClass,
   dataTableHeadRowClass,
@@ -110,7 +110,7 @@ export default function OrdersTable({
             }}
             placeholder="Search orders…"
           />
-          <DataTableSelect
+          <CustomSelect
             value={status}
             onChange={(value) => {
               setStatus(value as OrderStatus | "");

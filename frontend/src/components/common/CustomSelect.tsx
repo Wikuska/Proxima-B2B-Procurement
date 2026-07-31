@@ -1,27 +1,31 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { Check, ChevronDown } from "lucide-react";
+import { cn } from "../../utils/cn";
 
-export interface DataTableSelectOption {
+export interface CustomSelectOption {
   value: string;
   label: string;
 }
 
-interface DataTableSelectProps {
+interface CustomSelectProps {
   value: string;
   onChange: (value: string) => void;
-  options: DataTableSelectOption[];
+  options: CustomSelectOption[];
   "aria-label": string;
   className?: string;
+  /** Extra classes for the trigger button (e.g. white field on gray form well). */
+  triggerClassName?: string;
 }
 
-/** Styled filter select for DataTableShell toolbars (replaces native `<select>`). */
-export default function DataTableSelect({
+/** Shared styled select dropdown for filters and forms. */
+export default function CustomSelect({
   value,
   onChange,
   options,
   "aria-label": ariaLabel,
   className = "",
-}: DataTableSelectProps) {
+  triggerClassName,
+}: CustomSelectProps) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const listId = useId();
@@ -53,11 +57,13 @@ export default function DataTableSelect({
         aria-expanded={open}
         aria-controls={listId}
         onClick={() => setOpen((prev) => !prev)}
-        className={`inline-flex w-full min-w-[11rem] items-center justify-between gap-2 rounded-lg border bg-bg-base px-3 py-2 text-sm text-text-main transition-colors ${
+        className={cn(
+          "inline-flex w-full min-w-[11rem] items-center justify-between gap-2 rounded-lg border bg-bg-base px-3 py-2 text-sm text-text-main transition-colors",
           open
             ? "border-primary"
-            : "border-border-base/40 hover:border-border-base/70"
-        }`}
+            : "border-border-base/40 hover:border-border-base/70",
+          triggerClassName,
+        )}
       >
         <span className="truncate">{selected?.label ?? "—"}</span>
         <ChevronDown

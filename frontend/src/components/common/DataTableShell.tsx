@@ -21,10 +21,10 @@ export default function DataTableShell({
 }: DataTableShellProps) {
   return (
     <div
-      className={`bg-bg-surface border border-border-base/30 rounded-xl overflow-hidden shadow-sm w-full ${className}`}
+      className={`bg-bg-surface border border-border-base/30 rounded-xl shadow-sm w-full ${className}`}
     >
       {toolbar && (
-        <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center border-b border-border-base/20">
+        <div className="relative z-20 flex flex-col gap-3 p-4 sm:flex-row sm:items-center border-b border-border-base/20">
           {toolbar}
         </div>
       )}

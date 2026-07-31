@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import Panel from "../../components/common/Panel";
+import CustomSelect from "../../components/common/CustomSelect";
 import FormInput from "../../components/forms/FormInput";
 import {
   useCompanyMembers,
@@ -185,29 +186,26 @@ export default function CompanySettingsTab() {
           ) : (
             <div className="space-y-4">
               <div>
-                <label
-                  htmlFor="transfer-target"
-                  className="mb-1 block text-sm font-medium text-text-main"
-                >
+                <span className="mb-1 block text-sm font-medium text-text-main">
                   New company admin
-                </label>
-                <select
-                  id="transfer-target"
+                </span>
+                <CustomSelect
                   value={transferTargetId}
-                  onChange={(e) => setTransferTargetId(e.target.value)}
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-border-base/40 bg-bg-base text-text-main focus:outline-none focus:border-border-focus"
-                >
-                  <option value="">Select a member…</option>
-                  {transferCandidates.map((m) => {
-                    const name =
-                      `${m.first_name} ${m.last_name}`.trim() || m.email;
-                    return (
-                      <option key={m.id} value={m.id}>
-                        {name} ({m.email})
-                      </option>
-                    );
-                  })}
-                </select>
+                  onChange={setTransferTargetId}
+                  options={[
+                    { value: "", label: "Select a member…" },
+                    ...transferCandidates.map((m) => {
+                      const name =
+                        `${m.first_name} ${m.last_name}`.trim() || m.email;
+                      return {
+                        value: m.id,
+                        label: `${name} (${m.email})`,
+                      };
+                    }),
+                  ]}
+                  aria-label="New company admin"
+                  className="w-full min-w-0"
+                />
               </div>
 
               {(transferTargetId || isTransferring) && (

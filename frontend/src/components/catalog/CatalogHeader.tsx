@@ -1,5 +1,6 @@
 import { type CategoryResponse } from "../../api/catalog";
 import type { CatalogSort } from "../../hooks/catalog/useCatalogParams";
+import CustomSelect from "../common/CustomSelect";
 
 interface CatalogHeaderProps {
   category?: CategoryResponse;
@@ -31,6 +32,15 @@ export default function CatalogHeader({
       ? category.name
       : "All Products";
 
+  const sortOptions = [
+    ...(isSearchMode
+      ? [{ value: "relevance" as const, label: "Relevance" }]
+      : []),
+    { value: "name_asc" as const, label: "Name (A-Z)" },
+    { value: "price_asc" as const, label: "Price (Low to High)" },
+    { value: "price_desc" as const, label: "Price (High to Low)" },
+  ];
+
   return (
     <div className="flex flex-col gap-4 md:flex-row md:justify-between md:items-end mb-8 border-b border-border-base/20 pb-4">
       <div>
@@ -53,16 +63,14 @@ export default function CatalogHeader({
 
       <div className="flex items-center gap-2 text-sm shrink-0">
         <span className="text-text-muted">Sort by:</span>
-        <select
+        <CustomSelect
           value={effectiveSort}
-          onChange={(event) => onSortChange(event.target.value as CatalogSort)}
-          className="bg-bg-surface border border-border-base/30 rounded-md px-3 py-1.5 text-text-main focus:outline-none focus:border-accent"
-        >
-          {isSearchMode && <option value="relevance">Relevance</option>}
-          <option value="name_asc">Name (A-Z)</option>
-          <option value="price_asc">Price (Low to High)</option>
-          <option value="price_desc">Price (High to Low)</option>
-        </select>
+          onChange={(value) => onSortChange(value as CatalogSort)}
+          options={sortOptions}
+          aria-label="Sort products"
+          className="min-w-[12rem]"
+          triggerClassName="bg-bg-surface border-border-base/30 min-w-0"
+        />
       </div>
     </div>
   );

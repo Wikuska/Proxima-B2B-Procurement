@@ -10,7 +10,7 @@ const VALID_SORTS = new Set<CatalogSort>([
   "price_desc",
 ]);
 
-const DEFAULT_SIZE = 24;
+const DEFAULT_SIZE = 25;
 
 export function useCatalogParams() {
   const [searchParams, setSearchParams] = useSearchParams();
